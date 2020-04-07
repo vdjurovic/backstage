@@ -1,0 +1,9 @@
+# Properties file template for Maven Liquibase plugin. This sample file shows how to configure your own
+# liquibase.properties file which is used by Maven plugin.
+#
+# Make sure that file liquibase.properties is not commited to git, since it contains per-developer information
+
+driver=org.postgresql.Driver
+url=jdbc:postgresql://localhost:5432/dbname
+username=user
+password=pass
