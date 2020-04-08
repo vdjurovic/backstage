@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ignite-project dependency-management-type="MAVEN" name="launchtest">
+    <application id="7PjPKl4iLX7" version="1.0.0-SNAPSHOT">
+        <application-info>
+            <application-name>LaunchTest</application-name>
+            <icons>
+                <icon path="data/icons/icon1.png" file-name="icon1.png" size="2026"/>
+                <icon path="data/icons/winicon.ico" file-name="winicon.ico" size="370070"/>
+                <icon path="data/icons/maicon.icns" file-name="maicon.icns" size="128885"/>
+            </icons>
+        </application-info>
+    </application>
+    <jvm exact-version="" implementation="HOTSPOT" provider="OPENJDK" version="JDK_11">
+        <platform-specific-dependencies>
+            <linux/>
+            <mac/>
+            <windows/>
+        </platform-specific-dependencies>
+        <arguments>arg1 arg2</arguments>
+        <dependencies>
+            <dependency main-artifact="true" scope="MODULEPATH" path="modules/launchtest-1.0-SNAPSHOT.jar" file-name="launchtest-1.0-SNAPSHOT.jar" size="4508"/>
+            <dependency main-artifact="false" scope="MODULEPATH" path="modules/javafx-base-13.0.1-mac.jar" file-name="javafx-base-13.0.1-mac.jar" size="744666"/>
+            <dependency main-artifact="false" scope="MODULEPATH" path="modules/javafx-graphics-13.0.1-mac.jar" file-name="javafx-graphics-13.0.1-mac.jar" size="4806634"/>
+            <dependency main-artifact="false" scope="MODULEPATH" path="modules/javafx-graphics-13.0.1.jar" file-name="javafx-graphics-13.0.1.jar" size="306"/>
+            <dependency main-artifact="false" scope="MODULEPATH" path="modules/javafx-base-13.0.1.jar" file-name="javafx-base-13.0.1.jar" size="302"/>
+            <dependency main-artifact="false" scope="MODULEPATH" path="modules/javafx-controls-13.0.1.jar" file-name="javafx-controls-13.0.1.jar" size="306"/>
+            <dependency main-artifact="false" scope="MODULEPATH" path="modules/javafx-controls-13.0.1-mac.jar" file-name="javafx-controls-13.0.1-mac.jar" size="2508838"/>
+        </dependencies>
+        <jvm-options>-Xms=32m -Xmx=128m</jvm-options>
+        <main-class>co.bitshifted.xapps.ignite.Ignite</main-class>
+        <module-name>launchtest</module-name>
+        <splash-screen path="data/splash.png" file-name="splash.png" size="28044"/>
+        <system-properties>-Dprop1=value1 -Dprop2=value2</system-properties>
+    </jvm>
+    <server base-url="http://localhost:8080" name="localhost"/>
+</ignite-project>

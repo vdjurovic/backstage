@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package co.bitshifted.xapps.backstage.service;
+package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshifted.xapps.backstage.entity.AppDeploymentStatus;
 import co.bitshifted.xapps.backstage.entity.Application;

@@ -9,7 +9,7 @@
 package co.bitshifted.xapps.backstage;
 
 
-import co.bitshifted.xapps.backstage.service.DeploymentProcessTask;
+import co.bitshifted.xapps.backstage.deploy.DeploymentProcessTask;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;

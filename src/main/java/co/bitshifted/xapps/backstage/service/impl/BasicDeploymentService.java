@@ -13,7 +13,7 @@ import co.bitshifted.xapps.backstage.entity.Application;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentStatusRepository;
 import co.bitshifted.xapps.backstage.repository.ApplicationRepository;
-import co.bitshifted.xapps.backstage.service.DeploymentProcessTask;
+import co.bitshifted.xapps.backstage.deploy.DeploymentProcessTask;
 import co.bitshifted.xapps.backstage.service.DeploymentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
