@@ -9,26 +9,59 @@
 package co.bitshifted.xapps.backstage.content.impl;
 
 import co.bitshifted.xapps.backstage.content.ContentMapping;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
  * @author Vladimir Djurovic
  */
 @Component
+@Slf4j
 public class FileSystemContentMapping implements ContentMapping {
 
+	private final Path contentRoot;
 	private final Path workspace;
+	private final Path jdkStorageDirectory;
+	private final Path launcherDirectory;
 
-	public FileSystemContentMapping(@Value("${content.workspace.location}") String workspaceLocation) {
-		this.workspace = Path.of(workspaceLocation);
+	public FileSystemContentMapping(@Value("${content.root.location}") String rootLocation) {
+		this.contentRoot = Path.of(rootLocation);
+		workspace = contentRoot.resolve("workspace");
+		jdkStorageDirectory = contentRoot.resolve("jdk");
+		launcherDirectory = contentRoot.resolve("launchers");
+	}
+
+	@PostConstruct
+	public void initialize() {
+		try {
+			Files.createDirectories(workspace);
+			Files.createDirectories(jdkStorageDirectory);
+			Files.createDirectories(launcherDirectory);
+		} catch (IOException ex) {
+			log.error("Failed to create content directories", ex);
+		}
+
 	}
 
 	@Override
 	public URI getWorkspaceUri() {
 		return workspace.toUri();
+	}
+
+	@Override
+	public URI getJdkStorageUri() {
+		return jdkStorageDirectory.toUri();
+	}
+
+	@Override
+	public URI getLauncherStorageUri() {
+		return launcherDirectory.toUri();
 	}
 }

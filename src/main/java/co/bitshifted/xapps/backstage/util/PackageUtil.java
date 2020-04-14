@@ -31,9 +31,9 @@ public final class PackageUtil {
 		// private constructor to prevent instantiation
 	}
 
-	public static Path unpackZipArchive(Path zipFilePath) throws IOException {
+	public static Path unpackZipArchive(Path zipFilePath, String targetDirName) throws IOException {
 		var parent = zipFilePath.getParent();
-		var targetDir = Path.of(parent.toAbsolutePath().toString(), zipFilePath.toFile().getName().replaceAll("\\.", "_")).toFile();
+		var targetDir = Path.of(parent.toAbsolutePath().toString(), targetDirName).toFile();
 		log.debug("Target directory for extraction: {}", targetDir.getName());
 		try(var archive = new ZipArchiveInputStream(new BufferedInputStream(new FileInputStream(zipFilePath.toFile())))) {
 
@@ -41,11 +41,21 @@ public final class PackageUtil {
 			while((entry = archive.getNextZipEntry()) != null) {
 				log.debug("Unpacking entry {}", entry.getName());
 				var file = new File(targetDir, entry.getName());
-				Files.createDirectories(file.getParentFile().toPath());
-				IOUtils.copy(archive, new FileOutputStream(file));
+				if(entry.getName().endsWith("/")) {
+					Files.createDirectories(file.toPath());
+				} else {
+					Files.createDirectories(file.getParentFile().toPath());
+					IOUtils.copy(archive, new FileOutputStream(file));
+				}
+
 			}
 		}
 		return targetDir.toPath();
+	}
+
+	public static Path unpackZipArchive(Path zipFilePath) throws IOException {
+		var dirName = zipFilePath.toFile().getName().substring(0, zipFilePath.toFile().getName().lastIndexOf(".zip"));
+		return unpackZipArchive(zipFilePath, dirName);
 	}
 
 	public  static Path packZipArchive(Path sourceFolder) throws IOException {

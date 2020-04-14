@@ -41,7 +41,7 @@ public class ToolsRunnerTest {
 		deploymentPackageDir = PackageUtil.unpackZipArchive(copyTarget);
 	}
 
-//	@AfterClass
+	@AfterClass
 	public static void cleanupClass() throws Exception{
 		FileUtils.deleteDirectory(deploymentPackageDir.getParent().toFile());
 	}
@@ -60,8 +60,9 @@ public class ToolsRunnerTest {
 		var runner = new ToolsRunner();
 		runner.init();
 		var modules = runner.getApplicationModules(deploymentPackageDir);
-		var output = runner.createRuntimeImage(modules, deploymentPackageDir);
+		var jrePath = deploymentPackageDir.getParent().resolve("jre");
+		runner.createRuntimeImage(modules, deploymentPackageDir.resolve("modules"), jrePath);
 
-		assertTrue(Files.exists(output));
+		assertTrue(Files.exists(jrePath));
 	}
 }

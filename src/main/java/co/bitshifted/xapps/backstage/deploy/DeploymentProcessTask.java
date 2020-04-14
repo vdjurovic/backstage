@@ -11,18 +11,15 @@ package co.bitshifted.xapps.backstage.deploy;
 import co.bitshifted.xapps.backstage.entity.AppDeploymentStatus;
 import co.bitshifted.xapps.backstage.entity.Application;
 import co.bitshifted.xapps.backstage.enums.DeploymentStatus;
+import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentStatusRepository;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.Buffer;
+import java.nio.file.Path;
 
 /**
  * @author Vladimir Djurovic
@@ -30,35 +27,45 @@ import java.nio.Buffer;
 @Slf4j
 public class DeploymentProcessTask implements Runnable {
 
-	private final File deploymentArchive;
+	private final Path deploymentArchive;
+	private final Path deploymentWorkDir;
 	private AppDeploymentStatus status;
 
 	@Autowired
 	private AppDeploymentStatusRepository deploymentStatusRepo;
+	@Autowired
+	private ToolsRunner toolsRunner;
 
 	public DeploymentProcessTask(File file) {
-		this.deploymentArchive = file;
+		this.deploymentArchive = file.toPath();
+		this.deploymentWorkDir = deploymentArchive.getParent();
 	}
 
 	@Override
 	public void run() {
-		log.info("Start processing deployment archive {}", deploymentArchive.getName());
+		log.info("Start processing deployment archive {}", deploymentArchive.toFile().getName());
 		status.setCurrentStatus(DeploymentStatus.IN_PROGRESS);
 		deploymentStatusRepo.save(status);
 		log.debug("Setting deployment task status to {}", DeploymentStatus.IN_PROGRESS);
 
 		try{
-			var deploymentPackageDir = PackageUtil.unpackZipArchive(deploymentArchive.toPath());
-		} catch(IOException ex) {
-			log.error("Failed to unpack distribution archive", ex);
+			var deploymentPackageDir = PackageUtil.unpackZipArchive(deploymentArchive);
+			// create JRE image
+			var modules = toolsRunner.getApplicationModules(deploymentPackageDir);
+			var jrePath = deploymentPackageDir.getParent().resolve("jre");
+			toolsRunner.createRuntimeImage(modules, deploymentPackageDir.resolve("modules"), jrePath);
+		} catch(IOException | DeploymentException ex) {
+			log.error("Failed to create deployment package", ex);
+			status.setCurrentStatus(DeploymentStatus.FAILED);
+
 		}
 
 	}
 
 	public void init(Application app) {
 		log.debug("Initializing deployment task with app id {}", app.getId());
-		status = deploymentStatusRepo.save(new AppDeploymentStatus(deploymentArchive.getParentFile().getName(), app));
-		log.info("Initialized deployment task {}", deploymentArchive.getParentFile().getName());
+		status = deploymentStatusRepo.save(new AppDeploymentStatus(deploymentArchive.getParent().toFile().getName(), app));
+		log.info("Initialized deployment task {}", deploymentArchive.getParent().toFile().getName());
 	}
 
 }

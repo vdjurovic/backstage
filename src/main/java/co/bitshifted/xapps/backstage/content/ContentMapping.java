@@ -16,4 +16,8 @@ import java.net.URI;
 public interface ContentMapping {
 
 	URI getWorkspaceUri();
+
+	URI getJdkStorageUri();
+
+	URI getLauncherStorageUri();
 }

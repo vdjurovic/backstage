@@ -15,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -32,6 +35,16 @@ public class FileSystemMappingTest {
 		var out = contentMapping.getWorkspaceUri();
 		var workDir = System.getProperty("user.dir");
 
+		assertTrue(Files.exists(Path.of(out)));
+		assertTrue(out.getPath().startsWith(workDir));
+	}
+
+	@Test
+	public void jdkLocationTest() {
+		var out = contentMapping.getJdkStorageUri();
+		var workDir = System.getProperty("user.dir");
+
+		assertTrue(Files.exists(Path.of(out)));
 		assertTrue(out.getPath().startsWith(workDir));
 	}
 }

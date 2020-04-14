@@ -33,6 +33,6 @@ public class XmlProcessorTest {
 	public void mainArtifactFetchTest() throws Exception {
 		var out = xmlProcessor.findMainArtifact();
 		assertEquals(out.get("scope"), "MODULEPATH");
-		assertEquals(out.get("path"), "launchtest-1.0-SNAPSHOT.jar");
+		assertEquals(out.get("path"), "modules/launchtest-1.0-SNAPSHOT.jar");
 	}
 }

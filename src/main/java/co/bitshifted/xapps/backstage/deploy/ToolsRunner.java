@@ -13,10 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,12 +38,19 @@ public class ToolsRunner {
 		jlink = ToolProvider.findFirst("jlink").orElseThrow();
 	}
 
-	public Set<String> getApplicationModules(Path deploymentPackageDir) throws Exception {
-		var xmlProcessor = new XmlProcessor(deploymentPackageDir.resolve("ignite-config.xml"));
-		var mainArtifact = xmlProcessor.findMainArtifact();
-		var mainArtifactPath = deploymentPackageDir.resolve(mainArtifact.get("path"));
-		var mainArtifactModuleName = mainArtifactModuleName(mainArtifactPath);
-		log.debug("Found main artifact: {}", mainArtifact);
+	public Set<String> getApplicationModules(Path deploymentPackageDir) throws DeploymentException {
+		Path mainArtifactPath;
+		String mainArtifactModuleName;
+		try {
+			var xmlProcessor = new XmlProcessor(deploymentPackageDir.resolve("ignite-config.xml"));
+			var mainArtifact = xmlProcessor.findMainArtifact();
+			log.debug("Found main artifact: {}", mainArtifact);
+			mainArtifactPath = deploymentPackageDir.resolve(mainArtifact.get("path"));
+			mainArtifactModuleName = mainArtifactModuleName(mainArtifactPath);
+		} catch (Exception ex) {
+			log.error("Failed to parse XML configuration", ex);
+			throw new DeploymentException(ex);
+		}
 		var outString = new StringWriter();
 		var out = new PrintWriter(outString);
 		var errString = new StringWriter();
@@ -73,9 +77,12 @@ public class ToolsRunner {
 				while((line = reader.readLine()) != null) {
 					modules.add(line.trim());
 				}
+			} catch(IOException ex) {
+				log.error("Failed to read jdeps output", ex);
+				throw new DeploymentException(ex);
 			}
 
-		} else {
+		} else { 
 			log.error("Error running jdeps: {}", errString.toString());
 			throw new DeploymentException(errString.toString());
 		}
@@ -95,15 +102,14 @@ public class ToolsRunner {
 		return modules.iterator().next().descriptor().name();
 	}
 
-	public Path createRuntimeImage(Set<String> modules, Path deploymentPackageDir) throws Exception {
-		var jrePath = deploymentPackageDir.getParent().resolve("jre");
+	public void createRuntimeImage(Set<String> modules, Path modulesDir, Path outputDir) throws DeploymentException {
 		var argList = new ArrayList<String>();
 		argList.add("--module-path");
-		argList.add(deploymentPackageDir.resolve("modules").toAbsolutePath().toString());
+		argList.add(modulesDir.toAbsolutePath().toString());
 		argList.add("--add-modules");
 		argList.add(createModulesArgs(modules));
 		argList.add("--output");
-		argList.add(jrePath.toAbsolutePath().toString());
+		argList.add(outputDir.toAbsolutePath().toString());
 		log.debug("jlink args: {}", argList);
 
 		var outString = new StringWriter();
@@ -117,8 +123,6 @@ public class ToolsRunner {
 			log.error("Error running jlink: {}", errString.toString());
 			throw new DeploymentException(errString.toString());
 		}
-
-		return jrePath;
 	}
 
 	private String createModulesArgs(Set<String> modules) {
