@@ -8,8 +8,10 @@
 
 package co.bitshifted.xapps.backstage.deploy;
 
+import co.bitshifted.xapps.backstage.model.*;
 import lombok.Data;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,8 +20,15 @@ import java.util.stream.Collectors;
  */
 @Data
 public class DeploymentConfig {
+	private String appId;
 	private String appName;
 	private List<String> icons;
+	private Path deploymentPackageDir;
+	private JdkProvider jdkProvider;
+	private JvmImplementation jvmImplementation;
+	private JdkVersion jdkVersion;
+	private OS os;
+	private CpuArch cpuArch;
 
 	public String macAppBundleName() {
 		return appName + ".app";

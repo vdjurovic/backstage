@@ -8,20 +8,22 @@
 
 package co.bitshifted.xapps.backstage.deploy;
 
+import co.bitshifted.xapps.backstage.content.ContentMapping;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+
+import static co.bitshifted.xapps.backstage.BackstageConstants.DEPLOY_PKG_MODULES_DIR_NAME;
+import static co.bitshifted.xapps.backstage.BackstageConstants.JDK_JMODS_DIR_NAME;
 
 /**
  * @author Vladimir Djurovic
@@ -34,13 +36,17 @@ public class MacDeploymentBuilder {
 	private static final String APP_BUNDLE_JRE_DIR = "Contents/MacOS/jre";
 	private static final String APP_BUNDLE_RESOURCES_DIR = "Contents/Resources";
 
+	@Autowired
+	private ContentMapping contentMapping;
+
+
 	private final Path deploymentWorkDir;
 	private final Path deploymentPackageDir;
 	private final DeploymentConfig config;
 	private final ToolsRunner toolsRunner;
 
-	public MacDeploymentBuilder(Path deploymentPackageDir, DeploymentConfig config) {
-		this.deploymentPackageDir = deploymentPackageDir;
+	public MacDeploymentBuilder(DeploymentConfig config) {
+		this.deploymentPackageDir = config.getDeploymentPackageDir();
 		this.deploymentWorkDir = deploymentPackageDir.getParent();
 		this.config = config;
 		toolsRunner = new ToolsRunner();
@@ -59,7 +65,10 @@ public class MacDeploymentBuilder {
 			var appBundlePath = PackageUtil.unpackZipArchive(appBundleArchive, config.macAppBundleName());
 			// create JRE image
 			var moduleNames = toolsRunner.getApplicationModules(deploymentPackageDir);
-			toolsRunner.createRuntimeImage(moduleNames, deploymentPackageDir.resolve("modules"), appBundlePath.resolve(APP_BUNDLE_JRE_DIR));
+			var targetJdkDir = Path.of(contentMapping.getJdkLocation(config.getJdkProvider(), config.getJvmImplementation(), config.getJdkVersion(), config.getOs(), config.getCpuArch()));
+			var jdkModulesDir = targetJdkDir.resolve(JDK_JMODS_DIR_NAME);
+			var modulesPath = List.of(jdkModulesDir, deploymentPackageDir.resolve(DEPLOY_PKG_MODULES_DIR_NAME));
+			toolsRunner.createRuntimeImage(moduleNames, modulesPath, appBundlePath.resolve(APP_BUNDLE_JRE_DIR));
 			// copy icon to resources
 			config.findMacIcons().stream().map(ic -> deploymentPackageDir.resolve(ic)).forEach(ic -> {
 				try {

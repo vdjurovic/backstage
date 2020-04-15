@@ -6,16 +6,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package co.bitshifted.xapps.backstage.dto;
+package co.bitshifted.xapps.backstage.model;
 
-import co.bitshifted.xapps.backstage.model.DeploymentStatus;
-import lombok.Data;
+public enum JdkVersion {
+	JDK_11("11"),
+	JDK_12("12"),
+	JDK_13("13"),
+	JDK_14("14");
 
-/**
- * @author Vladimir Djurovic
- */
-@Data
-public class DeploymentStatusDTO {
-	private DeploymentStatus currentStatus;
-	private String details;
+	private String text;
+
+	JdkVersion(String text) {
+		this.text = text;
+	}
+
+	public String getText() {
+		return text;
+	}
 }

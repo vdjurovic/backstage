@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package co.bitshifted.xapps.backstage.enums;
+package co.bitshifted.xapps.backstage.model;
 
 public enum DeploymentStatus {
 	ACCEPTED, IN_PROGRESS, SUCCESS, FAILED;

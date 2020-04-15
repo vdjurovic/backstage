@@ -9,7 +9,9 @@
 package co.bitshifted.xapps.backstage;
 
 
+import co.bitshifted.xapps.backstage.deploy.DeploymentConfig;
 import co.bitshifted.xapps.backstage.deploy.DeploymentProcessTask;
+import co.bitshifted.xapps.backstage.deploy.MacDeploymentBuilder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +38,17 @@ public class BackstageApplication {
 	@Scope("prototype")
 	public DeploymentProcessTask processTask(File source) {
 		return new DeploymentProcessTask(source);
+	}
+
+	@Bean
+	public Function<DeploymentConfig, MacDeploymentBuilder> macDeploymentBuilderFactory() {
+		return source -> macDeploymentBuilder(source);
+	}
+
+	@Bean
+	@Scope("prototype")
+	public MacDeploymentBuilder macDeploymentBuilder(DeploymentConfig config){
+		return new MacDeploymentBuilder(config);
 	}
 
 }

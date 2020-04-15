@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.spi.ToolProvider;
 
@@ -102,10 +103,10 @@ public class ToolsRunner {
 		return modules.iterator().next().descriptor().name();
 	}
 
-	public void createRuntimeImage(Set<String> modules, Path modulesDir, Path outputDir) throws DeploymentException {
+	public void createRuntimeImage(Set<String> modules, List<Path> moduleDirs, Path outputDir) throws DeploymentException {
 		var argList = new ArrayList<String>();
 		argList.add("--module-path");
-		argList.add(modulesDir.toAbsolutePath().toString());
+		argList.add(concatenateModulesPath(moduleDirs));
 		argList.add("--add-modules");
 		argList.add(createModulesArgs(modules));
 		argList.add("--output");
@@ -129,5 +130,11 @@ public class ToolsRunner {
 		StringBuilder sb = new StringBuilder();
 		modules.forEach(m -> sb.append(",").append(m));
 		return sb.toString().substring(1);
+	}
+
+	private String concatenateModulesPath(List<Path> paths) {
+		StringBuilder sb = new StringBuilder(paths.get(0).toAbsolutePath().toString());
+		paths.stream().skip(1).forEach(path -> sb.append(":").append(path.toAbsolutePath().toString()));
+		return sb.toString();
 	}
 }

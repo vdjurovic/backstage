@@ -8,6 +8,8 @@
 
 package co.bitshifted.xapps.backstage.content;
 
+import co.bitshifted.xapps.backstage.model.*;
+
 import java.net.URI;
 
 /**
@@ -20,4 +22,7 @@ public interface ContentMapping {
 	URI getJdkStorageUri();
 
 	URI getLauncherStorageUri();
+
+	URI getJdkLocation(JdkProvider provider, JvmImplementation jvmImplementation, JdkVersion version, OS os, CpuArch cpuArch);
+
 }

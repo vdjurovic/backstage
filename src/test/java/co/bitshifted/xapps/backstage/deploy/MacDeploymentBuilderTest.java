@@ -9,12 +9,16 @@
 package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshifted.xapps.backstage.content.ContentMapping;
+import co.bitshifted.xapps.backstage.model.*;
 import co.bitshifted.xapps.backstage.test.TestConfig;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -22,6 +26,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.function.Function;
+
+import static org.mockito.Mockito.when;
 
 /**
  * @author Vladimir Djurovic
@@ -34,10 +41,14 @@ public class MacDeploymentBuilderTest {
 
 	@Autowired
 	private ContentMapping contentMapping;
+	@Autowired
+	private Function<DeploymentConfig, MacDeploymentBuilder> macDeploymentBuilderFactory;
+
 	private Path deploymentWorkDir;
 	private Path deploymentPackageDir;
 	private MacDeploymentBuilder deploymentBuilder;
 	private DeploymentConfig deploymentConfig;
+	private Path jdkLinkPath;
 
 	@Before
 	public void setup() throws Exception {
@@ -52,7 +63,25 @@ public class MacDeploymentBuilderTest {
 		deploymentConfig = new DeploymentConfig();
 		deploymentConfig.setAppName("TestApp");
 		deploymentConfig.setIcons(List.of("data/icons/icon1.png", "data/icons/winicon.ico", "data/icons/maicon.icns"));
-		deploymentBuilder = new MacDeploymentBuilder(deploymentPackageDir, deploymentConfig);
+		deploymentConfig.setDeploymentPackageDir(deploymentPackageDir);
+		deploymentConfig.setJdkProvider(JdkProvider.OPENJDK);
+		deploymentConfig.setJvmImplementation(JvmImplementation.HOTSPOT);
+		deploymentConfig.setJdkVersion(JdkVersion.JDK_11);
+		deploymentConfig.setOs(OS.LINUX);
+		deploymentConfig.setCpuArch(CpuArch.X_64);
+		deploymentBuilder = macDeploymentBuilderFactory.apply(deploymentConfig);
+		// create link to system JDK
+		var javaHome = System.getProperty("java.home");
+		System.out.println("java home: " + javaHome);
+		var jdkStorageDirPath = Path.of(contentMapping.getJdkStorageUri());
+		jdkLinkPath = jdkStorageDirPath.resolve("openjdk-hotspot-11-linux-x64");
+		Files.createSymbolicLink(jdkLinkPath, Path.of(javaHome));
+	}
+
+	@After
+	public void cleanup() throws Exception {
+		Files.deleteIfExists(jdkLinkPath);
+		FileUtils.deleteDirectory(deploymentWorkDir.toFile());
 	}
 
 

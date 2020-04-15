@@ -10,7 +10,7 @@ package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshifted.xapps.backstage.entity.AppDeploymentStatus;
 import co.bitshifted.xapps.backstage.entity.Application;
-import co.bitshifted.xapps.backstage.enums.DeploymentStatus;
+import co.bitshifted.xapps.backstage.model.DeploymentStatus;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentStatusRepository;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
@@ -53,7 +53,7 @@ public class DeploymentProcessTask implements Runnable {
 			// create JRE image
 			var modules = toolsRunner.getApplicationModules(deploymentPackageDir);
 			var jrePath = deploymentPackageDir.getParent().resolve("jre");
-			toolsRunner.createRuntimeImage(modules, deploymentPackageDir.resolve("modules"), jrePath);
+			//toolsRunner.createRuntimeImage(modules, deploymentPackageDir.resolve("modules"), jrePath);
 		} catch(IOException | DeploymentException ex) {
 			log.error("Failed to create deployment package", ex);
 			status.setCurrentStatus(DeploymentStatus.FAILED);

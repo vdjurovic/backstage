@@ -9,7 +9,7 @@
 package co.bitshifted.xapps.backstage.entity;
 
 import co.bitshifted.xapps.backstage.dto.DeploymentStatusDTO;
-import co.bitshifted.xapps.backstage.enums.DeploymentStatus;
+import co.bitshifted.xapps.backstage.model.DeploymentStatus;
 import lombok.Data;
 import org.modelmapper.ModelMapper;
 

@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -61,7 +62,7 @@ public class ToolsRunnerTest {
 		runner.init();
 		var modules = runner.getApplicationModules(deploymentPackageDir);
 		var jrePath = deploymentPackageDir.getParent().resolve("jre");
-		runner.createRuntimeImage(modules, deploymentPackageDir.resolve("modules"), jrePath);
+		runner.createRuntimeImage(modules, List.of(deploymentPackageDir.resolve("modules")), jrePath);
 
 		assertTrue(Files.exists(jrePath));
 	}

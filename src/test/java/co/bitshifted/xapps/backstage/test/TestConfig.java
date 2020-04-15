@@ -8,6 +8,8 @@
 
 package co.bitshifted.xapps.backstage.test;
 
+import co.bitshifted.xapps.backstage.content.ContentMapping;
+import org.mockito.Mockito;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import ru.yandex.qatools.embed.postgresql.PostgresExecutable;

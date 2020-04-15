@@ -37,4 +37,8 @@ public final class BackstageConstants {
 	 * UTC time zone ID as a string.
 	 */
 	public static final String UTC_ZONE_ID_STRING = "UTC";
+
+	public static final String DEPLOY_PKG_MODULES_DIR_NAME = "modules";
+	public static final String DEPLOY_PKG_CLASSPATH_DIR_NAME = "classpath";
+	public static final String JDK_JMODS_DIR_NAME = "jmods";
 }

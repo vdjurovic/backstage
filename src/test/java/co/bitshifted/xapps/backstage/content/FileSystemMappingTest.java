@@ -8,13 +8,18 @@
 
 package co.bitshifted.xapps.backstage.content;
 
+import co.bitshifted.xapps.backstage.model.*;
 import co.bitshifted.xapps.backstage.test.TestConfig;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -27,8 +32,23 @@ import static org.junit.Assert.assertTrue;
 @ContextConfiguration(classes = {TestConfig.class})
 public class FileSystemMappingTest {
 
+	private static final String MOCK_JDK_FILE_NAME = "openjdk-hotspot-11-linux-x64";
+
 	@Autowired
 	private ContentMapping contentMapping;
+
+	@Before
+	public void setup() throws Exception {
+		var jdkStorageUri = contentMapping.getJdkStorageUri();
+		var testFile = getClass().getResource("/" + MOCK_JDK_FILE_NAME).toURI();
+		FileUtils.copyToDirectory(new File(testFile), Path.of(jdkStorageUri).toFile());
+	}
+
+	@After
+	public void cleanup() throws Exception {
+		var testFile = Path.of(contentMapping.getJdkStorageUri()).resolve(MOCK_JDK_FILE_NAME);
+		Files.deleteIfExists(testFile);
+	}
 
 	@Test
 	public void workspaceLocationTest() {
@@ -46,5 +66,12 @@ public class FileSystemMappingTest {
 
 		assertTrue(Files.exists(Path.of(out)));
 		assertTrue(out.getPath().startsWith(workDir));
+	}
+
+	@Test
+	public void testJdkVersionFetch() {
+		var uri = contentMapping.getJdkLocation(JdkProvider.OPENJDK, JvmImplementation.HOTSPOT,
+				JdkVersion.JDK_11, OS.LINUX, CpuArch.X_64);
+		assertTrue(Files.exists(Path.of(uri)));
 	}
 }

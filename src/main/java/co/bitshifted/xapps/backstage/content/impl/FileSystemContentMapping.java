@@ -9,6 +9,7 @@
 package co.bitshifted.xapps.backstage.content.impl;
 
 import co.bitshifted.xapps.backstage.content.ContentMapping;
+import co.bitshifted.xapps.backstage.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,9 +23,11 @@ import java.nio.file.Path;
 /**
  * @author Vladimir Djurovic
  */
-@Component
+@Component("fileSystemContentMapping")
 @Slf4j
 public class FileSystemContentMapping implements ContentMapping {
+
+	private static final String JDK_LOCATION_FORMAT = "{provider}-{impl}-{version}-{os}-{cpu}";
 
 	private final Path contentRoot;
 	private final Path workspace;
@@ -63,5 +66,16 @@ public class FileSystemContentMapping implements ContentMapping {
 	@Override
 	public URI getLauncherStorageUri() {
 		return launcherDirectory.toUri();
+	}
+
+	@Override
+	public URI getJdkLocation(JdkProvider provider, JvmImplementation jvmImplementation, JdkVersion version, OS os, CpuArch cpuArch) {
+		String name = JDK_LOCATION_FORMAT.replace("{provider}", provider.getDisplay())
+				.replace("{impl}", jvmImplementation.getDisplay())
+				.replace("{version}", version.getText())
+				.replace("{os}", os.getBrief())
+				.replace("{cpu}", cpuArch.getDisplay());
+		log.debug("JDK file name: {}", name);
+		return jdkStorageDirectory.resolve(name).toUri();
 	}
 }
