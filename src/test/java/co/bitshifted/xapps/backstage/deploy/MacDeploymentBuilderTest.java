@@ -59,6 +59,10 @@ public class MacDeploymentBuilderTest {
 		var copyTarget = deploymentWorkDir.resolve(TEST_ARCHIVE_NAME);
 		Files.copy(archivePath, copyTarget, StandardCopyOption.REPLACE_EXISTING);
 		deploymentPackageDir = PackageUtil.unpackZipArchive(copyTarget);
+		// copy dummy launcher
+		var dummyLauncherPath = Path.of(getClass().getResource("/launchcode-mac-x64").toURI());
+		var launcherTarget = Path.of(contentMapping.getLauncherStorageUri()).resolve("launchcode-mac-x64");
+		Files.copy(dummyLauncherPath, launcherTarget, StandardCopyOption.REPLACE_EXISTING);
 
 		deploymentConfig = new DeploymentConfig();
 		deploymentConfig.setAppName("TestApp");
@@ -72,13 +76,12 @@ public class MacDeploymentBuilderTest {
 		deploymentBuilder = macDeploymentBuilderFactory.apply(deploymentConfig);
 		// create link to system JDK
 		var javaHome = System.getProperty("java.home");
-		System.out.println("java home: " + javaHome);
 		var jdkStorageDirPath = Path.of(contentMapping.getJdkStorageUri());
 		jdkLinkPath = jdkStorageDirPath.resolve("openjdk-hotspot-11-linux-x64");
 		Files.createSymbolicLink(jdkLinkPath, Path.of(javaHome));
 	}
 
-	@After
+//	@After
 	public void cleanup() throws Exception {
 		Files.deleteIfExists(jdkLinkPath);
 		FileUtils.deleteDirectory(deploymentWorkDir.toFile());

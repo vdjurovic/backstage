@@ -79,5 +79,17 @@ public class PackageUtilTest {
 		assertTrue(Files.exists(out));
 	}
 
+	@Test
+	public void unpackArchiveFolderName() throws Exception {
+		String workDir = System.getProperty("user.dir");
+		var source = Path.of(workDir, "target", "archive");
+		var result = PackageUtil.packZipArchive(source);
+		assertTrue(Files.exists(result));
+		FileUtils.deleteDirectory(source.toFile());
+
+		var out = PackageUtil.unpackZipArchive(result, "unpack-target");
+		assertTrue(Files.exists(out));
+	}
+
 
 }

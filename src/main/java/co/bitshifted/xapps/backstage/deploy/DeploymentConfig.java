@@ -29,6 +29,7 @@ public class DeploymentConfig {
 	private JdkVersion jdkVersion;
 	private OS os;
 	private CpuArch cpuArch;
+	private LauncherConfig launcherConfig;
 
 	public String macAppBundleName() {
 		return appName + ".app";

@@ -34,6 +34,7 @@ public class MacDeploymentBuilder {
 	private static final String APP_BUNDLE_ARCHIVE_NAME = "app-bundle.zip";
 	private static final String APP_BUNDLE_TEMPLATE = "/templates/" + APP_BUNDLE_ARCHIVE_NAME;
 	private static final String APP_BUNDLE_JRE_DIR = "Contents/MacOS/jre";
+	private static final String APP_BUNDLE_MACOS_DIR = "Contents/MacOS";
 	private static final String APP_BUNDLE_RESOURCES_DIR = "Contents/Resources";
 
 	@Autowired
@@ -63,6 +64,7 @@ public class MacDeploymentBuilder {
 			var appBundleArchive = macBuildDir.resolve(APP_BUNDLE_ARCHIVE_NAME);
 			Files.copy(Path.of(templateUri), appBundleArchive, StandardCopyOption.REPLACE_EXISTING);
 			var appBundlePath = PackageUtil.unpackZipArchive(appBundleArchive, config.macAppBundleName());
+			log.debug("Extracted app bundle archive to {}", appBundlePath.toString());
 			// create JRE image
 			var moduleNames = toolsRunner.getApplicationModules(deploymentPackageDir);
 			var targetJdkDir = Path.of(contentMapping.getJdkLocation(config.getJdkProvider(), config.getJvmImplementation(), config.getJdkVersion(), config.getOs(), config.getCpuArch()));
@@ -76,8 +78,11 @@ public class MacDeploymentBuilder {
 				} catch(IOException ex) {
 					log.error("Failed to copy icon {}", ic.toFile().getName());
 				}
-
 			});
+			// copy launcher
+			var launcherFile = Path.of(contentMapping.getLauncherStorageUri()).resolve("launchcode-mac-x64");
+			var launcherTarget = appBundlePath.resolve(APP_BUNDLE_MACOS_DIR).resolve(config.getAppName().toLowerCase().replaceAll("\\s", "-"));
+			Files.copy(launcherFile, launcherTarget, StandardCopyOption.REPLACE_EXISTING);
 
 		} catch(IOException | URISyntaxException ex) {
 			log.error("Failed to create deployment", ex);

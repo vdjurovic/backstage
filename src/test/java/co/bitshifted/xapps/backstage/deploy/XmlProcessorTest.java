@@ -8,13 +8,15 @@
 
 package co.bitshifted.xapps.backstage.deploy;
 
+import co.bitshifted.xapps.backstage.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.nio.file.Path;
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Vladimir Djurovic
@@ -34,5 +36,53 @@ public class XmlProcessorTest {
 		var out = xmlProcessor.findMainArtifact();
 		assertEquals(out.get("scope"), "MODULEPATH");
 		assertEquals(out.get("path"), "modules/launchtest-1.0-SNAPSHOT.jar");
+	}
+
+	@Test
+	public void testLauncherConfigXml() throws Exception {
+		var launcherConfig = new LauncherConfig();
+		var server = new Server();
+		server.setBaseUrl("http://localhost:8080");
+		launcherConfig.setServer(server);
+
+		var jvm = new JvmConfig();
+		jvm.setJvmDir("some/dir");
+		jvm.setJvmOptions("-Xms=20m");
+		jvm.setJvmProperties("-Dsome.option=value");
+		jvm.setModule("my.module");
+		jvm.setMainClass("com.my.MainClass");
+		launcherConfig.setJvm(jvm);
+
+		var out = xmlProcessor.createLauncherConfigXml(launcherConfig);
+		assertNotNull(out);
+		assertTrue(out.contains("<jvm-dir>some/dir</jvm-dir>"));
+		assertTrue(out.contains("<module>my.module</module>"));
+		assertTrue(out.contains("<server base-url=\"http://localhost:8080\"/>"));
+	}
+
+	@Test
+	public void testDeploymentConfig() throws Exception {
+		var config = xmlProcessor.getDeploymentConfig();
+
+		assertNotNull(config);
+		assertEquals("7PjPKl4iLX7", config.getAppId());
+		assertEquals("LaunchTest", config.getAppName());
+		assertEquals(3, config.getIcons().size());
+		assertTrue(config.getIcons().contains("data/icons/icon1.png"));
+		assertTrue(config.getIcons().contains("data/icons/winicon.ico"));
+		assertEquals(JdkProvider.OPENJDK, config.getJdkProvider());
+		assertEquals(JvmImplementation.HOTSPOT, config.getJvmImplementation());
+		assertEquals(JdkVersion.JDK_11, config.getJdkVersion());
+
+		var launcherConfig = config.getLauncherConfig();
+		assertEquals("co.bitshifted.xapps.ignite.Ignite", launcherConfig.getJvm().getMainClass());
+		assertEquals("launchtest", launcherConfig.getJvm().getModule());
+		assertEquals("-Xms=32m -Xmx=128m", launcherConfig.getJvm().getJvmOptions());
+		assertEquals("arg1 arg2", launcherConfig.getJvm().getArguments());
+		assertEquals("data/splash.png", launcherConfig.getJvm().getSplashScreen());
+
+		var serverConfig = config.getLauncherConfig().getServer();
+		assertNotNull(serverConfig);
+		assertEquals("http://localhost:8080", serverConfig.getBaseUrl());
 	}
 }
