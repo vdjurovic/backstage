@@ -8,20 +8,26 @@
 
 package co.bitshifted.xapps.backstage.deploy;
 
+import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.content.ContentMapping;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
+import co.bitshifted.xapps.backstage.model.CpuArch;
+import co.bitshifted.xapps.backstage.model.OS;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
+import static co.bitshifted.xapps.backstage.BackstageConstants.*;
 import static co.bitshifted.xapps.backstage.BackstageConstants.DEPLOY_PKG_MODULES_DIR_NAME;
 import static co.bitshifted.xapps.backstage.BackstageConstants.JDK_JMODS_DIR_NAME;
 
@@ -50,6 +56,9 @@ public class MacDeploymentBuilder {
 		this.deploymentPackageDir = config.getDeploymentPackageDir();
 		this.deploymentWorkDir = deploymentPackageDir.getParent();
 		this.config = config;
+		// add platform specific info
+		config.setOs(OS.MAC_OS_X);
+		config.setCpuArch(CpuArch.X_64);
 		toolsRunner = new ToolsRunner();
 		toolsRunner.init();
 	}
@@ -79,15 +88,39 @@ public class MacDeploymentBuilder {
 					log.error("Failed to copy icon {}", ic.toFile().getName());
 				}
 			});
+			copySplashScreen(deploymentPackageDir, appBundlePath.resolve(APP_BUNDLE_MACOS_DIR));
 			// copy launcher
-			var launcherFile = Path.of(contentMapping.getLauncherStorageUri()).resolve("launchcode-mac-x64");
+			var launcherFile = Path.of(contentMapping.getLauncherStorageUri()).resolve(LAUNCHER_FILE_NAME_MAC);
 			var launcherTarget = appBundlePath.resolve(APP_BUNDLE_MACOS_DIR).resolve(config.getAppName().toLowerCase().replaceAll("\\s", "-"));
 			Files.copy(launcherFile, launcherTarget, StandardCopyOption.REPLACE_EXISTING);
+			// create launcher configuration
+			createLauncherConfig(appBundlePath.resolve(APP_BUNDLE_MACOS_DIR));
 
 		} catch(IOException | URISyntaxException ex) {
 			log.error("Failed to create deployment", ex);
 			throw new DeploymentException(ex);
 		}
 
+	}
+
+	private void createLauncherConfig(Path appBundleMacOsPath) throws DeploymentException {
+		try {
+			var xmlProcessor = new XmlProcessor(config.getIgniteConfigFile());
+			var fileContent = xmlProcessor.createLauncherConfigXml(config.getLauncherConfig());
+			var launcherConfigPath = appBundleMacOsPath.resolve(LAUNCHER_CONFIG_FILE_NAME);
+			try(var writer = new PrintWriter(new FileWriter(launcherConfigPath.toFile()))) {
+				writer.write(fileContent);
+			}
+		} catch (Exception ex) {
+			throw new DeploymentException(ex);
+		}
+	}
+
+	private void copySplashScreen(Path deploymentPackageDir, Path appBundleMacOsPath) throws IOException {
+		var splashScreenPath = config.getSplashScreen();
+		if(splashScreenPath != null && !splashScreenPath.isEmpty() && !splashScreenPath.isBlank()) {
+			var realPath = deploymentPackageDir.resolve(splashScreenPath);
+			FileUtils.copyToDirectory(realPath.toFile(), appBundleMacOsPath.toFile());
+		}
 	}
 }

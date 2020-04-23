@@ -8,8 +8,11 @@
 
 package co.bitshifted.xapps.backstage.deploy;
 
+import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.model.*;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Setter;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -23,13 +26,22 @@ public class DeploymentConfig {
 	private String appId;
 	private String appName;
 	private List<String> icons;
+	private String splashScreen;
 	private Path deploymentPackageDir;
+	@Setter(AccessLevel.NONE)
+	private Path igniteConfigFile;
 	private JdkProvider jdkProvider;
 	private JvmImplementation jvmImplementation;
 	private JdkVersion jdkVersion;
 	private OS os;
 	private CpuArch cpuArch;
 	private LauncherConfig launcherConfig;
+
+	public void setDeploymentPackageDir(Path path) {
+		this.deploymentPackageDir = path;
+		igniteConfigFile = this.deploymentPackageDir.resolve(BackstageConstants.IGNITE_CONFIG_FILE_NAME);
+	}
+
 
 	public String macAppBundleName() {
 		return appName + ".app";

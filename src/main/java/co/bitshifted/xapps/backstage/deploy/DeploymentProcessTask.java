@@ -8,6 +8,7 @@
 
 package co.bitshifted.xapps.backstage.deploy;
 
+import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.entity.AppDeploymentStatus;
 import co.bitshifted.xapps.backstage.entity.Application;
 import co.bitshifted.xapps.backstage.model.DeploymentStatus;
@@ -16,10 +17,14 @@ import co.bitshifted.xapps.backstage.repository.AppDeploymentStatusRepository;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Function;
 
 /**
  * @author Vladimir Djurovic
@@ -34,7 +39,7 @@ public class DeploymentProcessTask implements Runnable {
 	@Autowired
 	private AppDeploymentStatusRepository deploymentStatusRepo;
 	@Autowired
-	private ToolsRunner toolsRunner;
+	private Function<DeploymentConfig, MacDeploymentBuilder> macDeploymentBuilderFactory;
 
 	public DeploymentProcessTask(File file) {
 		this.deploymentArchive = file.toPath();
@@ -50,11 +55,14 @@ public class DeploymentProcessTask implements Runnable {
 
 		try{
 			var deploymentPackageDir = PackageUtil.unpackZipArchive(deploymentArchive);
-			// create JRE image
-			var modules = toolsRunner.getApplicationModules(deploymentPackageDir);
-			var jrePath = deploymentPackageDir.getParent().resolve("jre");
-			//toolsRunner.createRuntimeImage(modules, deploymentPackageDir.resolve("modules"), jrePath);
-		} catch(IOException | DeploymentException ex) {
+			// create deployment configuration
+			var igniteConfigPath = deploymentPackageDir.resolve(BackstageConstants.IGNITE_CONFIG_FILE_NAME);
+			var xmlProcessor = new XmlProcessor(igniteConfigPath);
+			var deploymentConfig = xmlProcessor.getDeploymentConfig();
+			deploymentConfig.setDeploymentPackageDir(deploymentPackageDir);
+			var deploymentBuilder = macDeploymentBuilderFactory.apply(deploymentConfig);
+			deploymentBuilder.createDeployment();
+		} catch(IOException | DeploymentException | ParserConfigurationException | SAXException | XPathExpressionException ex) {
 			log.error("Failed to create deployment package", ex);
 			status.setCurrentStatus(DeploymentStatus.FAILED);
 

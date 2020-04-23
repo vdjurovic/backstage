@@ -67,12 +67,22 @@ public class MacDeploymentBuilderTest {
 		deploymentConfig = new DeploymentConfig();
 		deploymentConfig.setAppName("TestApp");
 		deploymentConfig.setIcons(List.of("data/icons/icon1.png", "data/icons/winicon.ico", "data/icons/maicon.icns"));
+		deploymentConfig.setSplashScreen("data/splash.png");
 		deploymentConfig.setDeploymentPackageDir(deploymentPackageDir);
 		deploymentConfig.setJdkProvider(JdkProvider.OPENJDK);
 		deploymentConfig.setJvmImplementation(JvmImplementation.HOTSPOT);
 		deploymentConfig.setJdkVersion(JdkVersion.JDK_11);
 		deploymentConfig.setOs(OS.LINUX);
 		deploymentConfig.setCpuArch(CpuArch.X_64);
+
+		var launcherConfig = new LauncherConfig();
+		launcherConfig.setVersion("1.0.0");
+		var jvm = new JvmConfig();
+		jvm.setMainClass("my.MainClass");
+		jvm.setJvmDir("/some/jvm/dir");
+		launcherConfig.setJvm(jvm);
+		deploymentConfig.setLauncherConfig(launcherConfig);
+
 		deploymentBuilder = macDeploymentBuilderFactory.apply(deploymentConfig);
 		// create link to system JDK
 		var javaHome = System.getProperty("java.home");

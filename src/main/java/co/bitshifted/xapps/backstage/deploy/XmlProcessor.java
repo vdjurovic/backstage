@@ -72,6 +72,7 @@ public class XmlProcessor {
 		deploymentConfig.setAppId(applicationId(xpath));
 		deploymentConfig.setAppName(applicationName(xpath));
 		deploymentConfig.setIcons(icons(xpath));
+		deploymentConfig.setSplashScreen(attributeValueAsString(xpath, "//jvm/splash-screen/@path"));
 		deploymentConfig.setJdkProvider(jdkProvider(xpath));
 		deploymentConfig.setJvmImplementation(jvmImplementation(xpath));
 		deploymentConfig.setJdkVersion(jdkVersion(xpath));
@@ -101,6 +102,7 @@ public class XmlProcessor {
 		}
 		return icons;
 	}
+
 
 	private JdkProvider jdkProvider(XPath xpath) throws XPathExpressionException {
 		var expression = xpath.compile("//jvm/@provider");

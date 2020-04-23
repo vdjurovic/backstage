@@ -38,6 +38,12 @@ public final class BackstageConstants {
 	 */
 	public static final String UTC_ZONE_ID_STRING = "UTC";
 
+	public static final String IGNITE_CONFIG_FILE_NAME = "ignite-config.xml";
+
+	public static final String LAUNCHER_CONFIG_FILE_NAME = "application.xml";
+
+	public static final String LAUNCHER_FILE_NAME_MAC = "launchcode-mac-x64";
+
 	public static final String DEPLOY_PKG_MODULES_DIR_NAME = "modules";
 	public static final String DEPLOY_PKG_CLASSPATH_DIR_NAME = "classpath";
 	public static final String JDK_JMODS_DIR_NAME = "jmods";
