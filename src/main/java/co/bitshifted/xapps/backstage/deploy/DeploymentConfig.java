@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class DeploymentConfig {
 	private String appId;
 	private String appName;
+	private String appVersion;
 	private List<String> icons;
 	private String splashScreen;
 	private Path deploymentPackageDir;
@@ -49,5 +50,9 @@ public class DeploymentConfig {
 
 	public List<String> findMacIcons() {
 		return icons.stream().filter(ic -> ic.endsWith(".icns")).collect(Collectors.toList());
+	}
+
+	public String getExecutableFileName() {
+		return appName.toLowerCase().replaceAll("\\s", "-");
 	}
 }

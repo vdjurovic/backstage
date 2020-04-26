@@ -18,14 +18,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Set;
 
 import static co.bitshifted.xapps.backstage.BackstageConstants.*;
 import static co.bitshifted.xapps.backstage.BackstageConstants.DEPLOY_PKG_MODULES_DIR_NAME;
@@ -91,10 +93,15 @@ public class MacDeploymentBuilder {
 			copySplashScreen(deploymentPackageDir, appBundlePath.resolve(APP_BUNDLE_MACOS_DIR));
 			// copy launcher
 			var launcherFile = Path.of(contentMapping.getLauncherStorageUri()).resolve(LAUNCHER_FILE_NAME_MAC);
-			var launcherTarget = appBundlePath.resolve(APP_BUNDLE_MACOS_DIR).resolve(config.getAppName().toLowerCase().replaceAll("\\s", "-"));
+			var launcherTarget = appBundlePath.resolve(APP_BUNDLE_MACOS_DIR).resolve(config.getExecutableFileName());
 			Files.copy(launcherFile, launcherTarget, StandardCopyOption.REPLACE_EXISTING);
+			var permissions = Set.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+					PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+					PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE);
+			Files.setPosixFilePermissions(launcherTarget, permissions);
 			// create launcher configuration
 			createLauncherConfig(appBundlePath.resolve(APP_BUNDLE_MACOS_DIR));
+			createInfoPlist(appBundlePath.resolve("Contents"), config);
 
 		} catch(IOException | URISyntaxException ex) {
 			log.error("Failed to create deployment", ex);
@@ -122,5 +129,17 @@ public class MacDeploymentBuilder {
 			var realPath = deploymentPackageDir.resolve(splashScreenPath);
 			FileUtils.copyToDirectory(realPath.toFile(), appBundleMacOsPath.toFile());
 		}
+	}
+
+	private void createInfoPlist(Path appBundleContentsPath, DeploymentConfig config) throws IOException {
+		var infoPlist = appBundleContentsPath.resolve("Info.plist");
+		var contents = Files.readString(infoPlist);
+		var replaced = contents.replace("${app.name}", config.getAppName())
+				.replace("${app.executable}", config.getExecutableFileName())
+				.replace("${app.icon}", config.findMacIcons().get(0))
+				.replace("${app.id}", config.getAppId())
+				.replace("${bundle.fqdn}", config.getAppId())
+				.replace("${app.version}", config.getAppVersion());
+		Files.writeString(infoPlist, replaced, StandardOpenOption.TRUNCATE_EXISTING);
 	}
 }

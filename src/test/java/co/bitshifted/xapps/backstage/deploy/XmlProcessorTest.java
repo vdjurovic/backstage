@@ -79,7 +79,7 @@ public class XmlProcessorTest {
 		assertEquals("launchtest", launcherConfig.getJvm().getModule());
 		assertEquals("-Xms=32m -Xmx=128m", launcherConfig.getJvm().getJvmOptions());
 		assertEquals("arg1 arg2", launcherConfig.getJvm().getArguments());
-		assertEquals("data/splash.png", launcherConfig.getJvm().getSplashScreen());
+		assertEquals("splash.png", launcherConfig.getJvm().getSplashScreen());
 
 		var serverConfig = config.getLauncherConfig().getServer();
 		assertNotNull(serverConfig);

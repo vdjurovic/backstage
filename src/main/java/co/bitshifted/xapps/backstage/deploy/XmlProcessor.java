@@ -71,6 +71,7 @@ public class XmlProcessor {
 		var xpath = xpathFactory.newXPath();
 		deploymentConfig.setAppId(applicationId(xpath));
 		deploymentConfig.setAppName(applicationName(xpath));
+		deploymentConfig.setAppVersion(attributeValueAsString(xpath, "//application/@version"));
 		deploymentConfig.setIcons(icons(xpath));
 		deploymentConfig.setSplashScreen(attributeValueAsString(xpath, "//jvm/splash-screen/@path"));
 		deploymentConfig.setJdkProvider(jdkProvider(xpath));
@@ -131,7 +132,7 @@ public class XmlProcessor {
 		jvmConfig.setArguments(nodeValueAsString(xpath, "//jvm/arguments"));
 		jvmConfig.setClasspath(nodeValueAsString(xpath, "//jvm/classpath"));
 		jvmConfig.setJar(nodeValueAsString(xpath, "//jvm/jar"));
-		jvmConfig.setSplashScreen(attributeValueAsString(xpath, "//jvm/splash-screen/@path"));
+		jvmConfig.setSplashScreen(attributeValueAsString(xpath, "//jvm/splash-screen/@file-name"));
 
 		var server = new Server();
 		server.setBaseUrl(attributeValueAsString(xpath, "//server/@base-url"));
