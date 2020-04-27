@@ -83,7 +83,7 @@ public class MacDeploymentBuilder {
 			var modulesPath = List.of(jdkModulesDir, deploymentPackageDir.resolve(DEPLOY_PKG_MODULES_DIR_NAME));
 			toolsRunner.createRuntimeImage(moduleNames, modulesPath, appBundlePath.resolve(APP_BUNDLE_JRE_DIR));
 			// copy icon to resources
-			config.findMacIcons().stream().map(ic -> deploymentPackageDir.resolve(ic)).forEach(ic -> {
+			config.findMacIcons().stream().map(ic -> deploymentPackageDir.resolve(ic.getPath())).forEach(ic -> {
 				try {
 					FileUtils.copyToDirectory(ic.toFile(), appBundlePath.resolve(APP_BUNDLE_RESOURCES_DIR).toFile());
 				} catch(IOException ex) {
@@ -124,9 +124,9 @@ public class MacDeploymentBuilder {
 	}
 
 	private void copySplashScreen(Path deploymentPackageDir, Path appBundleMacOsPath) throws IOException {
-		var splashScreenPath = config.getSplashScreen();
-		if(splashScreenPath != null && !splashScreenPath.isEmpty() && !splashScreenPath.isBlank()) {
-			var realPath = deploymentPackageDir.resolve(splashScreenPath);
+		var splashScreen = config.getSplashScreen();
+		if(splashScreen != null) {
+			var realPath = deploymentPackageDir.resolve(splashScreen.getPath());
 			FileUtils.copyToDirectory(realPath.toFile(), appBundleMacOsPath.toFile());
 		}
 	}
@@ -136,7 +136,7 @@ public class MacDeploymentBuilder {
 		var contents = Files.readString(infoPlist);
 		var replaced = contents.replace("${app.name}", config.getAppName())
 				.replace("${app.executable}", config.getExecutableFileName())
-				.replace("${app.icon}", config.findMacIcons().get(0))
+				.replace("${app.icon}", config.findMacIcons().get(0).getFileName())
 				.replace("${app.id}", config.getAppId())
 				.replace("${bundle.fqdn}", config.getAppId())
 				.replace("${app.version}", config.getAppVersion());

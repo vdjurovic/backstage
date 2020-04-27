@@ -23,6 +23,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Path;
@@ -73,7 +74,9 @@ public class XmlProcessor {
 		deploymentConfig.setAppName(applicationName(xpath));
 		deploymentConfig.setAppVersion(attributeValueAsString(xpath, "//application/@version"));
 		deploymentConfig.setIcons(icons(xpath));
-		deploymentConfig.setSplashScreen(attributeValueAsString(xpath, "//jvm/splash-screen/@path"));
+		deploymentConfig.setSplashScreen(new FileInfo(
+				attributeValueAsString(xpath, "//jvm/splash-screen/@file-name"),
+				attributeValueAsString(xpath, "//jvm/splash-screen/@path")));
 		deploymentConfig.setJdkProvider(jdkProvider(xpath));
 		deploymentConfig.setJvmImplementation(jvmImplementation(xpath));
 		deploymentConfig.setJdkVersion(jdkVersion(xpath));
@@ -93,13 +96,13 @@ public class XmlProcessor {
 		return appNameNode.getTextContent();
 	}
 
-	private List<String> icons(XPath xpath) throws XPathExpressionException {
+	private List<FileInfo> icons(XPath xpath) throws XPathExpressionException {
 		var expression = xpath.compile("//icons/icon");
 		var elements = (NodeList)expression.evaluate(xmlDocument, XPathConstants.NODESET);
-		var icons = new ArrayList<String>();
+		var icons = new ArrayList<FileInfo>();
 		for(int i =0;i < elements.getLength();i++) {
 			var element = (Element)elements.item(i);
-			icons.add(element.getAttribute("path").trim());
+			icons.add(new FileInfo(element.getAttribute("file-name").trim(),element.getAttribute("path").trim()));
 		}
 		return icons;
 	}

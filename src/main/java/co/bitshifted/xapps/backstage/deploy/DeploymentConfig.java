@@ -26,8 +26,8 @@ public class DeploymentConfig {
 	private String appId;
 	private String appName;
 	private String appVersion;
-	private List<String> icons;
-	private String splashScreen;
+	private List<FileInfo> icons;
+	private FileInfo splashScreen;
 	private Path deploymentPackageDir;
 	@Setter(AccessLevel.NONE)
 	private Path igniteConfigFile;
@@ -48,8 +48,8 @@ public class DeploymentConfig {
 		return appName + ".app";
 	}
 
-	public List<String> findMacIcons() {
-		return icons.stream().filter(ic -> ic.endsWith(".icns")).collect(Collectors.toList());
+	public List<FileInfo> findMacIcons() {
+		return icons.stream().filter(ic -> ic.getFileName().endsWith(".icns")).collect(Collectors.toList());
 	}
 
 	public String getExecutableFileName() {

@@ -66,8 +66,13 @@ public class MacDeploymentBuilderTest {
 
 		deploymentConfig = new DeploymentConfig();
 		deploymentConfig.setAppName("TestApp");
-		deploymentConfig.setIcons(List.of("data/icons/icon1.png", "data/icons/winicon.ico", "data/icons/maicon.icns"));
-		deploymentConfig.setSplashScreen("data/splash.png");
+		deploymentConfig.setAppId("appid");
+		deploymentConfig.setAppVersion("1.0.0");
+		deploymentConfig.setIcons(List.of(
+				new FileInfo("icon1.png","data/icons/icon1.png"),
+				new FileInfo("winicon.ico","data/icons/winicon.ico"),
+				new FileInfo("maicon.icns", "data/icons/maicon.icns")));
+		deploymentConfig.setSplashScreen(new FileInfo("splash.png", "data/splash.png"));
 		deploymentConfig.setDeploymentPackageDir(deploymentPackageDir);
 		deploymentConfig.setJdkProvider(JdkProvider.OPENJDK);
 		deploymentConfig.setJvmImplementation(JvmImplementation.HOTSPOT);
@@ -91,7 +96,7 @@ public class MacDeploymentBuilderTest {
 		Files.createSymbolicLink(jdkLinkPath, Path.of(javaHome));
 	}
 
-//	@After
+	@After
 	public void cleanup() throws Exception {
 		Files.deleteIfExists(jdkLinkPath);
 		FileUtils.deleteDirectory(deploymentWorkDir.toFile());
