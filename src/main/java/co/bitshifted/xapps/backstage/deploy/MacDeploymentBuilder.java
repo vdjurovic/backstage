@@ -8,7 +8,6 @@
 
 package co.bitshifted.xapps.backstage.deploy;
 
-import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.content.ContentMapping;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
@@ -25,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.Set;
 
@@ -66,7 +64,7 @@ public class MacDeploymentBuilder {
 	}
 
 	public void createDeployment() throws DeploymentException {
-		var macBuildDir = deploymentWorkDir.resolve("macos");
+		var macBuildDir = macBuildDir();
 		try {
 			// create mac OS build directory
 			Files.createDirectory(macBuildDir);
@@ -102,12 +100,19 @@ public class MacDeploymentBuilder {
 			// create launcher configuration
 			createLauncherConfig(appBundlePath.resolve(APP_BUNDLE_MACOS_DIR));
 			createInfoPlist(appBundlePath.resolve("Contents"), config);
-
+			// create update package
+			var updatePkgPath = createUpdatePackage(appBundlePath.resolve("Contents"));
+			log.debug("Update package path: {}", updatePkgPath.toString());
+			prepareForDownload(updatePkgPath);
 		} catch(IOException | URISyntaxException ex) {
 			log.error("Failed to create deployment", ex);
 			throw new DeploymentException(ex);
 		}
 
+	}
+
+	private Path macBuildDir() {
+		return deploymentWorkDir.resolve("macos");
 	}
 
 	private void createLauncherConfig(Path appBundleMacOsPath) throws DeploymentException {
@@ -141,5 +146,35 @@ public class MacDeploymentBuilder {
 				.replace("${bundle.fqdn}", config.getAppId())
 				.replace("${app.version}", config.getAppVersion());
 		Files.writeString(infoPlist, replaced, StandardOpenOption.TRUNCATE_EXISTING);
+	}
+
+	private Path createUpdatePackage(Path bundleContentsDir) throws IOException {
+		var updateDir = macBuildDir().resolve("update");
+		Files.createDirectories(updateDir);
+		log.debug("Created update directory {}", updateDir.toString());
+		var jreModules = bundleContentsDir.resolve("MacOS/jre/lib/modules");
+		var moved = updateDir.resolve("modules");
+		Files.move(jreModules, moved);
+		var updatePath =  PackageUtil.packZipDeterministic(bundleContentsDir);
+		// update package contents
+		var updateContents = updateDir.resolve("contents.zip");
+		Files.move(updatePath, updateContents);
+		log.debug("Created contents update package at {}", updateContents.toString());
+		// compress modules file
+		var updateModules = PackageUtil.zipSingleFile(moved);
+		log.debug("Created update modules file {}", updateModules.toString());
+		Files.move(moved, jreModules);
+		return updateDir;
+	}
+
+	private void prepareForDownload(Path updatesPath) throws IOException {
+		var downloadPath = Path.of(contentMapping.getUpdatesDownloadLocation());
+		var contentsTarget = downloadPath.resolve("contents.zip");
+		var contentSource = updatesPath.resolve("contents.zip");
+		Files.move(contentSource, contentsTarget);
+
+		var modulesTarget = downloadPath.resolve("modules.zip");
+		var moduleSource = updatesPath.resolve("modules.zip");
+		Files.move(moduleSource, modulesTarget);
 	}
 }

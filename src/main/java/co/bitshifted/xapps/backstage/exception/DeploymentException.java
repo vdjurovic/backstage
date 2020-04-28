@@ -8,6 +8,8 @@
 
 package co.bitshifted.xapps.backstage.exception;
 
+import co.bitshifted.xapps.backstage.deploy.DeploymentConfig;
+
 /**
  * @author Vladimir Djurovic
  */
@@ -19,5 +21,9 @@ public class DeploymentException extends Exception {
 
 	public DeploymentException(Throwable cause) {
 		super(cause);
+	}
+
+	public DeploymentException(String message, Throwable cause) {
+		super(message, cause);
 	}
 }
