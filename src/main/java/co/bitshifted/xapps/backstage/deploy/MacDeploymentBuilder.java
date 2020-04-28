@@ -171,10 +171,10 @@ public class MacDeploymentBuilder {
 		var downloadPath = Path.of(contentMapping.getUpdatesDownloadLocation());
 		var contentsTarget = downloadPath.resolve("contents.zip");
 		var contentSource = updatesPath.resolve("contents.zip");
-		Files.move(contentSource, contentsTarget);
+		Files.move(contentSource, contentsTarget, StandardCopyOption.REPLACE_EXISTING);
 
 		var modulesTarget = downloadPath.resolve("modules.zip");
 		var moduleSource = updatesPath.resolve("modules.zip");
-		Files.move(moduleSource, modulesTarget);
+		Files.move(moduleSource, modulesTarget, StandardCopyOption.REPLACE_EXISTING);
 	}
 }

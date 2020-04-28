@@ -62,12 +62,13 @@ public class DeploymentProcessTask implements Runnable {
 			deploymentConfig.setDeploymentPackageDir(deploymentPackageDir);
 			var deploymentBuilder = macDeploymentBuilderFactory.apply(deploymentConfig);
 			deploymentBuilder.createDeployment();
+			status.setCurrentStatus(DeploymentStatus.SUCCESS);
+			status.setDetails("Deployment completed successfully");
 		} catch(IOException | DeploymentException | ParserConfigurationException | SAXException | XPathExpressionException ex) {
 			log.error("Failed to create deployment package", ex);
 			status.setCurrentStatus(DeploymentStatus.FAILED);
-
 		}
-
+		deploymentStatusRepo.save(status);
 	}
 
 	public void init(Application app) {
