@@ -64,12 +64,15 @@ public class XmlProcessorTest {
 	public void testDeploymentConfig() throws Exception {
 		var config = xmlProcessor.getDeploymentConfig();
 
+		var icon1 = new FileInfo("icon1.png", "data/icons/icon1.png");
+		var icon2 = new FileInfo("winicon.ico", "data/icons/winicon.ico");
+
 		assertNotNull(config);
 		assertEquals("7PjPKl4iLX7", config.getAppId());
 		assertEquals("LaunchTest", config.getAppName());
 		assertEquals(3, config.getIcons().size());
-		assertTrue(config.getIcons().contains("data/icons/icon1.png"));
-		assertTrue(config.getIcons().contains("data/icons/winicon.ico"));
+		assertTrue(config.getIcons().contains(icon1));
+		assertTrue(config.getIcons().contains(icon2));
 		assertEquals(JdkProvider.OPENJDK, config.getJdkProvider());
 		assertEquals(JvmImplementation.HOTSPOT, config.getJvmImplementation());
 		assertEquals(JdkVersion.JDK_11, config.getJdkVersion());
