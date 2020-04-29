@@ -8,6 +8,7 @@
 
 package co.bitshifted.xapps.backstage.deploy;
 
+import co.bitshfted.xapps.zsync.ZsyncMake;
 import co.bitshifted.xapps.backstage.content.ContentMapping;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
@@ -26,6 +27,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Set;
+
 
 import static co.bitshifted.xapps.backstage.BackstageConstants.*;
 import static co.bitshifted.xapps.backstage.BackstageConstants.DEPLOY_PKG_MODULES_DIR_NAME;
@@ -176,5 +178,9 @@ public class MacDeploymentBuilder {
 		var modulesTarget = downloadPath.resolve("modules.zip");
 		var moduleSource = updatesPath.resolve("modules.zip");
 		Files.move(moduleSource, modulesTarget, StandardCopyOption.REPLACE_EXISTING);
+		// make zsync files for synchronization
+		var zsyncmake = new ZsyncMake();
+		zsyncmake.make(contentsTarget);
+		zsyncmake.make(modulesTarget);
 	}
 }
