@@ -9,11 +9,14 @@
 package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshifted.xapps.backstage.BackstageConstants;
+import co.bitshifted.xapps.backstage.entity.AppDeployment;
 import co.bitshifted.xapps.backstage.entity.AppDeploymentStatus;
 import co.bitshifted.xapps.backstage.entity.Application;
 import co.bitshifted.xapps.backstage.model.DeploymentStatus;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
+import co.bitshifted.xapps.backstage.repository.AppDeploymentRepository;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentStatusRepository;
+import co.bitshifted.xapps.backstage.repository.ApplicationRepository;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +27,7 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.function.Function;
 
 /**
@@ -40,6 +44,10 @@ public class DeploymentProcessTask implements Runnable {
 	private AppDeploymentStatusRepository deploymentStatusRepo;
 	@Autowired
 	private Function<DeploymentConfig, MacDeploymentBuilder> macDeploymentBuilderFactory;
+	@Autowired
+	private ApplicationRepository applicationRepository;
+	@Autowired
+	private AppDeploymentRepository appDeploymentRepository;
 
 	public DeploymentProcessTask(File file) {
 		this.deploymentArchive = file.toPath();
@@ -64,6 +72,7 @@ public class DeploymentProcessTask implements Runnable {
 			deploymentBuilder.createDeployment();
 			status.setCurrentStatus(DeploymentStatus.SUCCESS);
 			status.setDetails("Deployment completed successfully");
+			saveDeployment(deploymentConfig.getAppId(), deploymentConfig.getAppVersion());
 		} catch(IOException | DeploymentException | ParserConfigurationException | SAXException | XPathExpressionException ex) {
 			log.error("Failed to create deployment package", ex);
 			status.setCurrentStatus(DeploymentStatus.FAILED);
@@ -75,6 +84,15 @@ public class DeploymentProcessTask implements Runnable {
 		log.debug("Initializing deployment task with app id {}", app.getId());
 		status = deploymentStatusRepo.save(new AppDeploymentStatus(deploymentArchive.getParent().toFile().getName(), app));
 		log.info("Initialized deployment task {}", deploymentArchive.getParent().toFile().getName());
+	}
+
+	private void saveDeployment(String applicationId, String releaseNumber) {
+		var app = applicationRepository.findById(applicationId).get();
+		var deployment = new AppDeployment();
+		deployment.setApplication(app);
+		deployment.setReleaseTime(ZonedDateTime.now(BackstageConstants.UTC_ZONE_ID));
+		deployment.setReleaseNumber(releaseNumber);
+		appDeploymentRepository.save(deployment);
 	}
 
 }
