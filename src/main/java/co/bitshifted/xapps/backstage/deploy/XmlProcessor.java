@@ -125,6 +125,7 @@ public class XmlProcessor {
 
 	private LauncherConfig createLauncherConfig(XPath xpath) throws XPathExpressionException {
 		var launcherConfig = new LauncherConfig();
+		launcherConfig.setVersion(attributeValueAsString(xpath, "//application/@version"));
 		var jvmConfig = new JvmConfig();
 		jvmConfig.setMainClass(nodeValueAsString(xpath, "//jvm/main-class"));
 		jvmConfig.setModule(nodeValueAsString(xpath, "//jvm/module-name"));

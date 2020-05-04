@@ -8,14 +8,15 @@
 
 package co.bitshifted.xapps.backstage.ctrl;
 
+import co.bitshifted.xapps.backstage.model.CpuArch;
+import co.bitshifted.xapps.backstage.model.OS;
 import co.bitshifted.xapps.backstage.service.UpdateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 
 /**
@@ -29,10 +30,12 @@ public class UpdateController {
 	private UpdateService updateService;
 
 	@GetMapping(value = "/app/{appId}/release/{releaseNumber}")
-	public ResponseEntity<String> checkUpdates(@PathVariable  String appid, @PathVariable String releaseNumber) {
-		var status = updateService.hasUpdateAvailable(appid, releaseNumber);
+	public ResponseEntity<String> checkUpdates(HttpServletRequest request, @PathVariable  String appId, @PathVariable String releaseNumber,
+											   @RequestParam(name = "os") OS os, @RequestParam(name = "cpu") CpuArch cpuArch) {
+		var status = updateService.hasUpdateAvailable(appId, releaseNumber);
 		if(status) {
-			return ResponseEntity.ok("links");
+			var updateInfo = updateService.getUpdateInformation(appId, os, cpuArch);
+			return ResponseEntity.ok(updateInfo.asString(request));
 		} else {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}

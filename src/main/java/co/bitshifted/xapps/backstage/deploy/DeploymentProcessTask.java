@@ -17,6 +17,7 @@ import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentRepository;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentStatusRepository;
 import co.bitshifted.xapps.backstage.repository.ApplicationRepository;
+import co.bitshifted.xapps.backstage.util.BackstageFunctions;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +73,7 @@ public class DeploymentProcessTask implements Runnable {
 			deploymentBuilder.createDeployment();
 			status.setCurrentStatus(DeploymentStatus.SUCCESS);
 			status.setDetails("Deployment completed successfully");
-			saveDeployment(deploymentConfig.getAppId(), deploymentConfig.getAppVersion());
+			saveDeployment(deploymentConfig.getAppId());
 		} catch(IOException | DeploymentException | ParserConfigurationException | SAXException | XPathExpressionException ex) {
 			log.error("Failed to create deployment package", ex);
 			status.setCurrentStatus(DeploymentStatus.FAILED);
@@ -86,12 +87,12 @@ public class DeploymentProcessTask implements Runnable {
 		log.info("Initialized deployment task {}", deploymentArchive.getParent().toFile().getName());
 	}
 
-	private void saveDeployment(String applicationId, String releaseNumber) {
+	private void saveDeployment(String applicationId) {
 		var app = applicationRepository.findById(applicationId).get();
 		var deployment = new AppDeployment();
 		deployment.setApplication(app);
 		deployment.setReleaseTime(ZonedDateTime.now(BackstageConstants.UTC_ZONE_ID));
-		deployment.setReleaseNumber(releaseNumber);
+		deployment.setReleaseNumber(BackstageFunctions.getReleaseNumberFromDeploymentDir(deploymentWorkDir.toFile()));
 		appDeploymentRepository.save(deployment);
 	}
 

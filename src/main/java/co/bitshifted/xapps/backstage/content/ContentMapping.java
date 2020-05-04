@@ -27,4 +27,6 @@ public interface ContentMapping {
 
 	URI getJdkLocation(JdkProvider provider, JvmImplementation jvmImplementation, JdkVersion version, OS os, CpuArch cpuArch);
 
+	URI getUpdatesParentLocation(String applicationId, String releaseNumber, OS os, CpuArch cpuArch);
+
 }

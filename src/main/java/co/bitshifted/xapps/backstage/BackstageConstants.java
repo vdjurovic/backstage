@@ -38,6 +38,20 @@ public final class BackstageConstants {
 	 */
 	public static final String UTC_ZONE_ID_STRING = "UTC";
 
+	/**
+	 * File name of update archive for JRE modules
+	 */
+	public static final String MODULES_UPDATE_FILE_NAME = "modules.zip";
+
+	public static final String MODULES_UPDATE_ZSYNC_FILE_NAME = MODULES_UPDATE_FILE_NAME + ".zsync";
+
+	/**
+	 * File name of update archive for application content.
+	 */
+	public static final String CONTENT_UPDATE_FILE_NAME = "contents.zip";
+
+	public static final String CONTENT_UPDATE_ZSYNC_FILE_NAME = CONTENT_UPDATE_FILE_NAME + ".zsync";
+
 	public static final String IGNITE_CONFIG_FILE_NAME = "ignite-config.xml";
 
 	public static final String LAUNCHER_CONFIG_FILE_NAME = "application.xml";

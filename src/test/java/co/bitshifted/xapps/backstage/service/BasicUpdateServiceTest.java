@@ -9,6 +9,8 @@
 package co.bitshifted.xapps.backstage.service;
 
 import co.bitshifted.xapps.backstage.entity.AppDeployment;
+import co.bitshifted.xapps.backstage.model.CpuArch;
+import co.bitshifted.xapps.backstage.model.OS;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentRepository;
 import co.bitshifted.xapps.backstage.service.impl.BasicUpdateService;
 import org.junit.Assert;
@@ -50,5 +52,17 @@ public class BasicUpdateServiceTest {
 
 		var result = updateService.hasUpdateAvailable(APP_ID, currentRelease);
 		assertTrue(result);
+	}
+
+	@Test
+	public void testUpdateInformation() {
+		var currentRelease = "20200301-141516-200";
+		AppDeployment mockDeployment = mock(AppDeployment.class);
+		when(mockDeployment.getReleaseNumber()).thenReturn(RELEASE);
+		when(appDeploymentRepository.findFirstByApplication_IdOrderByReleaseNumberDesc(APP_ID)).thenReturn(mockDeployment);
+
+		var out = updateService.getUpdateInformation(APP_ID, OS.MAC_OS_X, CpuArch.X_64);
+		assertEquals("/update/download?appId=1234&release=20200301-141516-230&os=mac&cpu=x64&file=contents.zip.zsync", out.getContentsUrl());
+		assertEquals("/update/download?appId=1234&release=20200301-141516-230&os=mac&cpu=x64&file=modules.zip.zsync", out.getModulesUrl());
 	}
 }

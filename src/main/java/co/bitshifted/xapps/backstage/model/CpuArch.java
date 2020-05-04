@@ -21,4 +21,15 @@ public enum CpuArch {
 	public String getDisplay() {
 		return display;
 	}
+
+	public static CpuArch fromString(String source) {
+		switch (source){
+			case "x86":
+				return CpuArch.X_86;
+			case "x64":
+				return CpuArch.X_64;
+			default:
+				throw new IllegalArgumentException("Invalid value for CPU architecture");
+		}
+	}
 }

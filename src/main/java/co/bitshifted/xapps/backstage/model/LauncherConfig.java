@@ -23,6 +23,8 @@ import javax.xml.bind.annotation.*;
 public class LauncherConfig {
 	@XmlAttribute
 	private String version;
+	@XmlAttribute(name = "release-number")
+	private String releaseNumber;
 	@XmlElement
 	private Server server;
 	@XmlElement

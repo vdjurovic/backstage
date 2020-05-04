@@ -13,6 +13,7 @@ import co.bitshifted.xapps.backstage.dto.DeploymentStatusDTO;
 import co.bitshifted.xapps.backstage.exception.ContentException;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.service.DeploymentService;
+import co.bitshifted.xapps.backstage.util.BackstageFunctions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -55,7 +56,8 @@ public class DeploymentController {
 				throw new DeploymentException("Invalid or corrupt deployment archive");
 			}
 			deploymentService.processContent(deploymentPackagePath, appId);
-			String statusUrl = generateDeploymentStatusUrl(request, "/deployment/status/" + deploymentPackagePath.getParent().getFileName().toString());
+			String statusUrl = BackstageFunctions.generateServerUrl(request, "/deployment/status/" + deploymentPackagePath.getParent().getFileName().toString());
+			log.debug("Deployment status URL: {}", statusUrl);
 			return ResponseEntity.accepted().header(DEPLOYMENT_STATUS_HEADER, statusUrl).build();
 		} catch (IOException ex) {
 			throw new DeploymentException(ex);
@@ -68,16 +70,4 @@ public class DeploymentController {
 		return deploymentService.getDeploymentStatus(id).convertToDto();
 	}
 
-	private String generateDeploymentStatusUrl(HttpServletRequest request, String path) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(request.getScheme()).append("://");
-		sb.append(request.getServerName());
-		if (request.getServerPort() != 0) {
-			sb.append(":").append(request.getServerPort());
-		}
-		sb.append(request.getContextPath());
-		sb.append(path);
-		log.debug("Deployment status URL: {}", sb.toString());
-		return sb.toString();
-	}
 }

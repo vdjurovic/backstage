@@ -86,4 +86,10 @@ public class FileSystemContentMapping implements ContentMapping {
 		log.debug("JDK file name: {}", name);
 		return jdkStorageDirectory.resolve(name).toUri();
 	}
+
+	@Override
+	public URI getUpdatesParentLocation(String applicationId, String releaseNumber, OS os, CpuArch cpuArch) {
+		var updateBaseDir = Path.of(updatesDirectory.toString(), applicationId, releaseNumber, os.getBrief(), cpuArch.getDisplay());
+		return updateBaseDir.toUri();
+	}
 }

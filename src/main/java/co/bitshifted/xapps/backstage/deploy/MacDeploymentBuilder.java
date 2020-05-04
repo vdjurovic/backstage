@@ -9,10 +9,12 @@
 package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshfted.xapps.zsync.ZsyncMake;
+import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.content.ContentMapping;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
 import co.bitshifted.xapps.backstage.model.OS;
+import co.bitshifted.xapps.backstage.util.BackstageFunctions;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -120,6 +122,7 @@ public class MacDeploymentBuilder {
 	private void createLauncherConfig(Path appBundleMacOsPath) throws DeploymentException {
 		try {
 			var xmlProcessor = new XmlProcessor(config.getIgniteConfigFile());
+			config.getLauncherConfig().setReleaseNumber(BackstageFunctions.getReleaseNumberFromDeploymentDir(deploymentWorkDir.toFile()));
 			var fileContent = xmlProcessor.createLauncherConfigXml(config.getLauncherConfig());
 			var launcherConfigPath = appBundleMacOsPath.resolve(LAUNCHER_CONFIG_FILE_NAME);
 			try(var writer = new PrintWriter(new FileWriter(launcherConfigPath.toFile()))) {
@@ -169,14 +172,17 @@ public class MacDeploymentBuilder {
 		return updateDir;
 	}
 
-	private void prepareForDownload(Path updatesPath) throws IOException {
-		var downloadPath = Path.of(contentMapping.getUpdatesDownloadLocation());
-		var contentsTarget = downloadPath.resolve("contents.zip");
-		var contentSource = updatesPath.resolve("contents.zip");
+	private void prepareForDownload(Path updatesSourcePath) throws IOException {
+		var targetUpdatePath = Path.of(contentMapping.getUpdatesParentLocation(
+				config.getAppId(), config.getLauncherConfig().getReleaseNumber(), OS.MAC_OS_X, CpuArch.X_64));
+		Files.createDirectories(targetUpdatePath);
+		log.debug("Created directory structure for updates at {}", targetUpdatePath.toString());
+		var contentsTarget = targetUpdatePath.resolve(CONTENT_UPDATE_FILE_NAME);
+		var contentSource = updatesSourcePath.resolve(CONTENT_UPDATE_FILE_NAME);
 		Files.move(contentSource, contentsTarget, StandardCopyOption.REPLACE_EXISTING);
 
-		var modulesTarget = downloadPath.resolve("modules.zip");
-		var moduleSource = updatesPath.resolve("modules.zip");
+		var modulesTarget = targetUpdatePath.resolve(MODULES_UPDATE_FILE_NAME);
+		var moduleSource = updatesSourcePath.resolve(MODULES_UPDATE_FILE_NAME);
 		Files.move(moduleSource, modulesTarget, StandardCopyOption.REPLACE_EXISTING);
 		// make zsync files for synchronization
 		var zsyncmake = new ZsyncMake();
