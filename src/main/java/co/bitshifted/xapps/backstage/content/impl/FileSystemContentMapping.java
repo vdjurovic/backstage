@@ -92,4 +92,10 @@ public class FileSystemContentMapping implements ContentMapping {
 		var updateBaseDir = Path.of(updatesDirectory.toString(), applicationId, releaseNumber, os.getBrief(), cpuArch.getDisplay());
 		return updateBaseDir.toUri();
 	}
+
+	@Override
+	public URI getUpdateFile(String fileName, String applicationId, String releaseNumber, OS os, CpuArch cpuArch) {
+		var updateBaseDir = Path.of(getUpdatesParentLocation(applicationId, releaseNumber, os,cpuArch));
+		return updateBaseDir.resolve(fileName).toUri();
+	}
 }

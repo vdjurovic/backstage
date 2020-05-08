@@ -26,11 +26,11 @@ public class UpdateInformation {
 		var sb = new StringBuilder();
 		sb.append(BackstageConstants.CONTENT_UPDATE_FILE_NAME)
 				.append("->")
-				.append(BackstageFunctions.generateServerUrl(request, contentsUrl))
+				.append(BackstageFunctions.generateServerUrl(contentsUrl))
 				.append("\n");
 		sb.append(BackstageConstants.MODULES_UPDATE_FILE_NAME)
 				.append("->")
-				.append(BackstageFunctions.generateServerUrl(request, modulesUrl));
+				.append(BackstageFunctions.generateServerUrl(modulesUrl));
 		return sb.toString();
 	}
 }

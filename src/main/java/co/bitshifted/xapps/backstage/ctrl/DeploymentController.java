@@ -45,6 +45,7 @@ public class DeploymentController {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/{appId}/content", consumes = DEPLOYMENT_CONTENT_TYPE)
 	public ResponseEntity<Object> handleDeploymentUpload(HttpServletRequest request, @PathVariable String appId) throws DeploymentException, ContentException {
+		BackstageFunctions.initServerBaseUrl(request);
 		String contentType = request.getContentType();
 		if (!DEPLOYMENT_CONTENT_TYPE.equals(contentType)) {
 			throw new DeploymentException("Invalid content type");
@@ -56,7 +57,7 @@ public class DeploymentController {
 				throw new DeploymentException("Invalid or corrupt deployment archive");
 			}
 			deploymentService.processContent(deploymentPackagePath, appId);
-			String statusUrl = BackstageFunctions.generateServerUrl(request, "/deployment/status/" + deploymentPackagePath.getParent().getFileName().toString());
+			String statusUrl = BackstageFunctions.generateServerUrl("/deployment/status/" + deploymentPackagePath.getParent().getFileName().toString());
 			log.debug("Deployment status URL: {}", statusUrl);
 			return ResponseEntity.accepted().header(DEPLOYMENT_STATUS_HEADER, statusUrl).build();
 		} catch (IOException ex) {

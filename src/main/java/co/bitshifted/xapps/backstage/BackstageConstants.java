@@ -52,6 +52,11 @@ public final class BackstageConstants {
 
 	public static final String CONTENT_UPDATE_ZSYNC_FILE_NAME = CONTENT_UPDATE_FILE_NAME + ".zsync";
 
+	/**
+	 * MIME type of Zsync control file
+	 */
+	public static final String ZSYNC_MIME_TYPE = "application/x-zsync ";
+
 	public static final String IGNITE_CONFIG_FILE_NAME = "ignite-config.xml";
 
 	public static final String LAUNCHER_CONFIG_FILE_NAME = "application.xml";

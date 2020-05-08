@@ -14,12 +14,14 @@ import co.bitshifted.xapps.backstage.content.ContentMapping;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
 import co.bitshifted.xapps.backstage.model.OS;
+import co.bitshifted.xapps.backstage.service.UpdateService;
 import co.bitshifted.xapps.backstage.util.BackstageFunctions;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -49,7 +51,6 @@ public class MacDeploymentBuilder {
 
 	@Autowired
 	private ContentMapping contentMapping;
-
 
 	private final Path deploymentWorkDir;
 	private final Path deploymentPackageDir;
@@ -186,7 +187,21 @@ public class MacDeploymentBuilder {
 		Files.move(moduleSource, modulesTarget, StandardCopyOption.REPLACE_EXISTING);
 		// make zsync files for synchronization
 		var zsyncmake = new ZsyncMake();
-		zsyncmake.make(contentsTarget);
-		zsyncmake.make(modulesTarget);
+		var contentOptions = new ZsyncMake.Options();
+		contentOptions.setUrl(makeControlFileUrl(CONTENT_UPDATE_FILE_NAME));
+		zsyncmake.writeToFile(contentsTarget, contentOptions);
+
+		var moduleOptions = new ZsyncMake.Options();
+		moduleOptions.setUrl(makeControlFileUrl(MODULES_UPDATE_FILE_NAME));
+		zsyncmake.writeToFile(modulesTarget, moduleOptions);
+	}
+
+	private String makeControlFileUrl(String fileName) {
+		var path = String.format(UpdateService.UPDATE_DOWNLOAD_ENDPOINT_FORMAT, config.getAppId(),
+				BackstageFunctions.getReleaseNumberFromDeploymentDir(deploymentWorkDir.toFile()),
+				OS.MAC_OS_X.getBrief(), CpuArch.X_64.getDisplay(),fileName);
+		var url = BackstageFunctions.generateServerUrl(path);
+		log.info("Generated ZSync filr URL: {}", url);
+		return url;
 	}
 }

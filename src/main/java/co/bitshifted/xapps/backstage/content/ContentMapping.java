@@ -29,4 +29,6 @@ public interface ContentMapping {
 
 	URI getUpdatesParentLocation(String applicationId, String releaseNumber, OS os, CpuArch cpuArch);
 
+	URI getUpdateFile(String fileName, String applicationId, String releaseNumber, OS os, CpuArch cpuArch);
+
 }

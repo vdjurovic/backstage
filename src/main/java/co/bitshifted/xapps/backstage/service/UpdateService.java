@@ -9,10 +9,20 @@
 package co.bitshifted.xapps.backstage.service;
 
 import co.bitshifted.xapps.backstage.dto.UpdateInformation;
+import co.bitshifted.xapps.backstage.exception.ContentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
+import co.bitshifted.xapps.backstage.model.DownloadInfo;
+import co.bitshifted.xapps.backstage.model.FileInfo;
 import co.bitshifted.xapps.backstage.model.OS;
 
+import java.io.InputStream;
+
 public interface UpdateService {
+
+	/**
+	 * Format of endpoint URL for downloading update files.
+	 */
+	String UPDATE_DOWNLOAD_ENDPOINT_FORMAT = "/update/app/%s/download?&release=%s&os=%s&cpu=%s&file-name=%s";
 
 	/**
 	 * Check if there is an updates available for application relative to specified release. If
@@ -33,5 +43,18 @@ public interface UpdateService {
 	 * @return
 	 */
 	UpdateInformation getUpdateInformation(String applicationId, OS os, CpuArch cpuArch);
+
+	/**
+	 * Fetches information for requested update file. This method will verify that update file name matches the expected
+	 * format and throw {@code ContentException} if it does not.
+	 *
+	 * @param fileName file name
+	 * @param applicationId application ID
+	 * @param release
+	 * @param os
+	 * @param cpuArch
+	 * @return
+	 */
+	DownloadInfo getUpdateFile(String fileName, String applicationId, String release, OS os, CpuArch cpuArch) throws ContentException;
 
 }

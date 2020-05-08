@@ -47,7 +47,7 @@ public class BackstageFunctionsTest {
 		when(request.getServerPort()).thenReturn(8000);
 		when(request.getContextPath()).thenReturn("");
 
-		var out = BackstageFunctions.generateServerUrl(request, "sample/path?param=1");
+		var out = BackstageFunctions.generateServerUrl("sample/path?param=1");
 		assertEquals("http://my.server.host:8000/sample/path?param=1", out);
 	}
 }

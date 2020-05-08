@@ -11,8 +11,6 @@ package co.bitshifted.xapps.backstage.deploy;
 import co.bitshifted.xapps.backstage.model.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.nio.file.Path;
 

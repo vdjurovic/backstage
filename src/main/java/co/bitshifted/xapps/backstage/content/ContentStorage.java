@@ -24,4 +24,5 @@ public interface ContentStorage {
 	 * @return URI of the saved package
 	 */
 	URI uploadDeploymentPackage(InputStream in, String applicationId) throws ContentException;
+
 }
