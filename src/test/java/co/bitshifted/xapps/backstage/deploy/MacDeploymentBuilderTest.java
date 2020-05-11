@@ -11,6 +11,7 @@ package co.bitshifted.xapps.backstage.deploy;
 import co.bitshifted.xapps.backstage.content.ContentMapping;
 import co.bitshifted.xapps.backstage.model.*;
 import co.bitshifted.xapps.backstage.test.TestConfig;
+import co.bitshifted.xapps.backstage.util.BackstageFunctions;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -21,11 +22,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.servlet.http.HttpServletRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.function.Function;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Vladimir Djurovic
@@ -50,7 +55,8 @@ public class MacDeploymentBuilderTest {
 	@Before
 	public void setup() throws Exception {
 		var workspace = contentMapping.getWorkspaceUri();
-		deploymentWorkDir = Path.of(workspace).resolve("test");
+		var dirName = "7PjPKl4iLX7_20200201-131415-123";
+		deploymentWorkDir = Path.of(workspace).resolve(dirName);
 		var archivePath = Path.of(ToolsRunnerTest.class.getResource("/deployment/7PjPKl4iLX7.zip").toURI());
 		Files.createDirectory(deploymentWorkDir);
 		var copyTarget = deploymentWorkDir.resolve(TEST_ARCHIVE_NAME);
@@ -102,6 +108,12 @@ public class MacDeploymentBuilderTest {
 
 	@Test
 	public void testMacDeploymentBuild() throws Exception {
+		var request = mock(HttpServletRequest.class);
+		when(request.getScheme()).thenReturn("http");
+		when(request.getServerName()).thenReturn("my.server.host");
+		when(request.getServerPort()).thenReturn(8000);
+		when(request.getContextPath()).thenReturn("");
+		BackstageFunctions.initServerBaseUrl(request);
 		deploymentBuilder.createDeployment();
 	}
 }

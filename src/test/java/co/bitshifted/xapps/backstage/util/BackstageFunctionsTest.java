@@ -46,6 +46,7 @@ public class BackstageFunctionsTest {
 		when(request.getServerName()).thenReturn("my.server.host");
 		when(request.getServerPort()).thenReturn(8000);
 		when(request.getContextPath()).thenReturn("");
+		BackstageFunctions.initServerBaseUrl(request);
 
 		var out = BackstageFunctions.generateServerUrl("sample/path?param=1");
 		assertEquals("http://my.server.host:8000/sample/path?param=1", out);

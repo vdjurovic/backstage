@@ -62,7 +62,7 @@ public class BasicUpdateServiceTest {
 		when(appDeploymentRepository.findFirstByApplication_IdOrderByReleaseNumberDesc(APP_ID)).thenReturn(mockDeployment);
 
 		var out = updateService.getUpdateInformation(APP_ID, OS.MAC_OS_X, CpuArch.X_64);
-		assertEquals("/update/download?appId=1234&release=20200301-141516-230&os=mac&cpu=x64&file=contents.zip.zsync", out.getContentsUrl());
-		assertEquals("/update/download?appId=1234&release=20200301-141516-230&os=mac&cpu=x64&file=modules.zip.zsync", out.getModulesUrl());
+		assertEquals("/update/app/1234/download?release=20200301-141516-230&os=mac&cpu=x64&file-name=contents.zip.zsync", out.getContentsUrl());
+		assertEquals("/update/app/1234/download?release=20200301-141516-230&os=mac&cpu=x64&file-name=modules.zip.zsync", out.getModulesUrl());
 	}
 }

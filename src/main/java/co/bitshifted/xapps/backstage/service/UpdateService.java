@@ -22,7 +22,7 @@ public interface UpdateService {
 	/**
 	 * Format of endpoint URL for downloading update files.
 	 */
-	String UPDATE_DOWNLOAD_ENDPOINT_FORMAT = "/update/app/%s/download?&release=%s&os=%s&cpu=%s&file-name=%s";
+	String UPDATE_DOWNLOAD_ENDPOINT_FORMAT = "/update/app/%s/download?release=%s&os=%s&cpu=%s&file-name=%s";
 
 	/**
 	 * Check if there is an updates available for application relative to specified release. If
