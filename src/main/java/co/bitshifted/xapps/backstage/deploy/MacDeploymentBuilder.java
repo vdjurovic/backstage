@@ -20,8 +20,8 @@ import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -51,6 +51,8 @@ public class MacDeploymentBuilder {
 
 	@Autowired
 	private ContentMapping contentMapping;
+	@Value("${update.server.baseurl}")
+	private String updateServerBaseUrl;
 
 	private final Path deploymentWorkDir;
 	private final Path deploymentPackageDir;
@@ -200,7 +202,7 @@ public class MacDeploymentBuilder {
 		var path = String.format(UpdateService.UPDATE_DOWNLOAD_ENDPOINT_FORMAT, config.getAppId(),
 				BackstageFunctions.getReleaseNumberFromDeploymentDir(deploymentWorkDir.toFile()),
 				OS.MAC_OS_X.getBrief(), CpuArch.X_64.getDisplay(),fileName);
-		var url = BackstageFunctions.generateServerUrl(path);
+		var url = BackstageFunctions.generateServerUrl(updateServerBaseUrl, path);
 		log.info("Generated ZSync filr URL: {}", url);
 		return url;
 	}

@@ -10,7 +10,6 @@ package co.bitshifted.xapps.backstage.util;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -19,7 +18,6 @@ import java.util.regex.Pattern;
 public final class BackstageFunctions {
 
 	private static final Pattern RELEASE_NUMBER_PATTERN = Pattern.compile("\\d{8}-\\d{6}-\\d{3}");
-	private static String serverBaseUrl;
 
 	private BackstageFunctions() {
 
@@ -41,9 +39,14 @@ public final class BackstageFunctions {
 		throw new IllegalStateException("release number format mismatch: " + releaseNum);
 	}
 
-	public static String generateServerUrl(String path) {
+	public static String generateServerUrl(HttpServletRequest request, String path) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(serverBaseUrl);
+		sb.append(request.getScheme()).append("://");
+		sb.append(request.getServerName());
+		if (request.getServerPort() != 0) {
+			sb.append(":").append(request.getServerPort());
+		}
+		sb.append(request.getContextPath());
 		if(!path.startsWith("/")) {
 			sb.append("/");
 		}
@@ -51,23 +54,13 @@ public final class BackstageFunctions {
 		return sb.toString();
 	}
 
-	public static void initServerBaseUrl(HttpServletRequest request) {
-		if(serverBaseUrl == null){
-			StringBuilder sb = new StringBuilder();
-			sb.append(request.getScheme()).append("://");
-			sb.append(request.getServerName());
-			if (request.getServerPort() != 0) {
-				sb.append(":").append(request.getServerPort());
-			}
-			sb.append(request.getContextPath());
-			serverBaseUrl = sb.toString();
+	public static String generateServerUrl(String base, String path) {
+		var sb = new StringBuilder(base);
+		if(!path.startsWith("/")) {
+			sb.append("/");
 		}
+		sb.append(path);
+		return sb.toString();
 	}
 
-	public static String getServerBaseUrl() {
-		if(serverBaseUrl == null) {
-			throw new IllegalStateException("Server base URl not initialized!");
-		}
-		return serverBaseUrl;
-	}
 }

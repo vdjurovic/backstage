@@ -11,7 +11,6 @@ package co.bitshifted.xapps.backstage.deploy;
 import co.bitshifted.xapps.backstage.content.ContentMapping;
 import co.bitshifted.xapps.backstage.model.*;
 import co.bitshifted.xapps.backstage.test.TestConfig;
-import co.bitshifted.xapps.backstage.util.BackstageFunctions;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -113,7 +112,6 @@ public class MacDeploymentBuilderTest {
 		when(request.getServerName()).thenReturn("my.server.host");
 		when(request.getServerPort()).thenReturn(8000);
 		when(request.getContextPath()).thenReturn("");
-		BackstageFunctions.initServerBaseUrl(request);
 		deploymentBuilder.createDeployment();
 	}
 }
