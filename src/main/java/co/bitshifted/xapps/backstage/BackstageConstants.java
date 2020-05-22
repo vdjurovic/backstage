@@ -63,6 +63,11 @@ public final class BackstageConstants {
 
 	public static final String LAUNCHER_FILE_NAME_MAC = "launchcode-mac-x64";
 
+	/**
+	 * Comment to set on executable files when they are added to .zip archives.
+	 */
+	public static final String ZIP_ENTRY_EXEC_COMMENT = "exec:true";
+
 	public static final String DEPLOY_PKG_MODULES_DIR_NAME = "modules";
 	public static final String DEPLOY_PKG_CLASSPATH_DIR_NAME = "classpath";
 	public static final String JDK_JMODS_DIR_NAME = "jmods";

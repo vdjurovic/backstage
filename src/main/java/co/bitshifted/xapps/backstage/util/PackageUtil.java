@@ -8,6 +8,7 @@
 
 package co.bitshifted.xapps.backstage.util;
 
+import co.bitshifted.xapps.backstage.BackstageConstants;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -127,6 +128,9 @@ public final class PackageUtil {
 				entry.setCreationTime(FileTime.fromMillis(10000000));
 				entry.setLastModifiedTime(FileTime.fromMillis(12000000));
 				entry.setLastAccessTime(FileTime.fromMillis(12000000));
+				if(file.canExecute()) {
+					entry.setComment(BackstageConstants.ZIP_ENTRY_EXEC_COMMENT);
+				}
 				try (var in = new FileInputStream(file)) {
 					archive.putArchiveEntry(entry);
 					IOUtils.copy(in, archive);

@@ -18,6 +18,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -158,7 +159,7 @@ public class MultipartFileSender {
 		response.setDateHeader("Expires", System.currentTimeMillis() + DEFAULT_EXPIRE_TIME);
 
 		// Send requested file (part(s)) to client ------------------------------------------------
-		var multipartBoundary = UUID.randomUUID();
+		var multipartBoundary = UUID.randomUUID().toString();
 
 		// Prepare streams.
 		try (InputStream input = new BufferedInputStream(Files.newInputStream(filepath));

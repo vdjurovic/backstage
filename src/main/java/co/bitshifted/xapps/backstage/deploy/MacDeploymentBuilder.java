@@ -81,6 +81,8 @@ public class MacDeploymentBuilder {
 			Files.copy(Path.of(templateUri), appBundleArchive, StandardCopyOption.REPLACE_EXISTING);
 			var appBundlePath = PackageUtil.unpackZipArchive(appBundleArchive, config.macAppBundleName());
 			log.debug("Extracted app bundle archive to {}", appBundlePath.toString());
+			// add modules for updates
+			copySyncroModules();
 			// create JRE image
 			var moduleNames = toolsRunner.getApplicationModules(deploymentPackageDir);
 			var targetJdkDir = Path.of(contentMapping.getJdkLocation(config.getJdkProvider(), config.getJvmImplementation(), config.getJdkVersion(), config.getOs(), config.getCpuArch()));
@@ -111,7 +113,7 @@ public class MacDeploymentBuilder {
 			var updatePkgPath = createUpdatePackage(appBundlePath.resolve("Contents"));
 			log.debug("Update package path: {}", updatePkgPath.toString());
 			prepareForDownload(updatePkgPath);
-		} catch(IOException | URISyntaxException ex) {
+		} catch(Exception ex) {
 			log.error("Failed to create deployment", ex);
 			throw new DeploymentException(ex);
 		}
@@ -205,5 +207,17 @@ public class MacDeploymentBuilder {
 		var url = BackstageFunctions.generateServerUrl(updateServerBaseUrl, path);
 		log.info("Generated ZSync filr URL: {}", url);
 		return url;
+	}
+
+	/**
+	 * Copy additional modules needed for updates.
+	 */
+	private void copySyncroModules() throws IOException {
+		var syncroDir = Path.of(contentMapping.getSyncroStorageUri());
+		var targetDir = deploymentPackageDir.resolve("modules");
+		if(Files.exists(targetDir)) {
+			Files.copy(syncroDir.resolve("syncro.jar"), targetDir.resolve("syncro.jar"), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(syncroDir.resolve("zsyncer.jar"), targetDir.resolve("zsyncer.jar"), StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 }

@@ -23,6 +23,8 @@ public interface ContentMapping {
 
 	URI getLauncherStorageUri();
 
+	URI getSyncroStorageUri();
+
 	URI getUpdatesDownloadLocation();
 
 	URI getJdkLocation(JdkProvider provider, JvmImplementation jvmImplementation, JdkVersion version, OS os, CpuArch cpuArch);

@@ -34,6 +34,7 @@ public class FileSystemContentMapping implements ContentMapping {
 	private final Path jdkStorageDirectory;
 	private final Path launcherDirectory;
 	private final Path updatesDirectory;
+	private final Path syncroDirectory;
 
 	public FileSystemContentMapping(@Value("${content.root.location}") String rootLocation) {
 		this.contentRoot = Path.of(rootLocation);
@@ -41,6 +42,7 @@ public class FileSystemContentMapping implements ContentMapping {
 		jdkStorageDirectory = contentRoot.resolve("jdk");
 		launcherDirectory = contentRoot.resolve("launchers");
 		updatesDirectory = contentRoot.resolve("download").resolve("updates");
+		syncroDirectory = contentRoot.resolve("syncro");
 	}
 
 	@PostConstruct
@@ -50,6 +52,7 @@ public class FileSystemContentMapping implements ContentMapping {
 			Files.createDirectories(jdkStorageDirectory);
 			Files.createDirectories(launcherDirectory);
 			Files.createDirectories(updatesDirectory);
+			Files.createDirectories(syncroDirectory);
 		} catch (IOException ex) {
 			log.error("Failed to create content directories", ex);
 		}
@@ -69,6 +72,11 @@ public class FileSystemContentMapping implements ContentMapping {
 	@Override
 	public URI getLauncherStorageUri() {
 		return launcherDirectory.toUri();
+	}
+
+	@Override
+	public URI getSyncroStorageUri() {
+		return syncroDirectory.toUri();
 	}
 
 	@Override

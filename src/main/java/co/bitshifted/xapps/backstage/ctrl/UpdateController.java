@@ -14,6 +14,7 @@ import co.bitshifted.xapps.backstage.exception.ContentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
 import co.bitshifted.xapps.backstage.model.OS;
 import co.bitshifted.xapps.backstage.service.UpdateService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +31,7 @@ import java.nio.file.Path;
 /**
  * @author Vladimir Djurovic
  */
+@Slf4j
 @RestController
 @RequestMapping(value = "/update")
 public class UpdateController {
@@ -75,7 +77,7 @@ public class UpdateController {
 			@RequestParam("cpu") CpuArch cpu,
 			HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
-
+		log.debug("Received range request with headers: {}", request.getHeader("Range"));
 		var downloadInfo = updateService.getUpdateFile(fileName, applicationId, release, os, cpu);
 		var filePath = Path.of(downloadInfo.getSourceUri());
 		MultipartFileSender.fromPath(filePath).with(request).with(response).serveResource();
