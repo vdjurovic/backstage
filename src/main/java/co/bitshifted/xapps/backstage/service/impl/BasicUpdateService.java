@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,12 +46,17 @@ public class BasicUpdateService implements UpdateService {
 	}
 
 	@Override
-	public UpdateInformation getUpdateInformation(String applicationId, OS os, CpuArch cpuArch) {
+	public UpdateInformation getUpdateInformation(String applicationId, OS os, CpuArch cpuArch) throws ContentException {
 		var latest = appDeploymentRepository.findFirstByApplication_IdOrderByReleaseNumberDesc(applicationId);
-		var contents = String.format(UPDATE_DOWNLOAD_ENDPOINT_FORMAT, applicationId, latest.getReleaseNumber(), os.getBrief(), cpuArch.getDisplay(), BackstageConstants.CONTENT_UPDATE_ZSYNC_FILE_NAME);
-		var modules = String.format(UPDATE_DOWNLOAD_ENDPOINT_FORMAT, applicationId, latest.getReleaseNumber(), os.getBrief(), cpuArch.getDisplay(), BackstageConstants.MODULES_UPDATE_ZSYNC_FILE_NAME);
+		var updateInfoFile = Path.of(contentMapping.getUpdatesParentLocation(applicationId, latest.getReleaseNumber(), os, cpuArch)).resolve(BackstageConstants.UPDATE_INFO_FILE_NAME);
 
-		return new UpdateInformation(contents, modules);
+		try {
+			var unmarshaller = JAXBContext.newInstance(UpdateInformation.class).createUnmarshaller();
+			return (UpdateInformation) unmarshaller.unmarshal(updateInfoFile.toFile());
+		} catch(JAXBException ex) {
+			throw new ContentException(ex);
+		}
+
 	}
 
 	@Override

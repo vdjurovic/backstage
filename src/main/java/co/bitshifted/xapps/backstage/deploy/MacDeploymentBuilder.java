@@ -9,8 +9,9 @@
 package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshfted.xapps.zsync.ZsyncMake;
-import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.content.ContentMapping;
+import co.bitshifted.xapps.backstage.dto.UpdateDetail;
+import co.bitshifted.xapps.backstage.dto.UpdateInformation;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
 import co.bitshifted.xapps.backstage.model.OS;
@@ -22,8 +23,12 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.io.*;
-import java.net.URISyntaxException;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -32,10 +37,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Set;
 
-
 import static co.bitshifted.xapps.backstage.BackstageConstants.*;
-import static co.bitshifted.xapps.backstage.BackstageConstants.DEPLOY_PKG_MODULES_DIR_NAME;
-import static co.bitshifted.xapps.backstage.BackstageConstants.JDK_JMODS_DIR_NAME;
 
 /**
  * @author Vladimir Djurovic
@@ -177,7 +179,7 @@ public class MacDeploymentBuilder {
 		return updateDir;
 	}
 
-	private void prepareForDownload(Path updatesSourcePath) throws IOException {
+	private void prepareForDownload(Path updatesSourcePath) throws IOException, JAXBException {
 		var targetUpdatePath = Path.of(contentMapping.getUpdatesParentLocation(
 				config.getAppId(), config.getLauncherConfig().getReleaseNumber(), OS.MAC_OS_X, CpuArch.X_64));
 		Files.createDirectories(targetUpdatePath);
@@ -198,6 +200,8 @@ public class MacDeploymentBuilder {
 		var moduleOptions = new ZsyncMake.Options();
 		moduleOptions.setUrl(makeControlFileUrl(MODULES_UPDATE_FILE_NAME));
 		zsyncmake.writeToFile(modulesTarget, moduleOptions);
+
+		writeUpdateInfoFile(targetUpdatePath);
 	}
 
 	private String makeControlFileUrl(String fileName) {
@@ -207,6 +211,26 @@ public class MacDeploymentBuilder {
 		var url = BackstageFunctions.generateServerUrl(updateServerBaseUrl, path);
 		log.info("Generated ZSync filr URL: {}", url);
 		return url;
+	}
+
+	private void writeUpdateInfoFile(Path baseDir) throws IOException, JAXBException {
+		var updateInfo = new UpdateInformation();
+		updateInfo.setReleaseNumber(config.getLauncherConfig().getReleaseNumber());
+		Files.walk(baseDir)
+				.filter(p -> p.toFile().getName().endsWith(".zsync"))
+				.forEach(f -> {
+					var name = f.toFile().getName();
+					var detail = new UpdateDetail();
+					detail.setFileName(name);
+					detail.setUrl(makeControlFileUrl(name));
+					detail.setSize(f.toFile().length());
+					updateInfo.addDetail(detail);
+				});
+		var ctx = JAXBContext.newInstance(UpdateInformation.class);
+		var marshaller = ctx.createMarshaller();
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+		marshaller.marshal(updateInfo, baseDir.resolve(UPDATE_INFO_FILE_NAME).toFile());
+
 	}
 
 	/**

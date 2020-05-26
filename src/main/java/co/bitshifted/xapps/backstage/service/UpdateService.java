@@ -40,9 +40,9 @@ public interface UpdateService {
 	 * @param applicationId
 	 * @param os
 	 * @param cpuArch
-	 * @return
+	 * @return update inforation
 	 */
-	UpdateInformation getUpdateInformation(String applicationId, OS os, CpuArch cpuArch);
+	UpdateInformation getUpdateInformation(String applicationId, OS os, CpuArch cpuArch) throws ContentException;
 
 	/**
 	 * Fetches information for requested update file. This method will verify that update file name matches the expected

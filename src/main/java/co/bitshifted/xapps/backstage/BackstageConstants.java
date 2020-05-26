@@ -53,6 +53,11 @@ public final class BackstageConstants {
 	public static final String CONTENT_UPDATE_ZSYNC_FILE_NAME = CONTENT_UPDATE_FILE_NAME + ".zsync";
 
 	/**
+	 * Name of update information file.
+	 */
+	public static final String UPDATE_INFO_FILE_NAME = "update-info.xml";
+
+	/**
 	 * MIME type of Zsync control file
 	 */
 	public static final String ZSYNC_MIME_TYPE = "application/x-zsync ";

@@ -10,6 +10,7 @@ package co.bitshifted.xapps.backstage.ctrl;
 
 import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.ctrl.partial.MultipartFileSender;
+import co.bitshifted.xapps.backstage.dto.UpdateInformation;
 import co.bitshifted.xapps.backstage.exception.ContentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
 import co.bitshifted.xapps.backstage.model.OS;
@@ -19,6 +20,7 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,13 +41,13 @@ public class UpdateController {
 	@Autowired
 	private UpdateService updateService;
 
-	@GetMapping(value = "/app/{appId}/release/{releaseNumber}")
-	public ResponseEntity<String> checkUpdates(HttpServletRequest request, @PathVariable  String appId, @PathVariable String releaseNumber,
-											   @RequestParam(name = "os") OS os, @RequestParam(name = "cpu") CpuArch cpuArch) {
+	@GetMapping(value = "/app/{appId}/release/{releaseNumber}", produces = MediaType.APPLICATION_ATOM_XML_VALUE)
+	public ResponseEntity<UpdateInformation> checkUpdates(HttpServletRequest request, @PathVariable  String appId, @PathVariable String releaseNumber,
+														  @RequestParam(name = "os") OS os, @RequestParam(name = "cpu") CpuArch cpuArch) throws ContentException {
 		var status = updateService.hasUpdateAvailable(appId, releaseNumber);
 		if(status) {
 			var updateInfo = updateService.getUpdateInformation(appId, os, cpuArch);
-			return ResponseEntity.ok(updateInfo.asString(request));
+			return ResponseEntity.ok(updateInfo);
 		} else {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}

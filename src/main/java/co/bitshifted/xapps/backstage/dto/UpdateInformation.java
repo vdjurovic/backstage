@@ -10,27 +10,28 @@ package co.bitshifted.xapps.backstage.dto;
 
 import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.util.BackstageFunctions;
+import com.sun.xml.txw2.annotation.XmlAttribute;
 import lombok.Data;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.annotation.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Vladimir Djurovic
  */
+@XmlRootElement(name = "update-info")
+@XmlAccessorType(XmlAccessType.FIELD)
 @Data
 public class UpdateInformation {
-	private final String contentsUrl;
-	private final String modulesUrl;
+	@XmlElement(name = "release-number")
+	private String releaseNumber;
+	@XmlElementWrapper(name = "details")
+	@XmlElement(name = "detail")
+	private List<UpdateDetail> details = new ArrayList<>();
 
-	public String asString(HttpServletRequest request) {
-		var sb = new StringBuilder();
-		sb.append(BackstageConstants.CONTENT_UPDATE_FILE_NAME)
-				.append("->")
-				.append(BackstageFunctions.generateServerUrl(request, contentsUrl))
-				.append("\n");
-		sb.append(BackstageConstants.MODULES_UPDATE_FILE_NAME)
-				.append("->")
-				.append(BackstageFunctions.generateServerUrl(request, modulesUrl));
-		return sb.toString();
+	public void addDetail(UpdateDetail detail) {
+		details.add(detail);
 	}
 }
