@@ -14,10 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -159,10 +156,10 @@ public class MultipartFileSender {
 		response.setDateHeader("Expires", System.currentTimeMillis() + DEFAULT_EXPIRE_TIME);
 
 		// Send requested file (part(s)) to client ------------------------------------------------
-		var multipartBoundary = UUID.randomUUID().toString();
+		var multipartBoundary = UUID.randomUUID().toString().replaceAll("-", "");
 
 		// Prepare streams.
-		try (InputStream input = new BufferedInputStream(Files.newInputStream(filepath));
+		try (RandomAccessFile input = new RandomAccessFile(filepath.toFile(), "r");
 			 OutputStream output = response.getOutputStream()) {
 
 			if (ranges.isEmpty() || ranges.get(0) == full) {
@@ -200,18 +197,17 @@ public class MultipartFileSender {
 				for (Range r : ranges) {
 					log.info("Return multi part of file : from ({}) to ({})", r.start, r.end);
 					// Add multipart boundary and header fields for every range.
-					sos.println();
-					sos.println("--" + multipartBoundary);
+					sos.println("\r\n--" + multipartBoundary);
 					sos.println("Content-Type: " + contentType);
 					sos.println("Content-Range: bytes " + r.start + "-" + r.end + "/" + r.total);
+					sos.print("\r\n");
 
 					// Copy single part range of multi part range.
 					Range.copy(input, output, length, r.start, r.length);
 				}
 
 				// End with multipart boundary.
-				sos.println();
-				sos.println("--" + multipartBoundary + "--");
+				sos.println("\r\n--" + multipartBoundary + "--");
 			}
 		}
 

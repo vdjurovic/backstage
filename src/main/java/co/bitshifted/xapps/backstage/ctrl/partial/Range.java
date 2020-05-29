@@ -11,6 +11,7 @@ package co.bitshifted.xapps.backstage.ctrl.partial;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 
 /**
  * @author Vladimir Djurovic
@@ -40,7 +41,7 @@ public class Range {
 		return (substring.length() > 0) ? Long.parseLong(substring) : -1;
 	}
 
-	public static void copy(InputStream input, OutputStream output, long inputSize, long start, long length) throws IOException {
+	public static void copy(RandomAccessFile input, OutputStream output, long inputSize, long start, long length) throws IOException {
 		byte[] buffer = new byte[MultipartFileSender.DEFAULT_BUFFER_SIZE];
 		int read;
 
@@ -51,7 +52,7 @@ public class Range {
 				output.flush();
 			}
 		} else {
-			input.skip(start);
+			input.seek(start);
 			long toRead = length;
 
 			while ((read = input.read(buffer)) > 0) {
