@@ -10,16 +10,25 @@ package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshfted.xapps.zsync.ZsyncMake;
 import co.bitshifted.xapps.backstage.content.ContentMapping;
+import co.bitshifted.xapps.backstage.dto.UpdateDetail;
+import co.bitshifted.xapps.backstage.dto.UpdateInformation;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
 import co.bitshifted.xapps.backstage.model.CpuArch;
 import co.bitshifted.xapps.backstage.model.OS;
+import co.bitshifted.xapps.backstage.service.UpdateService;
+import co.bitshifted.xapps.backstage.util.BackstageFunctions;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
-import java.io.*;
-import java.net.URISyntaxException;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -28,10 +37,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Set;
 
-
 import static co.bitshifted.xapps.backstage.BackstageConstants.*;
-import static co.bitshifted.xapps.backstage.BackstageConstants.DEPLOY_PKG_MODULES_DIR_NAME;
-import static co.bitshifted.xapps.backstage.BackstageConstants.JDK_JMODS_DIR_NAME;
 
 /**
  * @author Vladimir Djurovic
@@ -47,7 +53,8 @@ public class MacDeploymentBuilder {
 
 	@Autowired
 	private ContentMapping contentMapping;
-
+	@Value("${update.server.baseurl}")
+	private String updateServerBaseUrl;
 
 	private final Path deploymentWorkDir;
 	private final Path deploymentPackageDir;
@@ -76,6 +83,8 @@ public class MacDeploymentBuilder {
 			Files.copy(Path.of(templateUri), appBundleArchive, StandardCopyOption.REPLACE_EXISTING);
 			var appBundlePath = PackageUtil.unpackZipArchive(appBundleArchive, config.macAppBundleName());
 			log.debug("Extracted app bundle archive to {}", appBundlePath.toString());
+			// add modules for updates
+			copySyncroModules();
 			// create JRE image
 			var moduleNames = toolsRunner.getApplicationModules(deploymentPackageDir);
 			var targetJdkDir = Path.of(contentMapping.getJdkLocation(config.getJdkProvider(), config.getJvmImplementation(), config.getJdkVersion(), config.getOs(), config.getCpuArch()));
@@ -106,7 +115,7 @@ public class MacDeploymentBuilder {
 			var updatePkgPath = createUpdatePackage(appBundlePath.resolve("Contents"));
 			log.debug("Update package path: {}", updatePkgPath.toString());
 			prepareForDownload(updatePkgPath);
-		} catch(IOException | URISyntaxException ex) {
+		} catch(Exception ex) {
 			log.error("Failed to create deployment", ex);
 			throw new DeploymentException(ex);
 		}
@@ -120,6 +129,7 @@ public class MacDeploymentBuilder {
 	private void createLauncherConfig(Path appBundleMacOsPath) throws DeploymentException {
 		try {
 			var xmlProcessor = new XmlProcessor(config.getIgniteConfigFile());
+			config.getLauncherConfig().setReleaseNumber(BackstageFunctions.getReleaseNumberFromDeploymentDir(deploymentWorkDir.toFile()));
 			var fileContent = xmlProcessor.createLauncherConfigXml(config.getLauncherConfig());
 			var launcherConfigPath = appBundleMacOsPath.resolve(LAUNCHER_CONFIG_FILE_NAME);
 			try(var writer = new PrintWriter(new FileWriter(launcherConfigPath.toFile()))) {
@@ -169,18 +179,69 @@ public class MacDeploymentBuilder {
 		return updateDir;
 	}
 
-	private void prepareForDownload(Path updatesPath) throws IOException {
-		var downloadPath = Path.of(contentMapping.getUpdatesDownloadLocation());
-		var contentsTarget = downloadPath.resolve("contents.zip");
-		var contentSource = updatesPath.resolve("contents.zip");
+	private void prepareForDownload(Path updatesSourcePath) throws IOException, JAXBException {
+		var targetUpdatePath = Path.of(contentMapping.getUpdatesParentLocation(
+				config.getAppId(), config.getLauncherConfig().getReleaseNumber(), OS.MAC_OS_X, CpuArch.X_64));
+		Files.createDirectories(targetUpdatePath);
+		log.debug("Created directory structure for updates at {}", targetUpdatePath.toString());
+		var contentsTarget = targetUpdatePath.resolve(CONTENT_UPDATE_FILE_NAME);
+		var contentSource = updatesSourcePath.resolve(CONTENT_UPDATE_FILE_NAME);
 		Files.move(contentSource, contentsTarget, StandardCopyOption.REPLACE_EXISTING);
 
-		var modulesTarget = downloadPath.resolve("modules.zip");
-		var moduleSource = updatesPath.resolve("modules.zip");
+		var modulesTarget = targetUpdatePath.resolve(MODULES_UPDATE_FILE_NAME);
+		var moduleSource = updatesSourcePath.resolve(MODULES_UPDATE_FILE_NAME);
 		Files.move(moduleSource, modulesTarget, StandardCopyOption.REPLACE_EXISTING);
 		// make zsync files for synchronization
 		var zsyncmake = new ZsyncMake();
-		zsyncmake.make(contentsTarget);
-		zsyncmake.make(modulesTarget);
+		var contentOptions = new ZsyncMake.Options();
+		contentOptions.setUrl(makeControlFileUrl(CONTENT_UPDATE_FILE_NAME));
+		zsyncmake.writeToFile(contentsTarget, contentOptions);
+
+		var moduleOptions = new ZsyncMake.Options();
+		moduleOptions.setUrl(makeControlFileUrl(MODULES_UPDATE_FILE_NAME));
+		zsyncmake.writeToFile(modulesTarget, moduleOptions);
+
+		writeUpdateInfoFile(targetUpdatePath);
+	}
+
+	private String makeControlFileUrl(String fileName) {
+		var path = String.format(UpdateService.UPDATE_DOWNLOAD_ENDPOINT_FORMAT, config.getAppId(),
+				BackstageFunctions.getReleaseNumberFromDeploymentDir(deploymentWorkDir.toFile()),
+				OS.MAC_OS_X.getBrief(), CpuArch.X_64.getDisplay(),fileName);
+		var url = BackstageFunctions.generateServerUrl(updateServerBaseUrl, path);
+		log.info("Generated ZSync filr URL: {}", url);
+		return url;
+	}
+
+	private void writeUpdateInfoFile(Path baseDir) throws IOException, JAXBException {
+		var updateInfo = new UpdateInformation();
+		updateInfo.setReleaseNumber(config.getLauncherConfig().getReleaseNumber());
+		Files.walk(baseDir)
+				.filter(p -> p.toFile().getName().endsWith(".zsync"))
+				.forEach(f -> {
+					var name = f.toFile().getName();
+					var detail = new UpdateDetail();
+					detail.setFileName(name);
+					detail.setUrl(makeControlFileUrl(name));
+					detail.setSize(f.toFile().length());
+					updateInfo.addDetail(detail);
+				});
+		var ctx = JAXBContext.newInstance(UpdateInformation.class);
+		var marshaller = ctx.createMarshaller();
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+		marshaller.marshal(updateInfo, baseDir.resolve(UPDATE_INFO_FILE_NAME).toFile());
+
+	}
+
+	/**
+	 * Copy additional modules needed for updates.
+	 */
+	private void copySyncroModules() throws IOException {
+		var syncroDir = Path.of(contentMapping.getSyncroStorageUri());
+		var targetDir = deploymentPackageDir.resolve("modules");
+		if(Files.exists(targetDir)) {
+			Files.copy(syncroDir.resolve("syncro.jar"), targetDir.resolve("syncro.jar"), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(syncroDir.resolve("zsyncer.jar"), targetDir.resolve("zsyncer.jar"), StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 }

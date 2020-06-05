@@ -60,6 +60,7 @@ public class ToolsRunner {
 		var argsList = new ArrayList<String>();
 		argsList.add("--module-path");
 		argsList.add(deploymentPackageDir.resolve("modules").toAbsolutePath().toString());
+		argsList.add("--add-modules=co.bitshifted.xapps.syncro"); // need to include update module dependencies
 		argsList.add("--list-deps");
 		argsList.add(mainArtifactPath.toAbsolutePath().toString());
 		// if classpath dir exists, add it to arguments
@@ -91,6 +92,8 @@ public class ToolsRunner {
 			modules.add(mainArtifactModuleName);
 		}
 		log.debug("Found modules: {}", modules);
+		// include syncro module for updates
+		modules.add("co.bitshifted.xapps.syncro");
 		return modules;
 	}
 

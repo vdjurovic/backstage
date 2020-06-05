@@ -10,23 +10,13 @@ package co.bitshifted.xapps.backstage.model;
 
 import lombok.Data;
 
-import javax.xml.bind.annotation.*;
+import java.io.InputStream;
 
 /**
- * XML mapping for launcher configuration.
- *
  * @author Vladimir Djurovic
  */
 @Data
-@XmlRootElement(name = "application")
-@XmlAccessorType(XmlAccessType.FIELD)
-public class LauncherConfig {
-	@XmlAttribute
-	private String version;
-	@XmlAttribute(name = "release-number")
-	private String releaseNumber;
-	@XmlElement
-	private Server server;
-	@XmlElement
-	private JvmConfig jvm;
+public class FileInfo {
+	private final String fileName;
+	private final String path;
 }

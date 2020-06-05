@@ -6,18 +6,20 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package co.bitshifted.xapps.backstage.exception;
+package co.bitshifted.xapps.backstage.model;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+import java.net.URI;
 
 /**
  * @author Vladimir Djurovic
  */
-public class ContentException extends Exception {
+@Getter
+@RequiredArgsConstructor
+public class DownloadInfo {
 
-	public ContentException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public ContentException(Throwable cause) {
-		super(cause);
-	}
+	private final URI sourceUri;
+	private final long size;
 }

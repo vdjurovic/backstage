@@ -44,4 +44,18 @@
                                  referencedColumnNames="app_id" />
     </changeSet>
 
+    <changeSet id="deployment_releases" author="vdjurovic" dbms="postgresql">
+        <createTable tableName="app_deployment">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" />
+            </column>
+            <column name="app_id" type="VARCHAR" />
+            <column name="release_number" type="VARCHAR" />
+            <column name="release_time" type="timestamp with timezone" />
+        </createTable>
+        <addForeignKeyConstraint baseTableName="app_deployment" baseColumnNames="app_id" constraintName="app_id_fkey"
+                                 referencedTableName="application"
+                                 referencedColumnNames="app_id" />
+    </changeSet>
+
 </databaseChangeLog>

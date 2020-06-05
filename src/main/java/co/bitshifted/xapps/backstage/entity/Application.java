@@ -15,6 +15,8 @@ import org.hibernate.annotations.GenericGenerator;
 import org.modelmapper.ModelMapper;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Vladimir Djurovic
@@ -39,6 +41,9 @@ public class Application {
 
 	@Column(name = "app_img_hash")
 	private String appImageHash;
+
+	@OneToMany(mappedBy = "application")
+	private Set<AppDeployment> deployments = new HashSet<>();
 
 	public ApplicationDTO convertToDto() {
 		return mapper.map(this, ApplicationDTO.class);

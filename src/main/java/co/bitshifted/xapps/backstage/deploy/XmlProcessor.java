@@ -23,7 +23,6 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Path;
@@ -125,6 +124,7 @@ public class XmlProcessor {
 
 	private LauncherConfig createLauncherConfig(XPath xpath) throws XPathExpressionException {
 		var launcherConfig = new LauncherConfig();
+		launcherConfig.setVersion(attributeValueAsString(xpath, "//application/@version"));
 		var jvmConfig = new JvmConfig();
 		jvmConfig.setMainClass(nodeValueAsString(xpath, "//jvm/main-class"));
 		jvmConfig.setModule(nodeValueAsString(xpath, "//jvm/module-name"));

@@ -35,14 +35,14 @@ public class FileSystemContentStorage implements ContentStorage {
 
 	@Autowired
 	private ContentMapping contentMapping;
-	private final SimpleDateFormat BUILD_NUMBER_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS");
+	private final SimpleDateFormat RELEASE_NUMBER_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS");
 
 	@Override
 	public URI uploadDeploymentPackage(InputStream in, String applicationId) throws ContentException {
 		var workspacePath = Path.of(contentMapping.getWorkspaceUri());
 		var buildTimestamp = ZonedDateTime.now(BackstageConstants.UTC_ZONE_ID);
 		var workDirectoryPath = workspacePath.resolve(applicationId + "_" +
-				BUILD_NUMBER_FORMAT.format(Date.from(buildTimestamp.toInstant())));
+				RELEASE_NUMBER_FORMAT.format(Date.from(buildTimestamp.toInstant())));
 		log.debug("Working directory: {}", workDirectoryPath.toAbsolutePath().toString());
 
 		var deploymentArchivePath = workDirectoryPath.resolve("package.zip");

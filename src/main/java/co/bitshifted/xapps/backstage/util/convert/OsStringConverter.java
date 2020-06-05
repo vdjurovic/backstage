@@ -6,15 +6,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package co.bitshifted.xapps.backstage.deploy;
+package co.bitshifted.xapps.backstage.util.convert;
 
-import lombok.Data;
+import co.bitshifted.xapps.backstage.model.OS;
+import org.springframework.core.convert.converter.Converter;
 
 /**
  * @author Vladimir Djurovic
  */
-@Data
-public class FileInfo {
-	private final String fileName;
-	private final String path;
+public class OsStringConverter implements Converter<String, OS> {
+	@Override
+	public OS convert(String s) {
+		return OS.fromShortString(s);
+	}
 }

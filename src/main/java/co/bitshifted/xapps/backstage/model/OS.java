@@ -28,4 +28,17 @@ public enum OS {
 	public String getBrief() {
 		return brief;
 	}
+
+	public static OS fromShortString(String source) {
+		switch (source){
+			case "win":
+				return OS.WINDOWS;
+			case "mac":
+				return OS.MAC_OS_X;
+			case "linux":
+				return OS.LINUX;
+			default:
+				throw new IllegalArgumentException("Invalid argument for OS type");
+		}
+	}
 }
