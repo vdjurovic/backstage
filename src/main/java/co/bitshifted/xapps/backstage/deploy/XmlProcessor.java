@@ -38,13 +38,19 @@ public class XmlProcessor {
 
 	private Document xmlDocument;
 	private XPathFactory xpathFactory;
+	private final String releaseNumber;
 
 
-	public XmlProcessor(Path documentPath) throws ParserConfigurationException, SAXException, IOException {
+	public XmlProcessor(Path documentPath, String releaseNumber) throws ParserConfigurationException, SAXException, IOException {
 		var docBuilderFactory = DocumentBuilderFactory.newInstance();
 		var builder = docBuilderFactory.newDocumentBuilder();
 		xmlDocument = builder.parse(documentPath.toString());
 		xpathFactory = XPathFactory.newInstance();
+		this.releaseNumber = releaseNumber;
+	}
+
+	public XmlProcessor(Path documentPath) throws ParserConfigurationException, SAXException, IOException {
+		this(documentPath, null);
 	}
 
 	public String createLauncherConfigXml(LauncherConfig launcherConfig) throws JAXBException {
@@ -67,21 +73,20 @@ public class XmlProcessor {
 	}
 
 	public DeploymentConfig getDeploymentConfig() throws XPathExpressionException {
-		var deploymentConfig = new DeploymentConfig();
+		var deploymentConfigBuilder = DeploymentConfig.builder();
 		var xpath = xpathFactory.newXPath();
-		deploymentConfig.setAppId(applicationId(xpath));
-		deploymentConfig.setAppName(applicationName(xpath));
-		deploymentConfig.setAppVersion(attributeValueAsString(xpath, "//application/@version"));
-		deploymentConfig.setIcons(icons(xpath));
-		deploymentConfig.setSplashScreen(new FileInfo(
-				attributeValueAsString(xpath, "//jvm/splash-screen/@file-name"),
-				attributeValueAsString(xpath, "//jvm/splash-screen/@path")));
-		deploymentConfig.setJdkProvider(jdkProvider(xpath));
-		deploymentConfig.setJvmImplementation(jvmImplementation(xpath));
-		deploymentConfig.setJdkVersion(jdkVersion(xpath));
-		deploymentConfig.setLauncherConfig(createLauncherConfig(xpath));
-
-		return deploymentConfig;
+		deploymentConfigBuilder.appId(applicationId(xpath))
+				.appName(applicationName(xpath))
+				.appVersion(attributeValueAsString(xpath, "//application/@version"))
+				.icons(icons(xpath))
+				.splashScreen(new FileInfo(
+						attributeValueAsString(xpath, "//jvm/splash-screen/@file-name"),
+						attributeValueAsString(xpath, "//jvm/splash-screen/@path")))
+				.jdkProvider(jdkProvider(xpath))
+				.jvmImplementation(jvmImplementation(xpath))
+				.jdkVersion(jdkVersion(xpath))
+				.launcherConfig(createLauncherConfig(xpath));
+		return deploymentConfigBuilder.build();
 	}
 
 	private String applicationId(XPath xpath) throws XPathExpressionException {
@@ -125,6 +130,7 @@ public class XmlProcessor {
 	private LauncherConfig createLauncherConfig(XPath xpath) throws XPathExpressionException {
 		var launcherConfig = new LauncherConfig();
 		launcherConfig.setVersion(attributeValueAsString(xpath, "//application/@version"));
+		launcherConfig.setReleaseNumber(releaseNumber);
 		var jvmConfig = new JvmConfig();
 		jvmConfig.setMainClass(nodeValueAsString(xpath, "//jvm/main-class"));
 		jvmConfig.setModule(nodeValueAsString(xpath, "//jvm/module-name"));

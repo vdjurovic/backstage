@@ -15,6 +15,7 @@ import co.bitshifted.xapps.backstage.repository.AppDeploymentStatusRepository;
 import co.bitshifted.xapps.backstage.repository.ApplicationRepository;
 import co.bitshifted.xapps.backstage.deploy.DeploymentProcessTask;
 import co.bitshifted.xapps.backstage.service.DeploymentService;
+import co.bitshifted.xapps.backstage.util.DeploymentExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,8 +36,8 @@ import java.util.function.Function;
 @Slf4j
 public class BasicDeploymentService implements DeploymentService {
 
-	private ExecutorService executorService;
-
+	@Autowired
+	private DeploymentExecutorService executorService;
 	@Autowired
 	private Function<File, DeploymentProcessTask> deploymentTaskFactory;
 	@Autowired
@@ -44,17 +45,16 @@ public class BasicDeploymentService implements DeploymentService {
 	@Autowired
 	private AppDeploymentStatusRepository deploymentStatusRepository;
 
-	@PostConstruct
-	public void init() {
-		executorService = Executors.newCachedThreadPool();
-	}
-
 
 	@Override
 	public void processContent(Path deploymentPath, String appId) throws DeploymentException {
 		Application app = appRepository.findById(appId).get();
+		var deploymentId = deploymentPath.getParent().toFile().getName();
+		var status = new AppDeploymentStatus(deploymentId, app);
+		deploymentStatusRepository.save(status);
+		log.debug("Created deployment ID {}", deploymentId);
 		DeploymentProcessTask task = deploymentTaskFactory.apply(deploymentPath.toFile());
-		task.init(app);
+		task.init(deploymentId);
 		executorService.submit(task);
 		log.info("Deployment task submitted. Deployment archive: {}", deploymentPath.getFileName().toString());
 	}

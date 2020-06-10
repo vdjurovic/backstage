@@ -11,7 +11,10 @@ package co.bitshifted.xapps.backstage;
 
 import co.bitshifted.xapps.backstage.deploy.DeploymentConfig;
 import co.bitshifted.xapps.backstage.deploy.DeploymentProcessTask;
-import co.bitshifted.xapps.backstage.deploy.MacDeploymentBuilder;
+import co.bitshifted.xapps.backstage.deploy.TargetDeploymentInfo;
+import co.bitshifted.xapps.backstage.deploy.builders.MacDeploymentBuilder;
+import co.bitshifted.xapps.backstage.deploy.builders.DeploymentBuilder;
+import co.bitshifted.xapps.backstage.deploy.builders.WindowsDeploymentBuilder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -41,14 +44,21 @@ public class BackstageApplication {
 	}
 
 	@Bean
-	public Function<DeploymentConfig, MacDeploymentBuilder> macDeploymentBuilderFactory() {
-		return source -> macDeploymentBuilder(source);
+	public Function<TargetDeploymentInfo, DeploymentBuilder> deploymentBuilderFactory() {
+		return source -> deploymentBuilder(source);
 	}
 
 	@Bean
 	@Scope("prototype")
-	public MacDeploymentBuilder macDeploymentBuilder(DeploymentConfig config){
-		return new MacDeploymentBuilder(config);
+	public DeploymentBuilder deploymentBuilder(TargetDeploymentInfo deploymentInfo){
+		switch (deploymentInfo.getTargetOs()){
+			case MAC_OS_X:
+				return new MacDeploymentBuilder(deploymentInfo);
+			case WINDOWS:
+			case LINUX:
+				return new WindowsDeploymentBuilder(deploymentInfo);
+		}
+		throw new IllegalArgumentException("Unsupported target operating system");
 	}
 
 }

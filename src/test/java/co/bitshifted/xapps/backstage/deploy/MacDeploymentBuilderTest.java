@@ -9,6 +9,7 @@
 package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshifted.xapps.backstage.content.ContentMapping;
+import co.bitshifted.xapps.backstage.deploy.builders.MacDeploymentBuilder;
 import co.bitshifted.xapps.backstage.model.*;
 import co.bitshifted.xapps.backstage.test.TestConfig;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
@@ -43,7 +44,7 @@ public class MacDeploymentBuilderTest {
 	@Autowired
 	private ContentMapping contentMapping;
 	@Autowired
-	private Function<DeploymentConfig, MacDeploymentBuilder> macDeploymentBuilderFactory;
+	private Function<TargetDeploymentInfo, MacDeploymentBuilder> macDeploymentBuilderFactory;
 
 	private Path deploymentWorkDir;
 	private Path deploymentPackageDir;
@@ -66,31 +67,37 @@ public class MacDeploymentBuilderTest {
 		var launcherTarget = Path.of(contentMapping.getLauncherStorageUri()).resolve("launchcode-mac-x64");
 		Files.copy(dummyLauncherPath, launcherTarget, StandardCopyOption.REPLACE_EXISTING);
 
-		deploymentConfig = new DeploymentConfig();
-		deploymentConfig.setAppName("TestApp");
-		deploymentConfig.setAppId("appid");
-		deploymentConfig.setAppVersion("1.0.0");
-		deploymentConfig.setIcons(List.of(
-				new FileInfo("icon1.png","data/icons/icon1.png"),
-				new FileInfo("winicon.ico","data/icons/winicon.ico"),
-				new FileInfo("maicon.icns", "data/icons/maicon.icns")));
-		deploymentConfig.setSplashScreen(new FileInfo("splash.png", "data/splash.png"));
-		deploymentConfig.setDeploymentPackageDir(deploymentPackageDir);
-		deploymentConfig.setJdkProvider(JdkProvider.OPENJDK);
-		deploymentConfig.setJvmImplementation(JvmImplementation.HOTSPOT);
-		deploymentConfig.setJdkVersion(JdkVersion.JDK_11);
-		deploymentConfig.setOs(OS.LINUX);
-		deploymentConfig.setCpuArch(CpuArch.X_64);
-
 		var launcherConfig = new LauncherConfig();
 		launcherConfig.setVersion("1.0.0");
 		var jvm = new JvmConfig();
 		jvm.setMainClass("my.MainClass");
 		jvm.setJvmDir("/some/jvm/dir");
 		launcherConfig.setJvm(jvm);
-		deploymentConfig.setLauncherConfig(launcherConfig);
 
-		deploymentBuilder = macDeploymentBuilderFactory.apply(deploymentConfig);
+		var configBuilder = DeploymentConfig.builder();
+		configBuilder.appName("TestApp")
+				.appId("appId")
+				.appVersion("1.0.0")
+				.icons(List.of(
+						new FileInfo("icon1.png","data/icons/icon1.png"),
+						new FileInfo("winicon.ico","data/icons/winicon.ico"),
+						new FileInfo("maicon.icns", "data/icons/maicon.icns")))
+				.splashScreen(new FileInfo("splash.png", "data/splash.png"))
+				.jdkProvider(JdkProvider.OPENJDK)
+				.jvmImplementation(JvmImplementation.HOTSPOT)
+				.jdkVersion(JdkVersion.JDK_11)
+		.launcherConfig(launcherConfig);
+		deploymentConfig = configBuilder.build();
+
+		var targetDeploymentInfo = TargetDeploymentInfo.builder()
+				.deploymentConfig(deploymentConfig)
+				.deploymentPackageDir(deploymentPackageDir)
+				.targetOs(OS.MAC_OS_X)
+				.targetCpuArch(CpuArch.X_64)
+				.build();
+
+
+		deploymentBuilder = macDeploymentBuilderFactory.apply(targetDeploymentInfo);
 		// create link to system JDK
 		var javaHome = System.getProperty("java.home");
 		var jdkStorageDirPath = Path.of(contentMapping.getJdkStorageUri());
