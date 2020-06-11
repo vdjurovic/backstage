@@ -97,6 +97,7 @@ public class DeploymentProcessTask implements Runnable {
 					.build();
 			var win64deploymentBuilder = deploymentBuilderFactory.apply(win64DeploymentInfo);
 			win64deploymentBuilder.createDeployment();
+			saveDeployment(deploymentConfig.getAppId());
 		} catch(Exception ex) {
 			log.error("Failed to create deployment package", ex);
 			throw new RuntimeException(ex);
@@ -110,6 +111,15 @@ public class DeploymentProcessTask implements Runnable {
 
 	public String getDeploymentId() {
 		return deploymentId;
+	}
+
+	private void saveDeployment(String applicationId) {
+		var app = applicationRepository.findById(applicationId).get();
+		var deployment = new AppDeployment();
+		deployment.setApplication(app);
+		deployment.setReleaseTime(ZonedDateTime.now(BackstageConstants.UTC_ZONE_ID));
+		deployment.setReleaseNumber(BackstageFunctions.getReleaseNumberFromDeploymentDir(deploymentWorkDir.toFile()));
+		appDeploymentRepository.save(deployment);
 	}
 
 }

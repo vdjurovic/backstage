@@ -36,8 +36,8 @@ public class DeploymentConfig {
 		return appName + ".app";
 	}
 
-	public List<FileInfo> findMacIcons() {
-		return icons.stream().filter(ic -> ic.getFileName().endsWith(".icns")).collect(Collectors.toList());
+	public List<FileInfo> findIcons(String extension) {
+		return icons.stream().filter(ic -> ic.getFileName().endsWith(extension)).collect(Collectors.toList());
 	}
 
 	public String getExecutableFileName() {

@@ -46,6 +46,7 @@ import static co.bitshifted.xapps.backstage.BackstageConstants.*;
 @Slf4j
 public class WindowsDeploymentBuilder extends DeploymentBuilder {
 
+
 	@Autowired
 	private ContentMapping contentMapping;
 	@Value("${update.server.baseurl}")
@@ -62,8 +63,10 @@ public class WindowsDeploymentBuilder extends DeploymentBuilder {
 			var buildDirectory = deploymentWorkDir.resolve(dirName);
 			Files.createDirectory(buildDirectory);
 			logger().debug("Created Windows build directory {}", buildDirectory);
-			return buildDirectory;
-		} catch(IOException ex) {
+			var appDirPath = buildDirectory.resolve(config.getAppName());
+			Files.createDirectory(appDirPath);
+			return appDirPath;
+		} catch (IOException ex) {
 			log.error("Failed to create build directory");
 			throw new DeploymentException(ex);
 		}
@@ -71,82 +74,50 @@ public class WindowsDeploymentBuilder extends DeploymentBuilder {
 	}
 
 	@Override
-	protected void copyIcons(Path targetDir) {
-
-	}
-
-	@Override
 	public void createDeployment() throws DeploymentException {
 		try {
 			// create windows build directory
-			var buildDir = prepareDirectoryStructure();
+			var appDirPath = prepareDirectoryStructure();
 			// add modules for updates
 			copySyncroModules();
-//			// create skeleton for app bundle
-//			var templateUri = getClass().getResource(APP_BUNDLE_TEMPLATE).toURI();
-//			var appBundleArchive = macBuildDir.resolve(APP_BUNDLE_ARCHIVE_NAME);
-//			Files.copy(Path.of(templateUri), appBundleArchive, StandardCopyOption.REPLACE_EXISTING);
-//			var appBundlePath = PackageUtil.unpackZipArchive(appBundleArchive, config.macAppBundleName());
-//			log.debug("Extracted app bundle archive to {}", appBundlePath.toString());
-//			// add modules for updates
-//			copySyncroModules();
-//			// create JRE image
-//			var moduleNames = toolsRunner.getApplicationModules(deploymentPackageDir);
-//			var targetJdkDir = Path.of(contentMapping.getJdkLocation(config.getJdkProvider(), config.getJvmImplementation(), config.getJdkVersion(), config.getOs(), config.getCpuArch()));
-//			var jdkModulesDir = targetJdkDir.resolve(JDK_JMODS_DIR_NAME);
-//			var modulesPath = List.of(jdkModulesDir, deploymentPackageDir.resolve(DEPLOY_PKG_MODULES_DIR_NAME));
-//			toolsRunner.createRuntimeImage(moduleNames, modulesPath, appBundlePath.resolve(APP_BUNDLE_JRE_DIR));
-//			// copy icon to resources
-//			config.findMacIcons().stream().map(ic -> deploymentPackageDir.resolve(ic.getPath())).forEach(ic -> {
-//				try {
-//					FileUtils.copyToDirectory(ic.toFile(), appBundlePath.resolve(APP_BUNDLE_RESOURCES_DIR).toFile());
-//				} catch(IOException ex) {
-//					log.error("Failed to copy icon {}", ic.toFile().getName());
-//				}
-//			});
-//			copySplashScreen(deploymentPackageDir, appBundlePath.resolve(APP_BUNDLE_MACOS_DIR));
-//			// copy launcher
-//			var launcherFile = Path.of(contentMapping.getLauncherStorageUri()).resolve(LAUNCHER_FILE_NAME_MAC);
-//			var launcherTarget = appBundlePath.resolve(APP_BUNDLE_MACOS_DIR).resolve(config.getExecutableFileName());
-//			Files.copy(launcherFile, launcherTarget, StandardCopyOption.REPLACE_EXISTING);
-//			var permissions = Set.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-//					PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
-//					PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE);
-//			Files.setPosixFilePermissions(launcherTarget, permissions);
-//			// create launcher configuration
-//			createLauncherConfig(appBundlePath.resolve(APP_BUNDLE_MACOS_DIR));
-//			createInfoPlist(appBundlePath.resolve("Contents"), config);
-			// create update package
-//			var updatePkgPath = createUpdatePackage(appBundlePath.resolve("Contents"));
-//			log.debug("Update package path: {}", updatePkgPath.toString());
-//			prepareForDownload(updatePkgPath);
-		} catch(Exception ex) {
+			createJreImage(appDirPath.resolve("jre"));
+			copyIcons(appDirPath);
+			copySplashScreen(appDirPath);
+			copyLauncher(LAUNCHER_FILE_NAME_WIN_64, appDirPath);
+			// create launcher configuration
+			writeLauncherConfig(appDirPath);
+			var updatePkgPath = createUpdatePackage(appDirPath);
+			log.debug("Update package path: {}", updatePkgPath.toString());
+			prepareForDownload(updatePkgPath);
+		} catch (Exception ex) {
 			log.error("Failed to create deployment", ex);
 			throw new DeploymentException(ex);
 		}
 
 	}
 
-
-
-	protected Path createUpdatePackage(Path bundleContentsDir) throws DeploymentException {
-		return null;
-//		var updateDir = macBuildDir().resolve("update");
-//		Files.createDirectories(updateDir);
-//		log.debug("Created update directory {}", updateDir.toString());
-//		var jreModules = bundleContentsDir.resolve("MacOS/jre/lib/modules");
-//		var moved = updateDir.resolve("modules");
-//		Files.move(jreModules, moved);
-//		var updatePath =  PackageUtil.packZipDeterministic(bundleContentsDir);
-//		// update package contents
-//		var updateContents = updateDir.resolve("contents.zip");
-//		Files.move(updatePath, updateContents);
-//		log.debug("Created contents update package at {}", updateContents.toString());
-//		// compress modules file
-//		var updateModules = PackageUtil.zipSingleFile(moved);
-//		log.debug("Created update modules file {}", updateModules.toString());
-//		Files.move(moved, jreModules);
-//		return updateDir;
+	@Override
+	protected Path createUpdatePackage(Path appDir) throws DeploymentException {
+		try {
+			var updateDir = appDir.getParent().resolve("update");
+			Files.createDirectories(updateDir);
+			log.debug("Created update directory {}", updateDir.toString());
+			var jreModules = appDir.resolve("jre/lib/modules");
+			var moved = updateDir.resolve("modules");
+			Files.move(jreModules, moved);
+			var updatePath = PackageUtil.packZipDeterministic(appDir);
+			// update package contents
+			var updateContents = updateDir.resolve("contents.zip");
+			Files.move(updatePath, updateContents);
+			log.debug("Created contents update package at {}", updateContents.toString());
+			// compress modules file
+			var updateModules = PackageUtil.zipSingleFile(moved);
+			log.debug("Created update modules file {}", updateModules.toString());
+			Files.move(moved, jreModules);
+			return updateDir;
+		} catch (IOException ex) {
+			throw new DeploymentException(ex);
+		}
 	}
 
 	@Override

@@ -106,7 +106,11 @@ public abstract class DeploymentBuilder {
 	protected void copyLauncher(String launcherName, Path targetDir) throws DeploymentException {
 		try {
 			var launcherFile = Path.of(contentMapping.getLauncherStorageUri()).resolve(launcherName);
-			var launcherTarget = targetDir.resolve(config.getExecutableFileName());
+			var sb = new StringBuilder(config.getExecutableFileName());
+			if(targetOs == OS.WINDOWS) {
+				sb.append(".exe");
+			}
+			var launcherTarget = targetDir.resolve(sb.toString());
 			Files.copy(launcherFile, launcherTarget, StandardCopyOption.REPLACE_EXISTING);
 			var permissions = Set.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
 					PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
@@ -183,7 +187,16 @@ public abstract class DeploymentBuilder {
 		writeUpdateInfoFile(targetUpdatePath);
 	}
 
-	protected abstract void copyIcons(Path targetDir);
+	protected void copyIcons(Path targetDir) {
+		config.findIcons(getIconExtensionForOs()).stream().map(ic -> deploymentPackageDir.resolve(ic.getPath())).forEach(ic -> {
+			try {
+				FileUtils.copyToDirectory(ic.toFile(), targetDir.toFile());
+			} catch(IOException ex) {
+				logger().error("Failed to copy icon {}", ic.toFile().getName());
+
+			}
+		});
+	}
 
 	protected abstract Path prepareDirectoryStructure() throws DeploymentException;
 
@@ -192,4 +205,16 @@ public abstract class DeploymentBuilder {
 	protected abstract Logger logger();
 
 	public abstract void createDeployment() throws DeploymentException;
+
+	private String getIconExtensionForOs() {
+		switch (targetOs) {
+			case MAC_OS_X:
+				return "icns";
+			case WINDOWS:
+				return ".ico";
+			case LINUX:
+				return ".png";
+		}
+		throw new IllegalArgumentException("Unknown operating system");
+	}
 }

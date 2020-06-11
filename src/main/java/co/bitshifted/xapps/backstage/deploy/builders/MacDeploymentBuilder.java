@@ -61,18 +61,6 @@ public class MacDeploymentBuilder extends DeploymentBuilder {
 	}
 
 	@Override
-	protected void copyIcons(Path targetDir) {
-		config.findMacIcons().stream().map(ic -> deploymentPackageDir.resolve(ic.getPath())).forEach(ic -> {
-			try {
-				FileUtils.copyToDirectory(ic.toFile(), targetDir.toFile());
-			} catch(IOException ex) {
-				log.error("Failed to copy icon {}", ic.toFile().getName());
-
-			}
-		});
-	}
-
-	@Override
 	public void createDeployment() throws DeploymentException {
 		try {
 			var appBundlePath = prepareDirectoryStructure();
@@ -108,7 +96,7 @@ public class MacDeploymentBuilder extends DeploymentBuilder {
 		var contents = Files.readString(infoPlist);
 		var replaced = contents.replace("${app.name}", config.getAppName())
 				.replace("${app.executable}", config.getExecutableFileName())
-				.replace("${app.icon}", config.findMacIcons().get(0).getFileName())
+				.replace("${app.icon}", config.findIcons(".icns").get(0).getFileName())
 				.replace("${app.id}", config.getAppId())
 				.replace("${bundle.fqdn}", config.getAppId())
 				.replace("${app.version}", config.getAppVersion());
