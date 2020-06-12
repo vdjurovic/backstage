@@ -10,9 +10,7 @@ package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshifted.xapps.backstage.BackstageConstants;
 import co.bitshifted.xapps.backstage.model.*;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Setter;
+import lombok.*;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -21,35 +19,25 @@ import java.util.stream.Collectors;
 /**
  * @author Vladimir Djurovic
  */
-@Data
+@Getter
+@Builder
 public class DeploymentConfig {
-	private String appId;
-	private String appName;
-	private String appVersion;
-	private List<FileInfo> icons;
-	private FileInfo splashScreen;
-	private Path deploymentPackageDir;
-	@Setter(AccessLevel.NONE)
-	private Path igniteConfigFile;
-	private JdkProvider jdkProvider;
-	private JvmImplementation jvmImplementation;
-	private JdkVersion jdkVersion;
-	private OS os;
-	private CpuArch cpuArch;
-	private LauncherConfig launcherConfig;
-
-	public void setDeploymentPackageDir(Path path) {
-		this.deploymentPackageDir = path;
-		igniteConfigFile = this.deploymentPackageDir.resolve(BackstageConstants.IGNITE_CONFIG_FILE_NAME);
-	}
-
+	private final String appId;
+	private final String appName;
+	private final String appVersion;
+	private final List<FileInfo> icons;
+	private final FileInfo splashScreen;
+	private final JdkProvider jdkProvider;
+	private final JvmImplementation jvmImplementation;
+	private final JdkVersion jdkVersion;
+	private final LauncherConfig launcherConfig;
 
 	public String macAppBundleName() {
 		return appName + ".app";
 	}
 
-	public List<FileInfo> findMacIcons() {
-		return icons.stream().filter(ic -> ic.getFileName().endsWith(".icns")).collect(Collectors.toList());
+	public List<FileInfo> findIcons(String extension) {
+		return icons.stream().filter(ic -> ic.getFileName().endsWith(extension)).collect(Collectors.toList());
 	}
 
 	public String getExecutableFileName() {

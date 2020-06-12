@@ -67,6 +67,7 @@ public final class BackstageConstants {
 	public static final String LAUNCHER_CONFIG_FILE_NAME = "application.xml";
 
 	public static final String LAUNCHER_FILE_NAME_MAC = "launchcode-mac-x64";
+	public static final String LAUNCHER_FILE_NAME_WIN_64 = "launchcode-windows-x64";
 
 	/**
 	 * Comment to set on executable files when they are added to .zip archives.

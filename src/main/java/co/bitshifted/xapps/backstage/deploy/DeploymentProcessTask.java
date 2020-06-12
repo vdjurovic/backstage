@@ -9,16 +9,20 @@
 package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshifted.xapps.backstage.BackstageConstants;
+import co.bitshifted.xapps.backstage.deploy.builders.DeploymentBuilder;
 import co.bitshifted.xapps.backstage.entity.AppDeployment;
 import co.bitshifted.xapps.backstage.entity.AppDeploymentStatus;
 import co.bitshifted.xapps.backstage.entity.Application;
+import co.bitshifted.xapps.backstage.model.CpuArch;
 import co.bitshifted.xapps.backstage.model.DeploymentStatus;
 import co.bitshifted.xapps.backstage.exception.DeploymentException;
+import co.bitshifted.xapps.backstage.model.OS;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentRepository;
 import co.bitshifted.xapps.backstage.repository.AppDeploymentStatusRepository;
 import co.bitshifted.xapps.backstage.repository.ApplicationRepository;
 import co.bitshifted.xapps.backstage.util.BackstageFunctions;
 import co.bitshifted.xapps.backstage.util.PackageUtil;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.SAXException;
@@ -35,18 +39,25 @@ import java.util.function.Function;
  * @author Vladimir Djurovic
  */
 @Slf4j
+@EqualsAndHashCode
 public class DeploymentProcessTask implements Runnable {
 
+	@EqualsAndHashCode.Include
 	private final Path deploymentArchive;
+	@EqualsAndHashCode.Include
 	private final Path deploymentWorkDir;
-	private AppDeploymentStatus status;
+	@EqualsAndHashCode.Include
+	private String deploymentId;
 
+	@EqualsAndHashCode.Exclude
 	@Autowired
-	private AppDeploymentStatusRepository deploymentStatusRepo;
-	@Autowired
-	private Function<DeploymentConfig, MacDeploymentBuilder> macDeploymentBuilderFactory;
+	private Function<TargetDeploymentInfo, DeploymentBuilder> deploymentBuilderFactory;
+
+	@EqualsAndHashCode.Exclude
 	@Autowired
 	private ApplicationRepository applicationRepository;
+
+	@EqualsAndHashCode.Exclude
 	@Autowired
 	private AppDeploymentRepository appDeploymentRepository;
 
@@ -58,33 +69,48 @@ public class DeploymentProcessTask implements Runnable {
 	@Override
 	public void run() {
 		log.info("Start processing deployment archive {}", deploymentArchive.toFile().getName());
-		status.setCurrentStatus(DeploymentStatus.IN_PROGRESS);
-		deploymentStatusRepo.save(status);
 		log.debug("Setting deployment task status to {}", DeploymentStatus.IN_PROGRESS);
 
 		try{
 			var deploymentPackageDir = PackageUtil.unpackZipArchive(deploymentArchive);
 			// create deployment configuration
 			var igniteConfigPath = deploymentPackageDir.resolve(BackstageConstants.IGNITE_CONFIG_FILE_NAME);
-			var xmlProcessor = new XmlProcessor(igniteConfigPath);
+			var releaseNumber = BackstageFunctions.getReleaseNumberFromDeploymentDir(deploymentWorkDir.toFile());
+			var xmlProcessor = new XmlProcessor(igniteConfigPath, releaseNumber);
 			var deploymentConfig = xmlProcessor.getDeploymentConfig();
-			deploymentConfig.setDeploymentPackageDir(deploymentPackageDir);
-			var deploymentBuilder = macDeploymentBuilderFactory.apply(deploymentConfig);
-			deploymentBuilder.createDeployment();
-			status.setCurrentStatus(DeploymentStatus.SUCCESS);
-			status.setDetails("Deployment completed successfully");
+			// run Mac deployment
+			var macDeploymentInfo = TargetDeploymentInfo.builder().deploymentConfig(deploymentConfig)
+					.deploymentPackageDir(deploymentPackageDir)
+					.targetOs(OS.MAC_OS_X)
+					.targetCpuArch(CpuArch.X_64)
+					.xmlProcessor(xmlProcessor)
+					.build();
+			var macDeploymentBuilder = deploymentBuilderFactory.apply(macDeploymentInfo);
+			macDeploymentBuilder.createDeployment();
+			// run Windows deployment
+			var win64DeploymentInfo = TargetDeploymentInfo.builder()
+					.deploymentConfig(deploymentConfig)
+					.deploymentPackageDir(deploymentPackageDir)
+					.targetOs(OS.WINDOWS)
+					.targetCpuArch(CpuArch.X_64)
+					.xmlProcessor(xmlProcessor)
+					.build();
+			var win64deploymentBuilder = deploymentBuilderFactory.apply(win64DeploymentInfo);
+			win64deploymentBuilder.createDeployment();
 			saveDeployment(deploymentConfig.getAppId());
-		} catch(IOException | DeploymentException | ParserConfigurationException | SAXException | XPathExpressionException ex) {
+		} catch(Exception ex) {
 			log.error("Failed to create deployment package", ex);
-			status.setCurrentStatus(DeploymentStatus.FAILED);
+			throw new RuntimeException(ex);
 		}
-		deploymentStatusRepo.save(status);
 	}
 
-	public void init(Application app) {
-		log.debug("Initializing deployment task with app id {}", app.getId());
-		status = deploymentStatusRepo.save(new AppDeploymentStatus(deploymentArchive.getParent().toFile().getName(), app));
+	public void init(String deploymentId) {
+		this.deploymentId = deploymentId;
 		log.info("Initialized deployment task {}", deploymentArchive.getParent().toFile().getName());
+	}
+
+	public String getDeploymentId() {
+		return deploymentId;
 	}
 
 	private void saveDeployment(String applicationId) {

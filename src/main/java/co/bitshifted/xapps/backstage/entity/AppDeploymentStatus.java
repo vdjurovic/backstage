@@ -11,6 +11,7 @@ package co.bitshifted.xapps.backstage.entity;
 import co.bitshifted.xapps.backstage.dto.DeploymentStatusDTO;
 import co.bitshifted.xapps.backstage.model.DeploymentStatus;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
 
 import javax.persistence.*;
@@ -21,6 +22,7 @@ import java.time.ZonedDateTime;
  */
 @Entity(name = "app_deployment_status")
 @Data
+@NoArgsConstructor
 public class AppDeploymentStatus {
 
 	@Transient
@@ -38,11 +40,7 @@ public class AppDeploymentStatus {
 	private DeploymentStatus currentStatus;
 	private String details;
 
-	public AppDeploymentStatus() {
-
-	}
-
-	public AppDeploymentStatus(String id, Application application) {
+	public  AppDeploymentStatus(String id, Application application) {
 		this.id = id;
 		this.application = application;
 		this.currentStatus = DeploymentStatus.ACCEPTED;

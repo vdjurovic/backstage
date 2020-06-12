@@ -12,6 +12,7 @@ import co.bitshifted.xapps.backstage.util.PackageUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -48,6 +49,7 @@ public class ToolsRunnerTest {
 	}
 
 	@Test
+	@Ignore
 	public void getListOfAppModules() throws Exception {
 		var runner = new ToolsRunner();
 		runner.init();
@@ -57,6 +59,7 @@ public class ToolsRunnerTest {
 	}
 
 	@Test
+	@Ignore
 	public void createRuntimeImageTest() throws Exception {
 		var runner = new ToolsRunner();
 		runner.init();
