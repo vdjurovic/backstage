@@ -9,6 +9,7 @@
 package co.bitshifted.xapps.backstage.deploy;
 
 import co.bitshifted.xapps.backstage.content.ContentMapping;
+import co.bitshifted.xapps.backstage.deploy.builders.DeploymentBuilder;
 import co.bitshifted.xapps.backstage.deploy.builders.MacDeploymentBuilder;
 import co.bitshifted.xapps.backstage.model.*;
 import co.bitshifted.xapps.backstage.test.TestConfig;
@@ -16,6 +17,7 @@ import co.bitshifted.xapps.backstage.util.PackageUtil;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,11 +46,11 @@ public class MacDeploymentBuilderTest {
 	@Autowired
 	private ContentMapping contentMapping;
 	@Autowired
-	private Function<TargetDeploymentInfo, MacDeploymentBuilder> macDeploymentBuilderFactory;
+	private Function<TargetDeploymentInfo, DeploymentBuilder> deploymentBuilderFactory;
 
 	private Path deploymentWorkDir;
 	private Path deploymentPackageDir;
-	private MacDeploymentBuilder deploymentBuilder;
+	private DeploymentBuilder deploymentBuilder;
 	private DeploymentConfig deploymentConfig;
 	private Path jdkLinkPath;
 
@@ -97,7 +99,7 @@ public class MacDeploymentBuilderTest {
 				.build();
 
 
-		deploymentBuilder = macDeploymentBuilderFactory.apply(targetDeploymentInfo);
+		deploymentBuilder = deploymentBuilderFactory.apply(targetDeploymentInfo);
 		// create link to system JDK
 		var javaHome = System.getProperty("java.home");
 		var jdkStorageDirPath = Path.of(contentMapping.getJdkStorageUri());
@@ -113,6 +115,7 @@ public class MacDeploymentBuilderTest {
 
 
 	@Test
+	@Ignore
 	public void testMacDeploymentBuild() throws Exception {
 		var request = mock(HttpServletRequest.class);
 		when(request.getScheme()).thenReturn("http");
