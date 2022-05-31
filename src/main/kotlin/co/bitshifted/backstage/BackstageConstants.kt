@@ -10,12 +10,12 @@
 
 package co.bitshifted.backstage
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
+import java.time.ZoneId
 
-@SpringBootApplication
-class BackstageApplication
+object BackstageConstants {
 
-fun main(args: Array<String>) {
-	runApplication<BackstageApplication>(*args)
+    /**
+     * UTC timezone ID.
+     */
+     val UTC_TIME_ZONE = ZoneId.of("UTC")
 }
