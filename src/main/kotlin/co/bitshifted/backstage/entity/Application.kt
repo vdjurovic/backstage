@@ -14,15 +14,18 @@ import co.bitshifted.backstage.util.GENERATOR_STRATEGY_NAME
 import org.hibernate.annotations.GenericGenerator
 import javax.persistence.*
 
-@Entity(name = "appliction")
+@Entity(name = "application")
 @Table(name = "application")
 class Application (
     @Id
     @GenericGenerator(name = "id_generator", strategy = GENERATOR_STRATEGY_NAME)
     @GeneratedValue(generator = "id_generator")
     @Column(name = "app_id")
-    var id : String,
+    var id : String?,
     @Column(name = "app_name")
-    var name : String
+    var name : String,
+    var headline : String?,
+    @Column(name = "app_description")
+    var description : String?
         ) {
 }

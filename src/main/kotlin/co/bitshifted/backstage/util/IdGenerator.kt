@@ -37,7 +37,7 @@ class IdGenerator : IdentifierGenerator {
     /**
      * Minimum length for hashes.
      */
-    private val MIN_HASH_LENGTH = 10
+    private val MIN_HASH_LENGTH = 8
 
     private val RANDOM_BOUND = 100000L
 
