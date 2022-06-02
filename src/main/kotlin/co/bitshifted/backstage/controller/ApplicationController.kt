@@ -14,6 +14,10 @@ import co.bitshifted.backstage.dto.ApplicationDTO
 import co.bitshifted.backstage.mappers.applicationMapper
 import co.bitshifted.backstage.service.ApplicationService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -25,9 +29,15 @@ class ApplicationController (
     @Autowired val applicationService: ApplicationService) {
 
     @PostMapping
-    fun createApplication(@RequestBody application : ApplicationDTO) : ApplicationDTO {
+    fun createApplication(@RequestBody application : ApplicationDTO) : ResponseEntity<ApplicationDTO> {
         val mapper = applicationMapper()
         val out = applicationService.createApplication(mapper.fromDto(application))
-        return mapper.toDto(out)
+        return ResponseEntity.ok(mapper.toDto(out))
+    }
+
+    @GetMapping("/{id}")
+    fun getApplication(@PathVariable("id") appId : String) : ResponseEntity<ApplicationDTO> {
+        val out = applicationService.getApplication(appId)
+        return ResponseEntity.ok(applicationMapper().toDto(out))
     }
 }
