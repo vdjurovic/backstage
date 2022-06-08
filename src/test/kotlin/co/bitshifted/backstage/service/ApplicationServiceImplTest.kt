@@ -10,15 +10,13 @@
 
 package co.bitshifted.backstage.service
 
-import co.bitshifted.backstage.ApplicationRepository
+import co.bitshifted.backstage.repository.ApplicationRepository
 import co.bitshifted.backstage.entity.Application
 import co.bitshifted.backstage.service.impl.ApplicationServiceImpl
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
-import org.springframework.test.context.junit.jupiter.SpringExtension
 
 
 class ApplicationServiceImplTest {

@@ -8,16 +8,8 @@
  *
  */
 
-package co.bitshifted.backstage
+package co.bitshifted.backstage.dto
 
-import java.time.ZoneId
-
-object BackstageConstants {
-
-    /**
-     * UTC timezone ID.
-     */
-     val UTC_TIME_ZONE = ZoneId.of("UTC")
-
-    val threadPoolKeepAliveMs = 500L
-}
+data class JvmConfigurationDTO(
+    var dependencies : List<JvmDependencyDTO>?
+)

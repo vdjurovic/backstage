@@ -8,16 +8,12 @@
  *
  */
 
-package co.bitshifted.backstage
+package co.bitshifted.backstage.service
 
-import java.time.ZoneId
+import co.bitshifted.backstage.dto.DeploymentDTO
+import co.bitshifted.backstage.dto.RequiredResourcesDTO
 
-object BackstageConstants {
+interface DeploymentService {
 
-    /**
-     * UTC timezone ID.
-     */
-     val UTC_TIME_ZONE = ZoneId.of("UTC")
-
-    val threadPoolKeepAliveMs = 500L
+    fun processDeploymentStageOne(deploymentDto : DeploymentDTO) : RequiredResourcesDTO
 }

@@ -8,10 +8,12 @@
  *
  */
 
-package co.bitshifted.backstage
+package co.bitshifted.backstage.repository
 
 import co.bitshifted.backstage.entity.Application
 import org.springframework.data.repository.PagingAndSortingRepository
+import org.springframework.stereotype.Repository
 
+@Repository
 interface ApplicationRepository : PagingAndSortingRepository<Application, String> {
 }

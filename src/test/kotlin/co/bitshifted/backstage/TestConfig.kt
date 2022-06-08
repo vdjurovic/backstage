@@ -11,6 +11,7 @@
 package co.bitshifted.backstage
 
 import co.bitshifted.backstage.controller.ApplicationController
+import co.bitshifted.backstage.repository.ApplicationRepository
 import co.bitshifted.backstage.service.ApplicationService
 import co.bitshifted.backstage.service.impl.ApplicationServiceImpl
 import com.fasterxml.jackson.databind.ObjectMapper

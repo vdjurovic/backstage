@@ -31,6 +31,7 @@
 		<mapstruct.version>1.4.2.Final</mapstruct.version>
 		<mockito.version>4.6.0</mockito.version>
 		<snakeyaml.version>1.30</snakeyaml.version>
+		<commons-codec.version>1.15</commons-codec.version>
 	</properties>
 
 	<dependencyManagement>
@@ -59,6 +60,11 @@
 				<groupId>org.yaml</groupId>
 				<artifactId>snakeyaml</artifactId>
 				<version>${snakeyaml.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>${commons-codec.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -95,6 +101,10 @@
 		<dependency>
 			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
 		</dependency>
 
 		<dependency>
@@ -210,7 +220,7 @@
 			<plugin>
 				<groupId>org.liquibase</groupId>
 				<artifactId>liquibase-maven-plugin</artifactId>
-				<version>3.6.3</version>
+				<version>4.11.0</version>
 				<configuration>
 					<propertyFile>liquibase/liquibase-local-dev.properties</propertyFile>
 					<changeLogFile>liquibase/liquibase.xml</changeLogFile>

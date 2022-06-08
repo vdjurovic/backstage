@@ -10,9 +10,8 @@
 
 package co.bitshifted.backstage.controller
 
-import co.bitshifted.backstage.ApplicationRepository
+import co.bitshifted.backstage.repository.ApplicationRepository
 import co.bitshifted.backstage.TestConfig
-import co.bitshifted.backstage.controller.ApplicationController
 import co.bitshifted.backstage.dto.ApplicationDTO
 import co.bitshifted.backstage.entity.Application
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.Mockito
 import org.mockito.Mockito.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -29,7 +27,6 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.context.web.WebAppConfiguration
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext

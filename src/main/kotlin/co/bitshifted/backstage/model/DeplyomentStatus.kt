@@ -8,16 +8,8 @@
  *
  */
 
-package co.bitshifted.backstage
+package co.bitshifted.backstage.model
 
-import java.time.ZoneId
-
-object BackstageConstants {
-
-    /**
-     * UTC timezone ID.
-     */
-     val UTC_TIME_ZONE = ZoneId.of("UTC")
-
-    val threadPoolKeepAliveMs = 500L
+enum class DeplyomentStatus {
+    ACCEPTED, STAGE_ONE_IN_PROGRESS
 }

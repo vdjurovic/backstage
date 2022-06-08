@@ -28,4 +28,23 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="deployment-table" author="vdjurovic" dbms="mysql">
+        <createTable tableName="deployment">
+            <column name="deployment_id" type="varchar(16)">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="submitted_at" type="timestamptz">
+                <constraints nullable="false" />
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false" />
+            </column>
+            <column name="details" type="varchar(256)" />
+            <column name="app_id" type="varchar(64)" />
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="deployment" baseColumnNames="app_id" constraintName="app_id_fkey" referencedTableName="application"
+                                 referencedColumnNames="app_id" />
+    </changeSet>
+
 </databaseChangeLog>

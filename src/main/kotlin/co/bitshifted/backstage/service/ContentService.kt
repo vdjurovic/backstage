@@ -8,16 +8,15 @@
  *
  */
 
-package co.bitshifted.backstage
+package co.bitshifted.backstage.service
 
-import java.time.ZoneId
+import java.io.InputStream
+import java.net.URI
+import java.net.URL
 
-object BackstageConstants {
+interface ContentService {
 
-    /**
-     * UTC timezone ID.
-     */
-     val UTC_TIME_ZONE = ZoneId.of("UTC")
+    fun save(input : InputStream) : URI
 
-    val threadPoolKeepAliveMs = 500L
+    fun get(sha256: String) : InputStream
 }

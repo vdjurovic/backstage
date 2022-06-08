@@ -10,7 +10,7 @@
 
 package co.bitshifted.backstage.service.impl
 
-import co.bitshifted.backstage.ApplicationRepository
+import co.bitshifted.backstage.repository.ApplicationRepository
 import co.bitshifted.backstage.entity.Application
 import co.bitshifted.backstage.service.ApplicationService
 import org.springframework.beans.factory.annotation.Autowired
