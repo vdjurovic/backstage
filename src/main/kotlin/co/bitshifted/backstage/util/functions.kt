@@ -12,6 +12,7 @@ package co.bitshifted.backstage.util
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import javax.servlet.http.HttpServletRequest
 
 inline fun <reified T> logger(from : T) : Logger {
     return LoggerFactory.getLogger(T::class.java)
@@ -20,3 +21,18 @@ inline fun <reified T> logger(from : T) : Logger {
 fun threadPoolCoreSize() = Runtime.getRuntime().availableProcessors()
 
 fun maxThreadPoolSize() = 2 * threadPoolCoreSize()
+
+fun generateServerUrl(request: HttpServletRequest, path: String): String? {
+    val sb = StringBuilder()
+    sb.append(request.scheme).append("://")
+    sb.append(request.serverName)
+    if (request.serverPort != 0) {
+        sb.append(":").append(request.serverPort)
+    }
+    sb.append(request.contextPath)
+    if (!path.startsWith("/")) {
+        sb.append("/")
+    }
+    sb.append(path)
+    return sb.toString()
+}

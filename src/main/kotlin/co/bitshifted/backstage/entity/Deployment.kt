@@ -10,29 +10,32 @@
 
 package co.bitshifted.backstage.entity
 
-import co.bitshifted.backstage.model.DeplyomentStatus
+import co.bitshifted.backstage.BackstageConstants
+import co.bitshifted.backstage.model.DeploymentStatus
 import co.bitshifted.backstage.util.GENERATOR_STRATEGY_NAME
 import org.hibernate.annotations.GenericGenerator
 import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity(name = "deployment")
-class Deployment {
+class Deployment(
     @Id
     @GenericGenerator(name = "id_generator", strategy = GENERATOR_STRATEGY_NAME)
     @GeneratedValue(generator = "id_generator")
     @Column(name = "deployment_id")
-    lateinit var id : String
-
+    var id: String? = null,
     @Column(name = "submitted_at")
-    lateinit var submittedAd : ZonedDateTime
+    var submittedAd: ZonedDateTime = ZonedDateTime.now(BackstageConstants.UTC_TIME_ZONE),
 
     @Enumerated(EnumType.STRING)
-    lateinit var status : DeplyomentStatus
+    var status: DeploymentStatus,
 
     @Column(name = "details")
-    var details : String? = null
+    var details: String? = null,
 
     @ManyToOne
-    lateinit var application: Application
+    @JoinColumn(name = "app_id")
+    var application: Application? = null
+) {
+
 }

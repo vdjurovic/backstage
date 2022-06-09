@@ -23,7 +23,7 @@ class DeploymentExecutorService(
     ThreadPoolExecutor(
         threadPoolCoreSize(),
     maxThreadPoolSize(),
-    BackstageConstants.threadPoolKeepAliveMs,
+    BackstageConstants.THREAD_POOL_KEEP_ALIVE_MS,
     TimeUnit.MILLISECONDS,
     ArrayBlockingQueue(threadPoolCoreSize()) ) {
 

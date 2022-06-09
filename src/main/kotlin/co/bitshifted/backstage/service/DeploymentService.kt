@@ -15,5 +15,7 @@ import co.bitshifted.backstage.dto.RequiredResourcesDTO
 
 interface DeploymentService {
 
+    fun validateDeployment(deploymentDto: DeploymentDTO) : String?
+
     fun processDeploymentStageOne(deploymentDto : DeploymentDTO) : RequiredResourcesDTO
 }

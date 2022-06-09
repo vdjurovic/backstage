@@ -8,8 +8,12 @@
  *
  */
 
-package co.bitshifted.backstage.model
+package co.bitshifted.backstage.exception
 
-enum class DeplyomentStatus {
-    ACCEPTED, STAGE_ONE_IN_PROGRESS
+import org.springframework.http.HttpStatus.BAD_REQUEST
+
+enum class ErrorInfo (val errorCode : Int, val httpStatus : Int) {
+
+    INVALID_INPUT(1110, BAD_REQUEST.value()),
+    NON_EXISTENT_APPLICATION_ID(1200, BAD_REQUEST.value())
 }

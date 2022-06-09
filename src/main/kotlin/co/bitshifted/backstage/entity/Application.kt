@@ -24,8 +24,8 @@ class Application (
     var id : String?,
     @Column(name = "app_name")
     var name : String,
-    var headline : String?,
+    var headline : String? = null,
     @Column(name = "app_description")
-    var description : String?
+    var description : String? = null
         ) {
 }
