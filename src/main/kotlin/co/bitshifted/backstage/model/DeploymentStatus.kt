@@ -11,5 +11,6 @@
 package co.bitshifted.backstage.model
 
 enum class DeploymentStatus {
-    ACCEPTED, STAGE_ONE_IN_PROGRESS
+    ACCEPTED, STAGE_ONE_IN_PROGRESS,
+    FAILED, SUCCESS
 }

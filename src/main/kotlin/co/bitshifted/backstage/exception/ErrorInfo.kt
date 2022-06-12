@@ -10,10 +10,13 @@
 
 package co.bitshifted.backstage.exception
 
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 
 enum class ErrorInfo (val errorCode : Int, val httpStatus : Int) {
 
     INVALID_INPUT(1110, BAD_REQUEST.value()),
-    NON_EXISTENT_APPLICATION_ID(1200, BAD_REQUEST.value())
+    NON_EXISTENT_APPLICATION_ID(1200, BAD_REQUEST.value()),
+
+    DEPLOYMENT_NOT_FOND(1300, HttpStatus.NOT_FOUND.value())
 }

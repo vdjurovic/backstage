@@ -8,17 +8,7 @@
  *
  */
 
-package co.bitshifted.backstage.service
+package co.bitshifted.backstage.model
 
-import java.io.InputStream
-import java.net.URI
-import java.net.URL
-
-interface ContentService {
-
-    fun save(input : InputStream) : URI
-
-    fun get(sha256: String) : InputStream
-
-    fun exists(sha256 : String, size : Long) : Boolean
+class DeploymenTaskConfig(val id : String, val stage : DeploymentStage) {
 }

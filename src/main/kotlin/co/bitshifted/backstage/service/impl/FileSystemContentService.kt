@@ -22,9 +22,12 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.net.URI
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
 
 
@@ -60,5 +63,13 @@ class FileSystemContentService(
 
         val target = Path.of(contentStorageLocation, level1, level2, level3, sha256)
         return target.inputStream()
+    }
+
+    override fun exists(sha256: String, size: Long): Boolean {
+        val level1 = sha256.substring(0, 2)
+        val level2 = sha256.substring(2, 4)
+        val level3 = sha256.substring(4, 6)
+        val target = Path.of(contentStorageLocation, level1, level2, level3, sha256)
+        return (target.exists(LinkOption.NOFOLLOW_LINKS) && target.fileSize() == size)
     }
 }

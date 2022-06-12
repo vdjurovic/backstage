@@ -60,4 +60,15 @@ class FileSystemContentServiceTest {
         val text = String(input.readAllBytes(), StandardCharsets.UTF_8)
         assertEquals("some content", text)
     }
+
+    @Test
+    fun confirmContentExists() {
+        val service = FileSystemContentService(contentStorageLocation)
+        val fileStream = javaClass.getResourceAsStream("/content/content.txt")
+        val out = service.save(fileStream)
+        val hash = out.path.substring(out.path.lastIndexOf("/") + 1)
+
+        val result = service.exists(hash, 12)
+        assertTrue(result)
+    }
 }
