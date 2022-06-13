@@ -44,7 +44,7 @@ class FileSystemContentServiceTest {
         val file = File(fileUrl.toURI())
         val out = service.save(file.inputStream())
         assertEquals(
-            Path.of(contentStorageLocation, "c8", "bd", "36", "c8bd36b6ba91aa78d9a33b129e05370dc232ebaef1af1828edbe588fc30cc8b3").toFile().absolutePath, out.path)
+            Path.of(contentStorageLocation, "29", "0f", "49", "290f493c44f5d63d06b374d0a5abd292fae38b92cab2fae5efefe1b0e9347f56").toFile().absolutePath, out.path)
         val content = Files.readString(Path.of(out))
         assertEquals("some content", content)
     }

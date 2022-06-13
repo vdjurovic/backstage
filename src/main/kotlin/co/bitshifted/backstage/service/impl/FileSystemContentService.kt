@@ -37,13 +37,15 @@ class FileSystemContentService(
 ) : ContentService {
 
     val logger = logger(this)
-    val digester = DigestUtils(MessageDigestAlgorithms.SHA3_256)
+    val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
 
     override fun save(input: InputStream): URI {
         logger.debug("Saving content")
         val bytes = ByteArrayOutputStream()
-        input.copyTo(bytes)
+        val count = input.copyTo(bytes)
+        logger.debug("Copied {} bytes", count)
         val hash = digester.digestAsHex(bytes.toByteArray())
+        logger.debug("File hash: {}", hash)
         // construct storage path
         val level1 = hash.substring(0, 2)
         val level2 = hash.substring(2, 4)
@@ -70,6 +72,7 @@ class FileSystemContentService(
         val level2 = sha256.substring(2, 4)
         val level3 = sha256.substring(4, 6)
         val target = Path.of(contentStorageLocation, level1, level2, level3, sha256)
+        logger.debug("Checking content storage location: {}", contentStorageLocation)
         return (target.exists(LinkOption.NOFOLLOW_LINKS) && target.fileSize() == size)
     }
 }

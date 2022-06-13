@@ -12,17 +12,20 @@ package co.bitshifted.backstage.mappers
 
 import co.bitshifted.backstage.dto.ApplicationInfoDTO
 import co.bitshifted.backstage.dto.DeploymentDTO
+import co.bitshifted.backstage.dto.JvmConfigurationDTO
 import co.bitshifted.backstage.model.DeploymentStage
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 
 class DeploymentMapperTest {
 
     @Test
     fun dtoToStageOneConfigTest() {
         val appInfo =ApplicationInfoDTO(splashScreen = null, icons = emptyList(), windows = null, linux = null, mac = null)
-        val dto = DeploymentDTO(applicationId = "appid", applicationInfo = appInfo, jvmConfig = null)
+        val mockJvmConfig = JvmConfigurationDTO(listOf())
+        val dto = DeploymentDTO(applicationId = "appid", applicationInfo = appInfo, jvmConfig = mockJvmConfig)
         val mapper = deploymentMapper()
         val out = mapper.dtoToDeploymentTaskConfig(dto, "deployment-id", DeploymentStage.STAGE_ONE)
         assertEquals("deployment-id", out.id)

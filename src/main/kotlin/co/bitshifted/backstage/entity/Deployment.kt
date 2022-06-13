@@ -35,7 +35,9 @@ class Deployment(
 
     @ManyToOne
     @JoinColumn(name = "app_id")
-    var application: Application? = null
+    var application: Application? = null,
+    @Column(name = "required_data")
+    var requiredData : String? = null
 ) {
 
 }

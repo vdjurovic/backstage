@@ -10,5 +10,7 @@
 
 package co.bitshifted.backstage.model
 
-class DeploymenTaskConfig(val id : String, val stage : DeploymentStage) {
+import co.bitshifted.backstage.dto.JvmConfigurationDTO
+
+class DeploymenTaskConfig(val id : String, val stage : DeploymentStage, val jvmConfig: JvmConfigurationDTO) {
 }

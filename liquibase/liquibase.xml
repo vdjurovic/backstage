@@ -47,4 +47,10 @@
                                  referencedColumnNames="app_id" />
     </changeSet>
 
+    <changeSet id="deployment-required" author="vdjurovic" dbms="mysql">
+        <addColumn tableName="deployment">
+            <column name="required_data" type="text" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
