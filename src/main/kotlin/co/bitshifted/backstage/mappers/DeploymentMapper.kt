@@ -11,10 +11,15 @@
 package co.bitshifted.backstage.mappers
 
 import co.bitshifted.backstage.dto.DeploymentDTO
+import co.bitshifted.backstage.dto.DeploymentStatusDTO
+import co.bitshifted.backstage.dto.RequiredResourcesDTO
+import co.bitshifted.backstage.entity.Deployment
 import co.bitshifted.backstage.model.DeploymenTaskConfig
 import co.bitshifted.backstage.model.DeploymentStage
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
+import org.mapstruct.Named
 
 @Mapper
 interface DeploymentMapper {
@@ -22,4 +27,6 @@ interface DeploymentMapper {
     @Mapping(source = "id", target = "id")
     @Mapping(source = "stage", target = "stage")
     fun dtoToDeploymentTaskConfig(deploymentDTO: DeploymentDTO, id : String, stage : DeploymentStage) : DeploymenTaskConfig
+
+
 }

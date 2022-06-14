@@ -11,6 +11,7 @@
 package co.bitshifted.backstage.service.impl
 
 import co.bitshifted.backstage.dto.DeploymentDTO
+import co.bitshifted.backstage.dto.DeploymentStatusDTO
 import co.bitshifted.backstage.dto.RequiredResourcesDTO
 import co.bitshifted.backstage.entity.Application
 import co.bitshifted.backstage.entity.Deployment
@@ -26,6 +27,7 @@ import co.bitshifted.backstage.service.DeploymentService
 import co.bitshifted.backstage.service.deployment.DeploymentExecutorService
 import co.bitshifted.backstage.service.deployment.DeploymentProcessTask
 import co.bitshifted.backstage.util.logger
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -36,10 +38,10 @@ class DeploymentServiceImpl(
     @Autowired val deploymentTaskFactory : java.util.function.Function<DeploymenTaskConfig, DeploymentProcessTask>,
     @Autowired val deploymentExecutorService: DeploymentExecutorService) : DeploymentService {
 
-    val logger = logger(this
-    )
+    val logger = logger(this)
+    val objectMapper = ObjectMapper()
 
-    override fun validateDeployment(deploymentDto: DeploymentDTO): String? {
+    override fun submitDeployment(deploymentDto: DeploymentDTO): String? {
         val app = applicationRepository.findById(deploymentDto.applicationId).orElseThrow { BackstageException(ErrorInfo.NON_EXISTENT_APPLICATION_ID, deploymentDto.applicationId) }
         val deployment = Deployment(application = app, status = DeploymentStatus.ACCEPTED)
         val out = deploymentRepository.save(deployment)
@@ -52,7 +54,12 @@ class DeploymentServiceImpl(
         return out.id
     }
 
-    override fun processDeploymentStageOne(deploymentDto: DeploymentDTO): RequiredResourcesDTO {
-        TODO("Not yet implemented")
+    override fun getDeployment(deploymentId: String): DeploymentStatusDTO {
+        val deployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
+        var text = deployment.requiredData
+        if(text == null || text == "") {
+            text = "{}"
+        }
+        return DeploymentStatusDTO(deployment.status, objectMapper.readValue(text, RequiredResourcesDTO::class.java))
     }
 }

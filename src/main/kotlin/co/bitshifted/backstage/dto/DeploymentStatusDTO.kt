@@ -10,13 +10,9 @@
 
 package co.bitshifted.backstage.dto
 
-data class JvmDependencyDTO(
-    var groupId : String? = null,
-    var artifactId : String? = null,
-    var version : String? = null,
-    var type : String? = null,
-    var classifier : String? = null,
-    var sha256 : String? = null,
-    var size : Long? = null,
-    var modular : Boolean = false
+import co.bitshifted.backstage.model.DeploymentStatus
+
+data class DeploymentStatusDTO(
+    var status : DeploymentStatus,
+    var requiredResources: RequiredResourcesDTO
 )
