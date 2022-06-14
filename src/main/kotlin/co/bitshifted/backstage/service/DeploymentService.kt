@@ -11,11 +11,12 @@
 package co.bitshifted.backstage.service
 
 import co.bitshifted.backstage.dto.DeploymentDTO
+import co.bitshifted.backstage.dto.DeploymentStatusDTO
 import co.bitshifted.backstage.dto.RequiredResourcesDTO
 
 interface DeploymentService {
 
-    fun validateDeployment(deploymentDto: DeploymentDTO) : String?
+    fun submitDeployment(deploymentDto: DeploymentDTO) : String?
 
-    fun processDeploymentStageOne(deploymentDto : DeploymentDTO) : RequiredResourcesDTO
+    fun getDeployment(deploymentId : String) : DeploymentStatusDTO
 }
