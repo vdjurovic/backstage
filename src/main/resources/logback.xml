@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2019. Vladimir Djurovic
-  ~
-  ~ This Source Code Form is subject to the terms of the Mozilla Public
-  ~ License, v. 2.0. If a copy of the MPL was not distributed with this
-  ~ file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  ~ /*
+  ~  * Copyright (c) 2019-2022  Bitshift D.O.O (http://bitshifted.co)
+  ~  *
+  ~  * This Source Code Form is subject to the terms of the Mozilla Public
+  ~  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  ~  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  ~  */
   -->
 <configuration>
     <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
@@ -19,7 +21,7 @@
 
     <!-- Daily rollover file configuration. Uncomment to enable -->
     <appender name="dailyRollingFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/appbox.log</file>
+        <file>logs/backstage.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/backstage_%d{yyyy-MM-dd}_%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy
@@ -35,7 +37,7 @@
     </appender>
 	
 
-    <logger name="co.bitshifted.xapps" additivity="false">
+    <logger name="co.bitshifted.backstage" additivity="false">
         <level value="DEBUG" />
         <!-- Uncomment to enable file logging -->
         <appender-ref ref="dailyRollingFileAppender"/>
