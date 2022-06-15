@@ -10,7 +10,8 @@
 
 package co.bitshifted.backstage.model
 
+import co.bitshifted.backstage.dto.BasicResourceDTO
 import co.bitshifted.backstage.dto.JvmConfigurationDTO
 
-class DeploymenTaskConfig(val id : String, val stage : DeploymentStage, val jvmConfig: JvmConfigurationDTO) {
+class DeploymentTaskConfig(val id : String, val stage : DeploymentStage, val jvmConfig: JvmConfigurationDTO, val resources : List<BasicResourceDTO>) {
 }

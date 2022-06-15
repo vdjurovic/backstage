@@ -12,9 +12,6 @@ package co.bitshifted.backstage.dto
 
 data class RequiredResourcesDTO(
     var dependencies : MutableList<JvmDependencyDTO> = mutableListOf(),
-    var resources : MutableList<BasicResourceDTO> = arrayListOf()
-) {
-    fun addDependency(dependency : JvmDependencyDTO) = dependencies.add(dependency)
+    var resources : MutableList<BasicResourceDTO> = mutableListOf()
+)
 
-    fun addResource(resource : BasicResourceDTO) = resources.add(resource)
-}
