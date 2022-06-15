@@ -16,5 +16,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class DeploymentDTO(
     @JsonProperty("id") var applicationId: String,
     @JsonProperty("application-info") var applicationInfo : ApplicationInfoDTO,
-    @JsonProperty("jvm") var jvmConfig : JvmConfigurationDTO?
+    @JsonProperty("jvm") var jvmConfig : JvmConfigurationDTO?,
+    var resources : List<BasicResourceDTO> = mutableListOf()
     )

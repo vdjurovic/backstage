@@ -10,8 +10,7 @@
 
 package co.bitshifted.backstage.config
 
-import co.bitshifted.backstage.dto.DeploymentDTO
-import co.bitshifted.backstage.model.DeploymenTaskConfig
+import co.bitshifted.backstage.model.DeploymentTaskConfig
 import co.bitshifted.backstage.service.deployment.DeploymentProcessTask
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -23,11 +22,11 @@ class DeploymentProcessConfig {
 
     @Bean
     @Scope("prototype")
-    fun deploymentProcessTask(deploymentConfig : DeploymenTaskConfig) : DeploymentProcessTask =  DeploymentProcessTask(deploymentConfig)
+    fun deploymentProcessTask(deploymentConfig : DeploymentTaskConfig) : DeploymentProcessTask =  DeploymentProcessTask(deploymentConfig)
 
     @Bean
-    fun deploymentTaskFactory(): Function<DeploymenTaskConfig, DeploymentProcessTask>? {
-        return Function { source: DeploymenTaskConfig ->
+    fun deploymentTaskFactory(): Function<DeploymentTaskConfig, DeploymentProcessTask>? {
+        return Function { source: DeploymentTaskConfig ->
             deploymentProcessTask(source)
         }
     }

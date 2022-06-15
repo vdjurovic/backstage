@@ -10,11 +10,12 @@
 
 package co.bitshifted.backstage.service.deployment
 
+import co.bitshifted.backstage.dto.BasicResourceDTO
 import co.bitshifted.backstage.dto.JvmDependencyDTO
 import co.bitshifted.backstage.dto.RequiredResourcesDTO
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.ErrorInfo
-import co.bitshifted.backstage.model.DeploymenTaskConfig
+import co.bitshifted.backstage.model.DeploymentTaskConfig
 import co.bitshifted.backstage.model.DeploymentStage
 import co.bitshifted.backstage.model.DeploymentStatus
 import co.bitshifted.backstage.repository.DeploymentRepository
@@ -24,12 +25,11 @@ import co.bitshifted.backstage.util.logger
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import java.io.ByteArrayInputStream
 
 const val MAVEN_CENTRAL_REPO_BASE_URL = "https://repo.maven.apache.org/maven2"
 
 class DeploymentProcessTask  (
-    val deploymentConfig: DeploymenTaskConfig
+    val deploymentConfig: DeploymentTaskConfig
 ): Runnable {
 
     val logger = logger(this)
@@ -47,7 +47,7 @@ class DeploymentProcessTask  (
 
     private fun runDeploymentStageOne() {
         // download dependencies if not exist
-        val missingDeps = mutableListOf<JvmDependencyDTO>()
+        val requirements = RequiredResourcesDTO()
         deploymentConfig.jvmConfig.dependencies?.forEach {
             val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
             if (!exists) {
@@ -55,14 +55,22 @@ class DeploymentProcessTask  (
                 val response = downloader?.downloadJavaDependency(MAVEN_CENTRAL_REPO_BASE_URL, it)
                 if (response?.second != HttpStatus.OK.value()) {
                     logger.info("Added dependency to missing list")
-                    missingDeps.add(it)
+                    requirements.dependencies.add(it)
                 } else {
                     logger.info("Saving dependency {}", it.artifactId)
                     contentService?.save(response?.first)
                 }
             }
         }
-        val requirements = RequiredResourcesDTO(dependencies = missingDeps)
+        // check for missing resources
+        deploymentConfig.resources.forEach {
+            val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
+            if (!exists) {
+                logger.info("Adding resource ${it.source} to missing resources list")
+                requirements.resources.add(it)
+            }
+        }
+
         val deployment = deploymentRepository?.findById(deploymentConfig.id)?.orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentConfig.id) }
         val text = objectMapper.writeValueAsString(requirements)
         logger.debug("Stage one requirements for deployment ID {}: {}", deploymentConfig.id, text)
