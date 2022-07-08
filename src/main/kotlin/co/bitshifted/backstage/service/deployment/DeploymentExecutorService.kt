@@ -42,7 +42,9 @@ class DeploymentExecutorService(
             val deploymentId = taskMap[r] ?: "unknown"
             logger.debug("Deployment ID: {}", deploymentId)
             val curDeployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
-            curDeployment.status = DeploymentStatus.STAGE_ONE_IN_PROGRESS
+            val curStatus = curDeployment.status
+            logger.debug("Current deployment status: {}", curStatus)
+            curDeployment.status = calculateNextStatus(curStatus)
             deploymentRepository.save(curDeployment)
             logger.debug("Updated status for deployment ID {} to {}", deploymentId, DeploymentStatus.STAGE_ONE_IN_PROGRESS)
         }
@@ -66,8 +68,16 @@ class DeploymentExecutorService(
     override fun submit(task: Runnable): Future<*> {
         val ftask = super.submit(task)
         if (task is DeploymentProcessTask && ftask is FutureTask) {
-            taskMap[ftask] = task.deploymentConfig.id
+            taskMap[ftask] = task.deploymentConfig.deploymentId
         }
         return ftask
+    }
+
+    private fun calculateNextStatus(input : DeploymentStatus) : DeploymentStatus {
+        return when(input) {
+            DeploymentStatus.ACCEPTED -> DeploymentStatus.STAGE_ONE_IN_PROGRESS
+            DeploymentStatus.STAGE_ONE_COMPLETED -> DeploymentStatus.STAGE_TWO_IN_PROGRESS
+            else -> throw BackstageException(ErrorInfo.UNEXPECTED_DEPLOYMENT_STATUS, input.name)
+        }
     }
 }

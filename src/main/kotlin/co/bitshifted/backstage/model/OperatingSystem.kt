@@ -10,10 +10,8 @@
 
 package co.bitshifted.backstage.model
 
-import co.bitshifted.backstage.dto.DeploymentDTO
-import java.io.InputStream
-import java.nio.file.Path
-
-class DeploymentTaskConfig(val deploymentId : String, val stage : DeploymentStage, val deployment : DeploymentDTO, val contentPath : Path? = null) {
-
+enum class OperatingSystem(val title : String) {
+    LINUX ("linux"),
+    WINDOWS ("windows"),
+    MAC_OS_X ("mac")
 }
