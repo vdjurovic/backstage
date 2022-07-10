@@ -8,11 +8,7 @@
  *
  */
 
-package co.bitshifted.backstage.model
+package co.bitshifted.backstage.exception
 
-import co.bitshifted.backstage.dto.DeploymentDTO
-import java.nio.file.Path
-
-class DeploymentTaskConfig(val deploymentId : String, val stage : DeploymentStage, val deployment : DeploymentDTO, val contentPath : Path? = null) {
-
+class DeploymentException (message : String) : Throwable(message) {
 }
