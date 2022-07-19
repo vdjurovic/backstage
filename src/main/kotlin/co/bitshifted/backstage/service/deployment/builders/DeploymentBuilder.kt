@@ -18,10 +18,10 @@ import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.DeploymentException
 import co.bitshifted.backstage.exception.ErrorInfo
-import co.bitshifted.backstage.model.OperatingSystem
 import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.service.ResourceMapping
 import co.bitshifted.backstage.util.logger
+import co.bitshifted.ignite.common.model.OperatingSystem
 import freemarker.template.Configuration
 import freemarker.template.TemplateExceptionHandler
 import freemarker.template.Version
@@ -51,6 +51,7 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
     private val splashFilePath = "config/embed/splash.txt"
     private val moduleFilePath = "config/embed/module.txt"
     private val mainClassFilePath = "config/embed/mainclass.txt"
+    private val winIconPath = "icons/launchcode.ico"
 
     val freemarkerConfig  = Configuration(Version(2,3,20))
     val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
@@ -78,6 +79,9 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
             cacheDeploymentFiles(linuxDir)
+            val windowsBuilder = WindowsDeploymentBuilder(this)
+            windowsBuilder.build()
+            cacheDeploymentFiles(windowsDir)
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
             return false
@@ -89,17 +93,17 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         logger.debug("Creating directory structure for deployment in {}", config.baseDir.absolutePathString())
         launchCodeDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OUTPUT_LAUNCHER_DIR))
         logger.debug("Created Launchcode output directory at {}", launchCodeDir.absolutePathString())
-        linuxDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.LINUX.title))
+        linuxDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.LINUX.display))
         logger.debug("Created Linux output directory at {}", linuxDir.absolutePathString())
         windowsDir =
-            Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.WINDOWS.title))
+            Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.WINDOWS.display))
         logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
-        macDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.MAC_OS_X.title))
+        macDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.MAC.display))
         logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
     }
 
-    fun copyDependencies(modulesDir: Path, classpathDir: Path) {
-        config.deployment.jvmConfiguration?.dependencies?.forEach {
+    fun copyDependencies(modulesDir: Path, classpathDir: Path, os : OperatingSystem) {
+        config.deployment.jvmConfiguration?.collectDependencies(os)?.forEach {
             var targetDIr: Path
             if (it.isModular) {
                 targetDIr = modulesDir
@@ -126,12 +130,12 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         }
     }
 
-    fun buildJdkImage(baseDir: Path, modulesDir: Path) {
+    fun buildJdkImage(baseDir: Path, modulesDir: Path, os : OperatingSystem) {
         logger.info("Building JDK image")
         val jvmConfig =
             config.deployment.jvmConfiguration ?: throw DeploymentException("Can not find JVm configuration")
         val jdkLocation =
-            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, jvmConfig.fixedVersion ?: "")
+            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, jvmConfig.fixedVersion ?: "")
         val moduleDirs = listOf(Path.of(jdkLocation).resolve(BackstageConstants.JDK_JMODS_DIR_NAME), modulesDir)
         val jreOutputDir = baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
         val toolRunner = ToolsRunner(baseDir)
@@ -191,6 +195,16 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         Files.writeString(modulePath, config.deployment.jvmConfiguration.moduleName ?: "")
         val mainClassPath = launchCodeDir.resolve(mainClassFilePath)
         Files.writeString(mainClassPath, config.deployment.jvmConfiguration.mainClass ?: "")
+        // copy windows icon
+        val winIcons = config.deployment.applicationInfo.windows.icons
+        if (winIcons.size > 0) {
+            val icon = winIcons[0]
+            val iconTarget = launchCodeDir.resolve(winIconPath)
+            logger.debug("Windows icon target: {}", iconTarget.absolutePathString())
+            config.contentService?.get(icon.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+                Files.copy(it, iconTarget, StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
     }
 
     private fun cacheDeploymentFiles(baseDir : Path) {
