@@ -10,9 +10,12 @@
 
 package co.bitshifted.backstage.model
 
-import co.bitshifted.ignite.common.dto.DeploymentDTO
-import java.nio.file.Path
+import javax.xml.bind.annotation.*
 
-class DeploymentTaskConfig(val deploymentConfig: DeploymentConfig, val stage : DeploymentStage, val contentPath : Path? = null) {
-
+@XmlRootElement(name = "release-entry")
+class ReleaseEntry(
+    @get:XmlAttribute var sha256 : String? = null,
+    @get:XmlAttribute var target : String? = null,
+    @get:XmlAttribute var executable : Boolean? = null
+) {
 }
