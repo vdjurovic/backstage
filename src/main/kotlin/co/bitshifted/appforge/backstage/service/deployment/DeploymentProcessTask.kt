@@ -66,8 +66,8 @@ class DeploymentProcessTask  (
     private fun runDeploymentStageOne() {
         // download dependencies if not exist
         val requirements = RequiredResourcesDTO()
-        taskConfig.deploymentConfig.jvmConfiguration?.collectAllDependencies()?.forEach {
-            val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
+        taskConfig.deploymentConfig.jvmConfiguration.collectAllDependencies().forEach {
+            val exists = contentService?.exists(it.sha256 ?: "unknown", it.size) ?: false
             if (!exists) {
                 logger.debug("Dependency {} does not exist", it.artifactId)
                 val response = downloader?.downloadJavaDependency(MAVEN_CENTRAL_REPO_BASE_URL, it)
@@ -76,7 +76,7 @@ class DeploymentProcessTask  (
                     requirements.dependencies.add(it)
                 } else {
                     logger.info("Saving dependency {}", it.artifactId)
-                    contentService?.save(response?.first)
+                    contentService?.save(response.first)
                 }
             }
         }
@@ -90,12 +90,12 @@ class DeploymentProcessTask  (
             }
         }
 
-        val deployment = deploymentRepository?.findById(taskConfig.deploymentConfig.deploymentId ?: "unknown")?.orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, taskConfig.deploymentConfig.deploymentId) }
+        val deployment = deploymentRepository.findById(taskConfig.deploymentConfig.deploymentId ?: "unknown").orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, taskConfig.deploymentConfig.deploymentId) }
         val text = objectMapper.writeValueAsString(requirements)
         logger.debug("Stage one requirements for deployment ID {}: {}", taskConfig.deploymentConfig.deploymentId, text)
         deployment?.requiredData = text
         deployment?.status = STAGE_ONE_COMPLETED
-        deploymentRepository?.save(deployment)
+        deploymentRepository.save(deployment)
 
         logger.info("Deployment ID {}, status: {}", taskConfig.deploymentConfig.deploymentId, deployment.status)
     }
@@ -112,9 +112,9 @@ class DeploymentProcessTask  (
 
     private fun processFinalContent() {
         logger.debug("Checking final dependencies...")
-        taskConfig.deploymentConfig.jvmConfiguration?.dependencies?.forEach {
+        taskConfig.deploymentConfig.jvmConfiguration.dependencies.forEach {
             logger.debug("Checking dependency {}:{}:{}", it.groupId, it.artifactId, it.version)
-            val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
+            val exists = contentService?.exists(it.sha256 ?: "unknown", it.size) ?: false
             if (!exists) {
                 // copy from deployment directory
                 logger.debug("Dependency {}:{}:{} does not exist in storage, trying deployment directory...", it.groupId, it.artifactId, it.version)
@@ -155,8 +155,8 @@ class DeploymentProcessTask  (
     }
 
     private fun setDeploymentStatus(status : DeploymentStatus) {
-        val deployment = deploymentRepository?.findById(taskConfig.deploymentConfig.deploymentId ?: "unknown") ?. orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, taskConfig.deploymentConfig.deploymentId) }
+        val deployment = deploymentRepository.findById(taskConfig.deploymentConfig.deploymentId ?: "unknown"). orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, taskConfig.deploymentConfig.deploymentId) }
         deployment.status = status
-        deploymentRepository?.save(deployment)
+        deploymentRepository.save(deployment)
     }
 }

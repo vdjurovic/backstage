@@ -82,9 +82,9 @@ class DefaultReleaseService(
         return releaseRepository.save(release).releaseId ?: throw DeploymentException("Invalid release ID: null")
     }
 
-    override fun completeRelease(baseDir: Path, deploymentConfig: DeploymentConfig, releaseID: String) {
-        logger.info("Creating release for ID {}", releaseID)
-        val release = releaseRepository.findById(releaseID).orElseThrow { DeploymentException("Could not find release with ID " + releaseID) }
+    override fun completeRelease(baseDir: Path, deploymentConfig: DeploymentConfig, releaseId: String) {
+        logger.info("Creating release for ID {}", releaseId)
+        val release = releaseRepository.findById(releaseId).orElseThrow { DeploymentException("Could not find release with ID " + releaseId) }
         deploymentConfig.applicationInfo.supportedOperatingSystems.forEach {
             createReleaseInfoFile(baseDir, it, deploymentConfig.applicationId, release.releaseId ?: "unknown", release.releaseTimestamp ?: "unknown")
         }
@@ -92,7 +92,7 @@ class DefaultReleaseService(
         val currentRelease = currentReleaseRepository.findByApplicationId(deploymentConfig.applicationId).orElse(
             ApplicationCurrentRelease(null, deploymentConfig.applicationId, null)
         )
-        currentRelease.releaseId = releaseID
+        currentRelease.releaseId = releaseId
         currentReleaseRepository.save(currentRelease)
     }
 

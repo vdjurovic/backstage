@@ -160,7 +160,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     }
 
     fun copyDependencies(modulesDir: Path, classpathDir: Path, os : OperatingSystem) {
-        builderConfig.deploymentConfig.jvmConfiguration?.collectDependencies(os)?.forEach {
+        builderConfig.deploymentConfig.jvmConfiguration.collectDependencies(os).forEach {
             var targetDIr: Path
             if (it.isModular) {
                 targetDIr = modulesDir
