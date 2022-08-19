@@ -22,8 +22,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.servlet.http.HttpServletRequest
 
-inline fun <reified T> logger(from : T) : Logger {
-    return LoggerFactory.getLogger(T::class.java)
+inline fun <reified T: Any> logger(from : T) : Logger {
+    return LoggerFactory.getLogger(from.javaClass)
 }
 
 fun threadPoolCoreSize() = Runtime.getRuntime().availableProcessors()
