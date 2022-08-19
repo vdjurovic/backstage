@@ -12,7 +12,7 @@ package co.bitshifted.appforge.backstage.service
 
 import co.bitshifted.appforge.backstage.dto.AppInstallerDTO
 import co.bitshifted.appforge.backstage.model.DeploymentConfig
-import co.bitshifted.ignite.common.model.OperatingSystem
+import co.bitshifted.appforge.common.model.OperatingSystem
 import java.nio.file.Path
 import java.util.Optional
 

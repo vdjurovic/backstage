@@ -12,7 +12,7 @@ package co.bitshifted.appforge.backstage.controller
 
 import co.bitshifted.appforge.backstage.repository.ApplicationRepository
 import co.bitshifted.appforge.backstage.TestConfig
-import co.bitshifted.ignite.common.dto.ApplicationDTO
+import co.bitshifted.appforge.common.dto.ApplicationDTO
 import co.bitshifted.appforge.backstage.entity.Application
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals

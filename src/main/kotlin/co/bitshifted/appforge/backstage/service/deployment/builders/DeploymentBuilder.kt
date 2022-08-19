@@ -26,8 +26,8 @@ import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.service.ReleaseService
 import co.bitshifted.appforge.backstage.service.ResourceMapping
 import co.bitshifted.appforge.backstage.util.logger
-import co.bitshifted.ignite.common.model.JavaVersion
-import co.bitshifted.ignite.common.model.OperatingSystem
+import co.bitshifted.appforge.common.model.JavaVersion
+import co.bitshifted.appforge.common.model.OperatingSystem
 import freemarker.template.Configuration
 import freemarker.template.TemplateExceptionHandler
 import freemarker.template.Version

@@ -16,7 +16,7 @@ import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.backstage.util.safeAppName
-import co.bitshifted.ignite.common.model.OperatingSystem
+import co.bitshifted.appforge.common.model.OperatingSystem
 import org.apache.commons.io.FileUtils
 import java.io.FileWriter
 import java.io.IOException

@@ -11,7 +11,7 @@
 package co.bitshifted.appforge.backstage.util
 
 import co.bitshifted.appforge.backstage.model.DeploymentConfig
-import co.bitshifted.ignite.common.model.BasicResource
+import co.bitshifted.appforge.common.model.BasicResource
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.slf4j.Logger

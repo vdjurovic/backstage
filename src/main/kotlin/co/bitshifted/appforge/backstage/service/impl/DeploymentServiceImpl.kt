@@ -11,16 +11,16 @@
 package co.bitshifted.appforge.backstage.service.impl
 
 import co.bitshifted.appforge.backstage.BackstageConstants
-import co.bitshifted.ignite.common.dto.DeploymentDTO
-import co.bitshifted.ignite.common.dto.DeploymentStatusDTO
-import co.bitshifted.ignite.common.dto.RequiredResourcesDTO
+import co.bitshifted.appforge.common.dto.DeploymentDTO
+import co.bitshifted.appforge.common.dto.DeploymentStatusDTO
+import co.bitshifted.appforge.common.dto.RequiredResourcesDTO
 import co.bitshifted.appforge.backstage.entity.Deployment
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.mappers.deploymentConfigMapper
 import co.bitshifted.appforge.backstage.model.DeploymentConfig
 import co.bitshifted.appforge.backstage.model.DeploymentStage
-import co.bitshifted.ignite.common.model.DeploymentStatus
+import co.bitshifted.appforge.common.model.DeploymentStatus
 import co.bitshifted.appforge.backstage.model.DeploymentTaskConfig
 import co.bitshifted.appforge.backstage.repository.ApplicationRepository
 import co.bitshifted.appforge.backstage.repository.DeploymentRepository

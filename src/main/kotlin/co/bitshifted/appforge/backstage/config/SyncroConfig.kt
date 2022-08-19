@@ -10,7 +10,7 @@
 
 package co.bitshifted.appforge.backstage.config
 
-import co.bitshifted.ignite.common.dto.JavaDependencyDTO
+import co.bitshifted.appforge.common.dto.JavaDependencyDTO
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConstructorBinding
 import org.springframework.context.annotation.Configuration

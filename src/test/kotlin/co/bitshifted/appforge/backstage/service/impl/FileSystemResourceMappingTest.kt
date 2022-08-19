@@ -11,15 +11,14 @@
 package co.bitshifted.appforge.backstage.service.impl
 
 import co.bitshifted.appforge.backstage.deleteDirectory
-import co.bitshifted.ignite.common.model.JavaVersion
-import co.bitshifted.ignite.common.model.JvmVendor
-import co.bitshifted.ignite.common.model.OperatingSystem
+import co.bitshifted.appforge.common.model.JavaVersion
+import co.bitshifted.appforge.common.model.JvmVendor
+import co.bitshifted.appforge.common.model.OperatingSystem
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.attribute.FileAttribute
 import kotlin.io.path.absolutePathString
 
 class FileSystemResourceMappingTest {

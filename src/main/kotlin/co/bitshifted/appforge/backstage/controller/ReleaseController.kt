@@ -13,7 +13,7 @@ package co.bitshifted.appforge.backstage.controller
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.service.ReleaseService
-import co.bitshifted.ignite.common.model.OperatingSystem
+import co.bitshifted.appforge.common.model.OperatingSystem
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

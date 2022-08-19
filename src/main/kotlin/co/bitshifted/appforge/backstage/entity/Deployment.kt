@@ -11,7 +11,7 @@
 package co.bitshifted.appforge.backstage.entity
 
 import co.bitshifted.appforge.backstage.BackstageConstants
-import co.bitshifted.ignite.common.model.DeploymentStatus
+import co.bitshifted.appforge.common.model.DeploymentStatus
 import co.bitshifted.appforge.backstage.util.GENERATOR_STRATEGY_NAME
 import org.hibernate.annotations.GenericGenerator
 import java.time.ZonedDateTime

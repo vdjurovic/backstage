@@ -13,8 +13,8 @@ package co.bitshifted.appforge.backstage.service.deployment.builders
 import co.bitshifted.appforge.backstage.model.DeploymentConfig
 import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.util.safeAppName
-import co.bitshifted.ignite.common.dto.JvmConfigurationDTO
-import co.bitshifted.ignite.common.model.ApplicationInfo
+import co.bitshifted.appforge.common.dto.JvmConfigurationDTO
+import co.bitshifted.appforge.common.model.ApplicationInfo
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test

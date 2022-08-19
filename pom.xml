@@ -38,7 +38,7 @@
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-compress.version>1.21</commons-compress.version>
-        <ignite-common.version>0.1.0-SNAPSHOT</ignite-common.version>
+        <appforge-common.version>0.1.0-SNAPSHOT</appforge-common.version>
         <freemarker.version>2.3.31</freemarker.version>
         <jackson.version>2.13.3</jackson.version>
         <spring-boot.version>2.7.0</spring-boot.version>
@@ -77,9 +77,9 @@
                 <version>${commons-codec.version}</version>
             </dependency>
             <dependency>
-                <groupId>co.bitshifted</groupId>
-                <artifactId>ignite-common</artifactId>
-                <version>${ignite-common.version}</version>
+                <groupId>co.bitshifted.appforge</groupId>
+                <artifactId>appforge-common</artifactId>
+                <version>${appforge-common.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -166,8 +166,8 @@
             <artifactId>commons-compress</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.bitshifted</groupId>
-            <artifactId>ignite-common</artifactId>
+            <groupId>co.bitshifted.appforge</groupId>
+            <artifactId>appforge-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>

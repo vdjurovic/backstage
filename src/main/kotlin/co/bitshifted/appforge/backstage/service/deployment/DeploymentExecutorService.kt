@@ -14,7 +14,7 @@ import co.bitshifted.appforge.backstage.BackstageConstants
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
-import co.bitshifted.ignite.common.model.DeploymentStatus
+import co.bitshifted.appforge.common.model.DeploymentStatus
 import co.bitshifted.appforge.backstage.repository.DeploymentRepository
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.backstage.util.maxThreadPoolSize

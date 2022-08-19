@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2022  Bitshift D.O.O (http://bitshifted.co)
+ *  * Copyright (c) 2022-2022  Bitshift D.O.O (http://bitshifted.co)
  *  *
  *  * This Source Code Form is subject to the terms of the Mozilla Public
  *  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,8 @@
 
 package co.bitshifted.appforge.backstage.service
 
-import co.bitshifted.ignite.common.dto.DeploymentDTO
-import co.bitshifted.ignite.common.dto.DeploymentStatusDTO
+import co.bitshifted.appforge.common.dto.DeploymentDTO
+import co.bitshifted.appforge.common.dto.DeploymentStatusDTO
 import java.io.InputStream
 
 interface DeploymentService {

@@ -11,7 +11,7 @@
 package co.bitshifted.appforge.backstage.mappers
 
 import co.bitshifted.appforge.backstage.model.DeploymentConfig
-import co.bitshifted.ignite.common.dto.DeploymentDTO
+import co.bitshifted.appforge.common.dto.DeploymentDTO
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 

@@ -11,11 +11,11 @@
 package co.bitshifted.appforge.backstage.controller
 
 import co.bitshifted.appforge.backstage.BackstageConstants
-import co.bitshifted.ignite.common.dto.DeploymentStatusDTO
+import co.bitshifted.appforge.common.dto.DeploymentStatusDTO
 import co.bitshifted.appforge.backstage.service.DeploymentService
 import co.bitshifted.appforge.backstage.util.generateServerUrl
 import co.bitshifted.appforge.backstage.util.logger
-import co.bitshifted.ignite.common.dto.DeploymentDTO
+import co.bitshifted.appforge.common.dto.DeploymentDTO
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping

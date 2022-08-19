@@ -16,7 +16,7 @@ import co.bitshifted.appforge.backstage.BackstageConstants.DEPLOYMENT_RESOURCES_
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.model.DeploymentStage
-import co.bitshifted.ignite.common.model.DeploymentStatus
+import co.bitshifted.appforge.common.model.DeploymentStatus
 import co.bitshifted.appforge.backstage.model.DeploymentTaskConfig
 import co.bitshifted.appforge.backstage.repository.DeploymentRepository
 import co.bitshifted.appforge.backstage.service.ContentService
@@ -25,8 +25,8 @@ import co.bitshifted.appforge.backstage.service.deployment.builders.DeploymentBu
 import co.bitshifted.appforge.backstage.util.Downloader
 import co.bitshifted.appforge.backstage.util.collectAllDeploymentResources
 import co.bitshifted.appforge.backstage.util.logger
-import co.bitshifted.ignite.common.dto.RequiredResourcesDTO
-import co.bitshifted.ignite.common.model.DeploymentStatus.*
+import co.bitshifted.appforge.common.dto.RequiredResourcesDTO
+import co.bitshifted.appforge.common.model.DeploymentStatus.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus

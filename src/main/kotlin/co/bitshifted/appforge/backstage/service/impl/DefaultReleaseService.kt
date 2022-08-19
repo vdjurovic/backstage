@@ -25,7 +25,7 @@ import co.bitshifted.appforge.backstage.repository.ApplicationReleaseRepository
 import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.service.ReleaseService
 import co.bitshifted.appforge.backstage.util.logger
-import co.bitshifted.ignite.common.model.OperatingSystem
+import co.bitshifted.appforge.common.model.OperatingSystem
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.codec.digest.MessageDigestAlgorithms

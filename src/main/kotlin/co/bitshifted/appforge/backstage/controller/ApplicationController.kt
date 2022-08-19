@@ -10,7 +10,7 @@
 
 package co.bitshifted.appforge.backstage.controller
 
-import co.bitshifted.ignite.common.dto.ApplicationDTO
+import co.bitshifted.appforge.common.dto.ApplicationDTO
 import co.bitshifted.appforge.backstage.mappers.applicationMapper
 import co.bitshifted.appforge.backstage.service.ApplicationService
 import org.springframework.beans.factory.annotation.Autowired
