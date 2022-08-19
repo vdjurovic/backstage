@@ -13,19 +13,23 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <groupId>co.bitshifted.appforge</groupId>
+        <artifactId>appforge</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
     <groupId>co.bitshifted</groupId>
     <artifactId>backstage</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
+
     <name>backstage</name>
     <description>Engine for generating deployment packages</description>
+
+
     <properties>
-        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <kotlin.version>1.6.21</kotlin.version>
+        <java.version>17</java.version>
         <!-- library version -->
         <hashids.version>1.0.3</hashids.version>
         <mapstruct.version>1.4.2.Final</mapstruct.version>
@@ -34,9 +38,10 @@
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-compress.version>1.21</commons-compress.version>
-        <ignite-common.version>0.1.0-SNAPSHOT</ignite-common.version>
+        <appforge-common.version>0.1.0-SNAPSHOT</appforge-common.version>
         <freemarker.version>2.3.31</freemarker.version>
         <jackson.version>2.13.3</jackson.version>
+        <spring-boot.version>2.7.0</spring-boot.version>
     </properties>
 
     <dependencyManagement>
@@ -72,9 +77,9 @@
                 <version>${commons-codec.version}</version>
             </dependency>
             <dependency>
-                <groupId>co.bitshifted</groupId>
-                <artifactId>ignite-common</artifactId>
-                <version>${ignite-common.version}</version>
+                <groupId>co.bitshifted.appforge</groupId>
+                <artifactId>appforge-common</artifactId>
+                <version>${appforge-common.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -100,6 +105,13 @@
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-kotlin</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -154,8 +166,8 @@
             <artifactId>commons-compress</artifactId>
         </dependency>
         <dependency>
-            <groupId>co.bitshifted</groupId>
-            <artifactId>ignite-common</artifactId>
+            <groupId>co.bitshifted.appforge</groupId>
+            <artifactId>appforge-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>
@@ -186,11 +198,34 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
                 <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
                     <execution>
                         <id>kapt</id>
                         <goals>
@@ -199,7 +234,6 @@
                         <configuration>
                             <sourceDirs>
                                 <sourceDir>src/main/kotlin</sourceDir>
-                                <sourceDir>src/main/java</sourceDir>
                             </sourceDirs>
                             <annotationProcessorPaths>
                                 <annotationProcessorPath>
@@ -212,6 +246,8 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <jvmTarget>${java.version}</jvmTarget>
+                    <javaParameters>true</javaParameters>
                     <args>
                         <arg>-Xjsr305=strict</arg>
                     </args>
