@@ -28,7 +28,7 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <kotlin.version>1.6.21</kotlin.version>
+        <kotlin.version>1.7.10</kotlin.version>
         <java.version>17</java.version>
         <!-- library version -->
         <hashids.version>1.0.3</hashids.version>
