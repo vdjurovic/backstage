@@ -10,6 +10,7 @@
 
 package co.bitshifted.appforge.backstage.service.impl
 
+import co.bitshifted.appforge.backstage.model.ContentItem
 import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.util.logger
 import org.apache.commons.codec.digest.DigestUtils
@@ -24,10 +25,7 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.fileSize
-import kotlin.io.path.inputStream
+import kotlin.io.path.*
 
 
 @Service("fileSystemContentService")
@@ -38,45 +36,42 @@ class FileSystemContentService(
     val logger = logger(this)
     val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
 
-    override fun save(input: InputStream): URI {
+    override fun save(input: InputStream): String {
         logger.debug("Saving content")
         val bytes = ByteArrayOutputStream()
         val count = input.copyTo(bytes)
         logger.debug("Copied {} bytes", count)
         val hash = digester.digestAsHex(bytes.toByteArray())
         logger.debug("File hash: {}", hash)
-        // construct storage path
-        val level1 = hash.substring(0, 2)
-        val level2 = hash.substring(2, 4)
-        val level3 = hash.substring(4, 6)
-        val targetDir = Path.of(contentStorageLocation, level1, level2, level3).createDirectories()
-        val targetFile = Path.of(targetDir.toFile().absolutePath, hash)
+        val targetFile = getPathFromHash(hash)
 
         Files.copy(ByteArrayInputStream(bytes.toByteArray()), targetFile, StandardCopyOption.REPLACE_EXISTING)
         input.close()
-        return targetFile.toUri()
+        return hash
     }
 
-    override fun save(input: InputStream, executable : Boolean) {
-        val uri = save(input)
+    override fun save(input: InputStream, executable : Boolean) : String {
+        val hash = save(input)
 
         if(executable) {
-            logger.debug("Setting executable flag for {}", uri)
-            val result = Path.of(uri).toFile().setExecutable(true)
+            val path = getPathFromHash(hash)
+            logger.debug("Setting executable flag for {}", path.absolutePathString())
+            val result = path.toFile().setExecutable(true)
             if(!result) {
-                logger.error("Failed to set executable flag for {}", uri)
+                logger.error("Failed to set executable flag for {}", path.absolutePathString())
             }
         }
-
+        return hash
     }
 
-    override fun get(sha256: String): InputStream {
+    override fun get(sha256: String): ContentItem {
         val level1 = sha256.substring(0, 2)
         val level2 = sha256.substring(2, 4)
         val level3 = sha256.substring(4, 6)
 
-        val target = Path.of(contentStorageLocation, level1, level2, level3, sha256)
-        return target.inputStream()
+        var target = Path.of(contentStorageLocation, level1, level2, level3, sha256)
+        var executable = Files.isExecutable(target)
+        return ContentItem(target.inputStream(), sha256, target.fileSize(), executable)
     }
 
     override fun exists(sha256: String, size: Long): Boolean {
@@ -86,5 +81,13 @@ class FileSystemContentService(
         val target = Path.of(contentStorageLocation, level1, level2, level3, sha256)
         logger.debug("Checking content storage location: {}", contentStorageLocation)
         return (target.exists(LinkOption.NOFOLLOW_LINKS) && target.fileSize() == size)
+    }
+
+    private fun getPathFromHash(hash : String) : Path {
+        val level1 = hash.substring(0, 2)
+        val level2 = hash.substring(2, 4)
+        val level3 = hash.substring(4, 6)
+        val targetDir = Path.of(contentStorageLocation, level1, level2, level3).createDirectories()
+        return Path.of(targetDir.toFile().absolutePath, hash)
     }
 }

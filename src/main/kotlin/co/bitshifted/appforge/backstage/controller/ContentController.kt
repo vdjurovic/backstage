@@ -10,11 +10,13 @@
 
 package co.bitshifted.appforge.backstage.controller
 
+import co.bitshifted.appforge.backstage.BackstageConstants
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.util.logger
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -32,8 +34,12 @@ class ContentController(@Autowired val contentService: ContentService) {
     @GetMapping("/{hash}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
     fun getContent(@PathVariable("hash") hash : String) : ResponseEntity<ByteArray> {
         try {
-            val bytes = contentService.get(hash).readAllBytes()
-            return ResponseEntity.ok(bytes)
+            val content = contentService.get(hash)
+            val bytes = content.input.readAllBytes()
+            val headers = HttpHeaders()
+            headers.contentLength = content.size
+            headers.add(BackstageConstants.EXECUTABLE_RESOURCE_HEADER, content.executable.toString())
+            return ResponseEntity.ok().headers(headers).body(bytes)
         } catch(th : Throwable) {
             logger.error("Failed to get content", th)
             throw BackstageException(ErrorInfo.INVALID_INPUT)

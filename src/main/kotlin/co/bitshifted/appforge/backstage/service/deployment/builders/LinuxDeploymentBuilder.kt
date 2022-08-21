@@ -79,7 +79,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             val target = builder.linuxDir.resolve(name)
             logger.debug("Icon target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builder.builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
@@ -92,7 +92,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             val target = builder.linuxDir.resolve(name)
             logger.debug("Splash screen target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.builderConfig.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builder.builderConfig.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }

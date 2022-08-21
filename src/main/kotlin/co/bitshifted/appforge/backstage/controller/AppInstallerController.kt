@@ -36,7 +36,7 @@ class AppInstallerController(
 
     @GetMapping("/{applicationId}/installers/{hash}")
     fun downloadInstaller(@PathVariable("applicationId") applicationId: String, @PathVariable("hash") fileHash : String) : ResponseEntity<ByteArray> {
-        val bytes = contentService.get(fileHash).readAllBytes()
+        val bytes = contentService.get(fileHash).input.readAllBytes()
         val metadata = releaseService.getInstallerData(applicationId, fileHash)
         val contetnDisposition = ContentDisposition.builder("inline").filename(metadata.fileName ?: "unknown").build()
         val headers = HttpHeaders()
