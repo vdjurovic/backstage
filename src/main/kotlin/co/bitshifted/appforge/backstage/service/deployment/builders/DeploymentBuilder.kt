@@ -169,7 +169,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
                 targetDIr = classpathDir
             }
             val targetPath = Paths.get(targetDIr.toFile().absolutePath, it.sha256 + JAR_EXTENSION)
-            builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
                 Files.copy(it, targetPath, StandardCopyOption.REPLACE_EXISTING)
             }
         }
@@ -181,7 +181,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             logger.debug("Resource target: {}", target.toFile().absolutePath)
             // create directory structure
             Files.createDirectories(target.parent)
-            builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
@@ -266,7 +266,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             val icon = winIcons[0]
             val iconTarget = launchCodeDir.resolve(winIconPath)
             logger.debug("Windows icon target: {}", iconTarget.absolutePathString())
-            builderConfig.contentService?.get(icon.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builderConfig.contentService?.get(icon.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
                 Files.copy(it, iconTarget, StandardCopyOption.REPLACE_EXISTING)
             }
         }

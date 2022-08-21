@@ -25,6 +25,7 @@ object BackstageConstants {
      * HTTP header containing URL of deployment status.
      */
     const val DEPLOYMENT_STATUS_HEADER = "X-Deployment-Status"
+    const val EXECUTABLE_RESOURCE_HEADER = "X-Resource-Executable"
 
     const val THREAD_POOL_KEEP_ALIVE_MS = 500L
 

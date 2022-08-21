@@ -10,17 +10,18 @@
 
 package co.bitshifted.appforge.backstage.service
 
+import co.bitshifted.appforge.backstage.model.ContentItem
 import java.io.InputStream
 import java.net.URI
 import java.net.URL
 
 interface ContentService {
 
-    fun save(input : InputStream) : URI
+    fun save(input : InputStream) : String
 
-    fun save(input: InputStream, executable : Boolean)
+    fun save(input: InputStream, executable : Boolean) : String
 
-    fun get(sha256: String) : InputStream
+    fun get(sha256: String) : ContentItem
 
     fun exists(sha256 : String, size : Long) : Boolean
 }

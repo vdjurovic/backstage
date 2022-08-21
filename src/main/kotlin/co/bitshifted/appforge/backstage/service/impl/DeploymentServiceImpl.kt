@@ -11,16 +11,12 @@
 package co.bitshifted.appforge.backstage.service.impl
 
 import co.bitshifted.appforge.backstage.BackstageConstants
-import co.bitshifted.appforge.common.dto.DeploymentDTO
-import co.bitshifted.appforge.common.dto.DeploymentStatusDTO
-import co.bitshifted.appforge.common.dto.RequiredResourcesDTO
 import co.bitshifted.appforge.backstage.entity.Deployment
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.mappers.deploymentConfigMapper
 import co.bitshifted.appforge.backstage.model.DeploymentConfig
 import co.bitshifted.appforge.backstage.model.DeploymentStage
-import co.bitshifted.appforge.common.model.DeploymentStatus
 import co.bitshifted.appforge.backstage.model.DeploymentTaskConfig
 import co.bitshifted.appforge.backstage.repository.ApplicationRepository
 import co.bitshifted.appforge.backstage.repository.DeploymentRepository
@@ -28,13 +24,16 @@ import co.bitshifted.appforge.backstage.service.DeploymentService
 import co.bitshifted.appforge.backstage.service.deployment.DeploymentExecutorService
 import co.bitshifted.appforge.backstage.service.deployment.DeploymentProcessTask
 import co.bitshifted.appforge.backstage.util.logger
+import co.bitshifted.appforge.common.dto.DeploymentDTO
+import co.bitshifted.appforge.common.dto.DeploymentStatusDTO
+import co.bitshifted.appforge.common.dto.RequiredResourcesDTO
+import co.bitshifted.appforge.common.model.DeploymentStatus
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.zip.ZipInputStream
 
 
