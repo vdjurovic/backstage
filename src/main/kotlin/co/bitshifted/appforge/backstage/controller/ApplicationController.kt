@@ -14,6 +14,9 @@ import co.bitshifted.appforge.common.dto.ApplicationDTO
 import co.bitshifted.appforge.backstage.mappers.applicationMapper
 import co.bitshifted.appforge.backstage.service.ApplicationService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -38,5 +41,11 @@ class ApplicationController (
     fun getApplication(@PathVariable("id") appId : String) : ResponseEntity<ApplicationDTO> {
         val out = applicationService.getApplication(appId)
         return ResponseEntity.ok(applicationMapper().toDto(out))
+    }
+
+    @GetMapping
+    fun listApplications(@PageableDefault(size = 20) pageable : Pageable ) : ResponseEntity<Page<ApplicationDTO>> {
+        val result = applicationService.listApplications(pageable).map { applicationMapper().toDto(it) }
+        return ResponseEntity.ok(result)
     }
 }
