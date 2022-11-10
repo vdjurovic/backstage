@@ -218,7 +218,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         val pb = ProcessBuilder("make", "all")
         pb.directory(File(launchCodeDir.absolutePathString()))
         val path = System.getenv("PATH")
-        pb.environment().put("PATH", "/usr/bin:/usr/local/bin:/usr/local/go/bin:/home/vlada/go/bin:/bin:/sbin")
+        pb.environment().put("PATH", "/usr/bin:/usr/local/bin:/usr/local/go/bin:\$USER/go/bin:/bin:/sbin")
         pb.environment().put("PWD", launchCodeDir.absolutePathString())
 
         println("PATH: $path")

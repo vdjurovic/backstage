@@ -13,7 +13,6 @@ package co.bitshifted.appforge.backstage.mappers
 import co.bitshifted.appforge.common.dto.ApplicationDTO
 import co.bitshifted.appforge.backstage.entity.Application
 import org.mapstruct.Mapper
-import org.mapstruct.factory.Mappers
 
 @Mapper
 interface ApplicationMapper {

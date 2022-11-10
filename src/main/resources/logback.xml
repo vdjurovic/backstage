@@ -37,7 +37,7 @@
     </appender>
 	
 
-    <logger name="co.bitshifted.backstage" additivity="false">
+    <logger name="co.bitshifted.appforge.backstage" additivity="false">
         <level value="DEBUG" />
         <!-- Uncomment to enable file logging -->
         <appender-ref ref="dailyRollingFileAppender"/>

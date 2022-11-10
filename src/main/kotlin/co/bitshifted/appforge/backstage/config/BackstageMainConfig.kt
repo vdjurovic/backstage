@@ -11,13 +11,18 @@
 package co.bitshifted.appforge.backstage.config
 
 import co.bitshifted.appforge.backstage.model.DeploymentTaskConfig
+import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfig
+import co.bitshifted.appforge.backstage.service.JdkInstallationTask
 import co.bitshifted.appforge.backstage.service.deployment.DeploymentProcessTask
 import co.bitshifted.appforge.backstage.service.deployment.builders.DeploymentBuilder
 import co.bitshifted.appforge.backstage.service.deployment.builders.DeploymentBuilderConfig
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Scope
 import java.util.function.Function
 
@@ -47,7 +52,24 @@ class BackstageMainConfig {
     }
 
     @Bean
+    @Scope("prototype")
+    fun jdkInstallationTask(installConfigList : List<JdkInstallConfig>) : JdkInstallationTask = JdkInstallationTask(installConfigList)
+
+    @Bean
+    fun jdkInstallTaskFactory() : Function<List<JdkInstallConfig>, JdkInstallationTask> {
+        return Function {
+            source : List<JdkInstallConfig> -> jdkInstallationTask(source)
+        }
+    }
+
+    @Bean("jsonObjectMapper")
+    @Primary
     fun jsonObjectMapper() : ObjectMapper {
         return ObjectMapper().registerKotlinModule()
+    }
+
+    @Bean("yamlObjectMapper")
+    fun yamlObjectMapper() : ObjectMapper {
+        return ObjectMapper(YAMLFactory()).registerKotlinModule()
     }
 }

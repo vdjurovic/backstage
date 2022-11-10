@@ -30,6 +30,7 @@ import co.bitshifted.appforge.common.dto.RequiredResourcesDTO
 import co.bitshifted.appforge.common.model.DeploymentStatus
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -43,7 +44,7 @@ class DeploymentServiceImpl(
     @Autowired val applicationRepository: ApplicationRepository,
     @Autowired val deploymentTaskFactory : java.util.function.Function<DeploymentTaskConfig, DeploymentProcessTask>,
     @Autowired val deploymentExecutorService: DeploymentExecutorService,
-    @Autowired val objectMapper: ObjectMapper) : DeploymentService {
+    @Autowired @Qualifier("jsonObjectMapper") val objectMapper: ObjectMapper) : DeploymentService {
 
     private val logger = logger(this)
 
