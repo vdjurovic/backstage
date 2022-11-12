@@ -136,5 +136,14 @@
             <column name="auto_update" type="boolean" defaultValue="false" />
         </createTable>
     </changeSet>
+    <changeSet id="update-jdk-tables" author="vdjurovic" dbms="mysql">
+        <addColumn tableName="jdk_installation_task">
+            <column name="completed_on" type="timestamptz" />
+        </addColumn>
+        <renameColumn tableName="installed_jdk" oldColumnName="release" newColumnName="jdk_release" columnDataType="varchar(16)" />
+    </changeSet>
+    <changeSet id="update-jdk-version-size" dbms="mysql" author="vdjurovic">
+        <modifyDataType tableName="installed_jdk" columnName="major_version" newDataType="varchar(16)" />
+    </changeSet>
 
 </databaseChangeLog>

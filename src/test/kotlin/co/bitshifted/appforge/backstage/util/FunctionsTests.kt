@@ -23,4 +23,11 @@ class FunctionsTests {
         val tmpDir = Files.createTempDirectory("tar_gz_unpack_test_")
         extractTarGzArchive(archivePath, tmpDir)
     }
+
+    @Test
+    fun testExtractZip() {
+        val tmpDir = Files.createTempDirectory("zip_unpack_test_")
+        val path = "/home/vlada/local/work/bitshift/AppForge/jdk-root/adoptium/17/windows/OpenJDK17U-jdk_x64_windows_hotspot_17.0.3_7.zip"
+        extractZipArchive(Path.of(path), tmpDir)
+    }
 }

@@ -10,24 +10,27 @@
 
 package co.bitshifted.appforge.backstage.entity
 
-import co.bitshifted.appforge.common.model.JdkInstallationStatus
 import co.bitshifted.appforge.backstage.util.GENERATOR_STRATEGY_NAME
-import co.bitshifted.appforge.backstage.util.currentTimeUtc
+import co.bitshifted.appforge.common.model.JavaVersion
+import co.bitshifted.appforge.common.model.JvmVendor
 import org.hibernate.annotations.GenericGenerator
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
-@Table(name = "jdk_installation_task")
-class JdkInstallationTask(
+@Table(name = "installed_jdk")
+class InstalledJdk(
     @Id
     @GenericGenerator(name = "id_generator", strategy = GENERATOR_STRATEGY_NAME)
     @GeneratedValue(generator = "id_generator")
-    @Column(name = "task_id")
-    var taskId : String? = null,
-    @Column(name = "started_on") var startedOn : ZonedDateTime = currentTimeUtc(),
-    @Column(name = "completed_on") var completedOn : ZonedDateTime? = null,
-    @Enumerated(EnumType.STRING) var status : JdkInstallationStatus = JdkInstallationStatus.PENDING) {
-
+    var id : String? = null,
+    @Enumerated(EnumType.STRING)
+    var vendor : JvmVendor,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "major_version")
+    var majorVersion : JavaVersion,
+    @Column(name = "jdk_release")
+    var release : String,
+    @Column(name = "auto_update")
+    var autoUpdate : Boolean = false
+) {
 }

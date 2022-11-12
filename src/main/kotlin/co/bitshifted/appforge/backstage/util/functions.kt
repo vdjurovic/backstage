@@ -15,6 +15,8 @@ import co.bitshifted.appforge.common.model.BasicResource
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.slf4j.Logger
@@ -24,6 +26,11 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
 import javax.servlet.http.HttpServletRequest
 
 
@@ -107,7 +114,25 @@ fun extractTarGzArchive(source: Path, targetDir: Path) {
     }
 }
 
+fun extractZipArchive(source : Path, targetDir : Path) {
+    ZipArchiveInputStream(Files.newInputStream(source)).use { zipArchIn ->
+        var entry : ZipArchiveEntry?
+        while(zipArchIn.nextZipEntry.also { entry = it } != null) {
+            if(entry?.isDirectory == true) {
+                Files.createDirectories(targetDir.resolve(entry?.name))
+            } else {
+                Files.copy(zipArchIn.readAllBytes().inputStream(), targetDir.resolve(entry?.name))
+                Files.setPosixFilePermissions(
+                    targetDir.resolve(entry?.name),
+                    PosixFilePermissions.fromString("rwxrwxr-x")
+                )
+            }
+        }
+    }
+}
+
 fun posixModeToString(mode: Int): String {
+    println("Unix mode: $mode")
     val ds = Integer.toOctalString(mode).toCharArray()
     val ss = charArrayOf('-', '-', '-', '-', '-', '-', '-', '-', '-')
     for (i in ds.indices.reversed()) {
@@ -128,3 +153,5 @@ fun posixModeToString(mode: Int): String {
     }
     return String(ss)
 }
+
+fun currentTimeUtc() = ZonedDateTime.now(ZoneId.of("UTC"))

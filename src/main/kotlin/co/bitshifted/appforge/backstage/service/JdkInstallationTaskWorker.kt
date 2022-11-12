@@ -10,10 +10,14 @@
 
 package co.bitshifted.appforge.backstage.service
 
+import co.bitshifted.appforge.backstage.entity.InstalledJdk
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfig
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallationSource
+import co.bitshifted.appforge.backstage.repository.InstalledJdkRepository
 import co.bitshifted.appforge.backstage.repository.JdkInstallationTaskRepository
+import co.bitshifted.appforge.backstage.util.currentTimeUtc
 import co.bitshifted.appforge.backstage.util.extractTarGzArchive
+import co.bitshifted.appforge.backstage.util.extractZipArchive
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.common.model.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,8 +27,11 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.absolutePathString
 
@@ -44,11 +51,13 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
     lateinit var jdkRootLocation: String
     @Autowired
     lateinit var jdkInstallationTaskRepository: JdkInstallationTaskRepository
+    @Autowired
+    lateinit var installedJdkRepository: InstalledJdkRepository
 
     override fun run() {
         logger.info("JDK root directory: $jdkRootLocation")
         val currentTask = jdkInstallationTaskRepository.findById(taskId).get()
-        val futuresList = mutableListOf<CompletableFuture<JdkInstallationSource>>()
+        val downloadsList = mutableListOf<CompletableFuture<JdkInstallationSource>>()
         installConfigList.forEach { config ->
             createDirectoryStructure(config.platform.vendor, config.majorVersion)
             logger.info("Started JDk download: vendor=${config.platform.vendor}, release=${config.release}")
@@ -67,23 +76,32 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
                         logger.info("Completed JDK download for ${pair.first} and ${pair.second}")
                         JdkInstallationSource(config, tmpFile, pair.first, pair.second, extractFileName(downloadLink))
                     }
-                futuresList.add(future)
+                downloadsList.add(future)
             }
         }
         currentTask.status = JdkInstallationStatus.DOWNLOAD_IN_PROGRESS
         jdkInstallationTaskRepository.save(currentTask)
-        CompletableFuture.allOf(*futuresList.toTypedArray()).join()
+        CompletableFuture.allOf(*downloadsList.toTypedArray()).join()
         logger.info("All JDK downloads completed")
         // unpack downloads
         currentTask.status = JdkInstallationStatus.INSTALL_IN_PROGRESS
         jdkInstallationTaskRepository.save(currentTask)
         val unpackTaskList = mutableListOf<CompletableFuture<Unit>>()
-        futuresList.forEach {
+        downloadsList.forEach {
             logger.debug("file name: ${it.get().fileName}, latest: ${it.get().latest}")
-            unpackTaskList.add(CompletableFuture.supplyAsync { extractTarGzArchive(it.get().srcFile, Paths.get(jdkRootLocation, it.get().vendor.code, it.get().majorVersion.display, it.get().os.display, it.get().arch.display)) })
+            if(it.get().os == OperatingSystem.WINDOWS) {
+                unpackTaskList.add(CompletableFuture.supplyAsync { extractZipArchive(it.get().srcFile, jdkInstallDirectory(it.get())) })
+            } else {
+                unpackTaskList.add(CompletableFuture.supplyAsync { extractTarGzArchive(it.get().srcFile, jdkInstallDirectory(it.get())) })
+            }
         }
         CompletableFuture.allOf(*unpackTaskList.toTypedArray()).join()
         currentTask.status = JdkInstallationStatus.COMPLETED
+        currentTask.completedOn = currentTimeUtc()
+        // cleanup temporary files
+        downloadsList.forEach { Files.delete(it.get().srcFile) }
+        // save JDK installation to DB
+        installedJdkRepository.saveAll(installConfigList.map { InstalledJdk(null, it.platform.vendor, it.majorVersion, it.release, it.latest) })
         jdkInstallationTaskRepository.save(currentTask)
     }
 
@@ -101,5 +119,9 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
                 Files.createDirectories(target)
             }
         }
+    }
+
+    private fun jdkInstallDirectory(source : JdkInstallationSource) : Path {
+        return Paths.get(jdkRootLocation, source.vendor.code, source.majorVersion.display, source.os.display, source.arch.display)
     }
 }
