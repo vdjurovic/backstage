@@ -10,16 +10,19 @@
 
 package co.bitshifted.appforge.backstage.service.impl
 
+import co.bitshifted.appforge.backstage.entity.JdkInstallationTask
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfig
 import co.bitshifted.appforge.backstage.model.jdk.JavaPlatformDetails
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfigFactory
+import co.bitshifted.appforge.backstage.repository.JdkInstallationTaskRepository
 import co.bitshifted.appforge.backstage.service.JdkInstallationService
-import co.bitshifted.appforge.backstage.service.JdkInstallationTask
+import co.bitshifted.appforge.backstage.service.JdkInstallationTaskWorker
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
 import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
+import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,17 +37,21 @@ import java.net.http.HttpResponse
 
 @Service
 class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") val yamlObjectMapper : ObjectMapper,
-                                    @Autowired val jdkInstallTaskFactory : java.util.function.Function<List<JdkInstallConfig>, JdkInstallationTask>,
+                                    @Autowired val jdkInstallTaskFactory : java.util.function.BiFunction<List<JdkInstallConfig>, String, JdkInstallationTaskWorker>,
+                                    @Autowired val jdkInstallTaskRepository : JdkInstallationTaskRepository,
                                     @Value("\${jdk.install.config.url}") val jdkConfigUrl : String) : JdkInstallationService {
 
     private val logger = logger(this)
 
-    override fun installJdk(input: List<JdkInstallRequestDTO>) {
+    override fun installJdk(input: List<JdkInstallRequestDTO>) : JdkInstallStatusDTO {
         val availableJdks = getAvailableJdks()
         logger.debug("Available JDKS: $availableJdks")
         val installConfigList = verifyReleaseMatches(input, availableJdks)
         // start installation in separate thread
-        Thread(jdkInstallTaskFactory.apply(installConfigList)).start()
+        val task = JdkInstallationTask()
+        val out = jdkInstallTaskRepository.save(task)
+        Thread(jdkInstallTaskFactory.apply(installConfigList, out.taskId ?: throw BackstageException(ErrorInfo.JDK_INSTALL_TASK_NOT_EXIST))).start()
+        return JdkInstallStatusDTO(out.taskId, out.status)
     }
 
     override fun listInstalledJdks(): List<JavaPlatformInfoDTO> {

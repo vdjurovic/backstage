@@ -12,6 +12,7 @@ package co.bitshifted.appforge.backstage.controller
 
 import co.bitshifted.appforge.backstage.service.JdkInstallationService
 import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
+import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -26,8 +27,9 @@ import org.springframework.web.bind.annotation.RestController
 class JdkManagementController(@Autowired val jdkInstallationService: JdkInstallationService) {
 
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun installJdk(@RequestBody request : List<JdkInstallRequestDTO>) : ResponseEntity<String> {
-        jdkInstallationService.installJdk(request)
-        return ResponseEntity.status(HttpStatus.ACCEPTED).header("", "").body("string")
+    fun installJdk(@RequestBody request : List<JdkInstallRequestDTO>) : ResponseEntity<JdkInstallStatusDTO> {
+        return ResponseEntity
+            .status(HttpStatus.ACCEPTED)
+            .body(jdkInstallationService.installJdk(request))
     }
 }

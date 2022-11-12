@@ -108,4 +108,33 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="jdk-installation-data" dbms="mysql" author="vdjurovic" >
+        <createTable tableName="jdk_installation_task" >
+            <column name="task_id" type="varchar(36)" >
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="started_on" type="timestamptz" >
+                <constraints nullable="false" />
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <createTable tableName="installed_jdk">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true"  nullable="false" />
+            </column>
+            <column name="vendor" type="varchar(32)">
+                <constraints nullable="false" />
+            </column>
+            <column name="major_version" type="varchar(4)">
+                <constraints nullable="false" />
+            </column>
+            <column name="release" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="auto_update" type="boolean" defaultValue="false" />
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>

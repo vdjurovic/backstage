@@ -12,18 +12,18 @@ package co.bitshifted.appforge.backstage.config
 
 import co.bitshifted.appforge.backstage.model.DeploymentTaskConfig
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfig
-import co.bitshifted.appforge.backstage.service.JdkInstallationTask
+import co.bitshifted.appforge.backstage.service.JdkInstallationTaskWorker
 import co.bitshifted.appforge.backstage.service.deployment.DeploymentProcessTask
 import co.bitshifted.appforge.backstage.service.deployment.builders.DeploymentBuilder
 import co.bitshifted.appforge.backstage.service.deployment.builders.DeploymentBuilderConfig
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.context.annotation.Scope
+import java.util.function.BiFunction
 import java.util.function.Function
 
 @Configuration
@@ -53,12 +53,12 @@ class BackstageMainConfig {
 
     @Bean
     @Scope("prototype")
-    fun jdkInstallationTask(installConfigList : List<JdkInstallConfig>) : JdkInstallationTask = JdkInstallationTask(installConfigList)
+    fun jdkInstallationTask(installConfigList : List<JdkInstallConfig>, taskId : String) : JdkInstallationTaskWorker = JdkInstallationTaskWorker(installConfigList, taskId)
 
     @Bean
-    fun jdkInstallTaskFactory() : Function<List<JdkInstallConfig>, JdkInstallationTask> {
-        return Function {
-            source : List<JdkInstallConfig> -> jdkInstallationTask(source)
+    fun jdkInstallTaskFactory() : BiFunction<List<JdkInstallConfig>, String, JdkInstallationTaskWorker> {
+        return BiFunction() {
+            installList : List<JdkInstallConfig>, taskId : String -> jdkInstallationTask(installList, taskId)
         }
     }
 

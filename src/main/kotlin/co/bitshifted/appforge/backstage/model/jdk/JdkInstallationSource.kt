@@ -14,16 +14,16 @@ import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.JavaVersion
 import co.bitshifted.appforge.common.model.JvmVendor
 import co.bitshifted.appforge.common.model.OperatingSystem
+import java.nio.file.Path
 
-class JdkInstallationSource(config : JdkInstallConfig, bytes : ByteArray, val os : OperatingSystem, val arch : CpuArch, val fileName : String) {
+class JdkInstallationSource(config : JdkInstallConfig, val srcFile : Path, val os : OperatingSystem, val arch : CpuArch, val fileName : String) {
 
-    val bytes : ByteArray
+
     val vendor : JvmVendor
     val majorVersion : JavaVersion
     val latest : Boolean
 
     init {
-        this.bytes = bytes
         this.vendor = config.platform.vendor
         this.majorVersion = config.majorVersion
         this.latest = config.latest
