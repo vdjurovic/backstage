@@ -95,13 +95,23 @@ fun directoryToTarGz(sourceDir: Path, target: Path) {
     }
 }
 
-fun extractTarGzArchive(source: Path, targetDir: Path) {
+/**
+ * Extract source .tar.gz archive to specified path.
+ * @param source path to archive to extract
+ * @param targetDir directory to which archive is extracted
+ * @return path of the top-level entry (usually directory inside archive)
+ */
+fun extractTarGzArchive(source: Path, targetDir: Path) : Path? {
+    var topLevelPath : Path? = null
     val gzipIn = GzipCompressorInputStream(Files.newInputStream(source))
     TarArchiveInputStream(gzipIn).use { tarIn ->
         var entry: TarArchiveEntry?
         while (tarIn.nextTarEntry.also { entry = it } != null) {
             if (entry?.isDirectory == true) {
-                Files.createDirectories(targetDir.resolve(entry?.name))
+                val dirPath = Files.createDirectories(targetDir.resolve(entry?.name))
+                if(topLevelPath == null) {
+                    topLevelPath = dirPath
+                }
             } else {
                 Files.copy(tarIn.readAllBytes().inputStream(), targetDir.resolve(entry?.name))
                 Files.setPosixFilePermissions(
@@ -110,16 +120,20 @@ fun extractTarGzArchive(source: Path, targetDir: Path) {
                 )
             }
         }
-
     }
+    return topLevelPath
 }
 
-fun extractZipArchive(source : Path, targetDir : Path) {
+fun extractZipArchive(source : Path, targetDir : Path) : Path? {
+    var topLevelPath : Path? = null
     ZipArchiveInputStream(Files.newInputStream(source)).use { zipArchIn ->
         var entry : ZipArchiveEntry?
         while(zipArchIn.nextZipEntry.also { entry = it } != null) {
             if(entry?.isDirectory == true) {
-                Files.createDirectories(targetDir.resolve(entry?.name))
+                val dirPath = Files.createDirectories(targetDir.resolve(entry?.name))
+                if(topLevelPath == null) {
+                    topLevelPath = dirPath
+                }
             } else {
                 Files.copy(zipArchIn.readAllBytes().inputStream(), targetDir.resolve(entry?.name))
                 Files.setPosixFilePermissions(
@@ -129,10 +143,10 @@ fun extractZipArchive(source : Path, targetDir : Path) {
             }
         }
     }
+    return topLevelPath
 }
 
 fun posixModeToString(mode: Int): String {
-    println("Unix mode: $mode")
     val ds = Integer.toOctalString(mode).toCharArray()
     val ss = charArrayOf('-', '-', '-', '-', '-', '-', '-', '-', '-')
     for (i in ds.indices.reversed()) {

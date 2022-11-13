@@ -10,6 +10,7 @@
 
 package co.bitshifted.appforge.backstage.service
 
+import co.bitshifted.appforge.backstage.BackstageConstants
 import co.bitshifted.appforge.backstage.entity.InstalledJdk
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfig
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallationSource
@@ -26,14 +27,12 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
 
 class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, val taskId : String) : Runnable {
 
@@ -57,28 +56,28 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
     override fun run() {
         logger.info("JDK root directory: $jdkRootLocation")
         val currentTask = jdkInstallationTaskRepository.findById(taskId).get()
-        val downloadsList = mutableListOf<CompletableFuture<JdkInstallationSource>>()
-        installConfigList.forEach { config ->
-            createDirectoryStructure(config.platform.vendor, config.majorVersion)
-            logger.info("Started JDk download: vendor=${config.platform.vendor}, release=${config.release}")
-            platforms.forEach { pair ->
-                val downloadLink = config.createDownloadLink(pair.first, pair.second)
-                logger.debug("Download link: $downloadLink")
-                val tmpFile = Files.createTempFile("jdk_install", "${pair.first}_${pair.second}")
-                logger.info("Starting JDK download for ${pair.first} and ${pair.second}")
-               val request = HttpRequest.newBuilder(URI(downloadLink)).GET().build()
-                val future = client.sendAsync(request, BodyHandlers.ofInputStream())
-                    .thenApply { ins ->
-                        Files.copy(ins.body(), tmpFile, StandardCopyOption.REPLACE_EXISTING)
-                        logger.debug("Copying data to file ${tmpFile.absolutePathString()}")
-                    }
-                    .thenApply { response ->
-                        logger.info("Completed JDK download for ${pair.first} and ${pair.second}")
-                        JdkInstallationSource(config, tmpFile, pair.first, pair.second, extractFileName(downloadLink))
-                    }
-                downloadsList.add(future)
-            }
-        }
+        val downloadsList = initDownloads()
+//        installConfigList.forEach { config ->
+//            createDirectoryStructure(config.platform.vendor, config.majorVersion)
+//            logger.info("Started JDk download: vendor=${config.platform.vendor}, release=${config.release}")
+//            platforms.forEach { pair ->
+//                val downloadLink = config.createDownloadLink(pair.first, pair.second)
+//                logger.debug("Download link: $downloadLink")
+//                val tmpFile = Files.createTempFile("jdk_install", "${pair.first}_${pair.second}")
+//                logger.info("Starting JDK download for ${pair.first} and ${pair.second}")
+//               val request = HttpRequest.newBuilder(URI(downloadLink)).GET().build()
+//                val future = client.sendAsync(request, BodyHandlers.ofInputStream())
+//                    .thenApply { ins ->
+//                        Files.copy(ins.body(), tmpFile, StandardCopyOption.REPLACE_EXISTING)
+//                        logger.debug("Copying data to file ${tmpFile.absolutePathString()}")
+//                    }
+//                    .thenApply { response ->
+//                        logger.info("Completed JDK download for ${pair.first} and ${pair.second}")
+//                        JdkInstallationSource(config, tmpFile, pair.first, pair.second, extractFileName(downloadLink))
+//                    }
+//                downloadsList.add(future)
+//            }
+//        }
         currentTask.status = JdkInstallationStatus.DOWNLOAD_IN_PROGRESS
         jdkInstallationTaskRepository.save(currentTask)
         CompletableFuture.allOf(*downloadsList.toTypedArray()).join()
@@ -87,12 +86,22 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
         currentTask.status = JdkInstallationStatus.INSTALL_IN_PROGRESS
         jdkInstallationTaskRepository.save(currentTask)
         val unpackTaskList = mutableListOf<CompletableFuture<Unit>>()
-        downloadsList.forEach {
-            logger.debug("file name: ${it.get().fileName}, latest: ${it.get().latest}")
-            if(it.get().os == OperatingSystem.WINDOWS) {
-                unpackTaskList.add(CompletableFuture.supplyAsync { extractZipArchive(it.get().srcFile, jdkInstallDirectory(it.get())) })
+        downloadsList.forEach { installSrc ->
+            logger.debug("file name: ${installSrc.get().fileName}, latest: ${installSrc.get().latest}")
+            if(installSrc.get().os == OperatingSystem.WINDOWS) {
+                unpackTaskList.add(CompletableFuture.supplyAsync { extractZipArchive(installSrc.get().srcFile, jdkInstallDirectory(installSrc.get())) }
+                    .thenApply {
+                        if(installSrc.get().latest) {
+                            applyLatestLink(it)
+                        }
+                    })
             } else {
-                unpackTaskList.add(CompletableFuture.supplyAsync { extractTarGzArchive(it.get().srcFile, jdkInstallDirectory(it.get())) })
+                unpackTaskList.add(CompletableFuture.supplyAsync { extractTarGzArchive(installSrc.get().srcFile, jdkInstallDirectory(installSrc.get())) }
+                    .thenApply {
+                        if(installSrc.get().latest) {
+                            applyLatestLink(it)
+                        }
+                    })
             }
         }
         CompletableFuture.allOf(*unpackTaskList.toTypedArray()).join()
@@ -101,7 +110,7 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
         // cleanup temporary files
         downloadsList.forEach { Files.delete(it.get().srcFile) }
         // save JDK installation to DB
-        installedJdkRepository.saveAll(installConfigList.map { InstalledJdk(null, it.platform.vendor, it.majorVersion, it.release, it.latest) })
+        installedJdkRepository.saveAll(installConfigList.map { InstalledJdk(null, it.platform.vendor, it.majorVersion, it.release, false) })
         jdkInstallationTaskRepository.save(currentTask)
     }
 
@@ -123,5 +132,44 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
 
     private fun jdkInstallDirectory(source : JdkInstallationSource) : Path {
         return Paths.get(jdkRootLocation, source.vendor.code, source.majorVersion.display, source.os.display, source.arch.display)
+    }
+
+    private fun initDownloads() : List<CompletableFuture<JdkInstallationSource>> {
+        val downloadsList = mutableListOf<CompletableFuture<JdkInstallationSource>>()
+        installConfigList.forEach { config ->
+            createDirectoryStructure(config.platform.vendor, config.majorVersion)
+            logger.info("Started JDk download: vendor=${config.platform.vendor}, release=${config.release}")
+            platforms.forEach { pair ->
+                val downloadLink = config.createDownloadLink(pair.first, pair.second)
+                logger.debug("Download link: $downloadLink")
+                val tmpFile = Files.createTempFile("jdk_install", "${pair.first}_${pair.second}")
+                logger.info("Starting JDK download for ${pair.first} and ${pair.second}")
+                val request = HttpRequest.newBuilder(URI(downloadLink)).GET().build()
+                val future = client.sendAsync(request, BodyHandlers.ofInputStream())
+                    .thenApply { ins ->
+                        Files.copy(ins.body(), tmpFile, StandardCopyOption.REPLACE_EXISTING)
+                        logger.debug("Copying data to file ${tmpFile.absolutePathString()}")
+                    }
+                    .thenApply { response ->
+                        logger.info("Completed JDK download for ${pair.first} and ${pair.second}")
+                        JdkInstallationSource(config, tmpFile, pair.first, pair.second, extractFileName(downloadLink))
+                    }
+                downloadsList.add(future)
+            }
+        }
+        return downloadsList
+    }
+
+    private fun applyLatestLink(target : Path?) {
+        if(target == null) {
+            return
+        }
+        val parent = target.parent
+        val existing = parent.resolve(BackstageConstants.LATEST_JAVA_DIR_LINK)
+        logger.debug("latest link path: ${existing.absolutePathString()}")
+       Files.deleteIfExists(existing)
+        // create latest link
+        logger.info("Creating link to target directory ${target.fileName}")
+        Files.createSymbolicLink(parent.resolve(BackstageConstants.LATEST_JAVA_DIR_LINK), target.fileName)
     }
 }

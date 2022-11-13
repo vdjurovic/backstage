@@ -10,9 +10,11 @@
 
 package co.bitshifted.appforge.backstage.util
 
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 class FunctionsTests {
 
@@ -21,7 +23,9 @@ class FunctionsTests {
         val archivePathUrl = this.javaClass.getResource("/testarchive.tar.gz")
         val archivePath = Path.of(archivePathUrl.toURI())
         val tmpDir = Files.createTempDirectory("tar_gz_unpack_test_")
-        extractTarGzArchive(archivePath, tmpDir)
+        val out = extractTarGzArchive(archivePath, tmpDir)
+        val expected = tmpDir.resolve("archive")
+        Assertions.assertEquals(expected.absolutePathString(), out?.absolutePathString())
     }
 
     @Test
