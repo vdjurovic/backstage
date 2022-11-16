@@ -11,26 +11,20 @@
 package co.bitshifted.appforge.backstage.entity
 
 import co.bitshifted.appforge.backstage.util.GENERATOR_STRATEGY_NAME
-import co.bitshifted.appforge.common.model.JavaVersion
-import co.bitshifted.appforge.common.model.JvmVendor
 import org.hibernate.annotations.GenericGenerator
 import javax.persistence.*
 
 @Entity
-@Table(name = "installed_jdk")
-class InstalledJdk(
+@Table(name = "installed_jdk_release")
+class InstalledJdkRelease(
     @Id
     @GenericGenerator(name = "id_generator", strategy = GENERATOR_STRATEGY_NAME)
     @GeneratedValue(generator = "id_generator")
     var id : String? = null,
-    @Enumerated(EnumType.STRING)
-    var vendor : JvmVendor,
-    @Enumerated(EnumType.STRING)
-    @Column(name = "major_version")
-    var majorVersion : JavaVersion,
-    @Column(name = "auto_update")
-    var autoUpdate : Boolean = false,
-    @OneToMany(mappedBy = "installedJdk", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    var releases : MutableSet<InstalledJdkRelease> = mutableSetOf()
+    @Column(name = "jdk_release")
+    var release : String? = null,
+    var latest : Boolean = false,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var installedJdk : InstalledJdk? = null
 ) {
 }

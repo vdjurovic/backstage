@@ -15,12 +15,12 @@ import co.bitshifted.appforge.common.model.JvmVendor
 
 object JdkInstallConfigFactory {
 
-    fun createInstallConfig(platform : JavaPlatformDetails, majorVersion : JavaVersion, release : String, latest : Boolean) : JdkInstallConfig {
+    fun createInstallConfig(platform : JavaPlatformDetails, majorVersion : JavaVersion, release : String, latest : Boolean, autoUpdate : Boolean) : JdkInstallConfig {
         return when(platform.vendor) {
-            JvmVendor.ADOPTIUM -> AdoptiumJdkInstallConfig(platform, majorVersion, release, latest)
-            JvmVendor.AZUL -> AzulJdkInstallConfig(platform, majorVersion, release, latest)
-            JvmVendor.CORRETTO -> CorrettoJdkInstallConfig(platform, majorVersion, release, latest)
-            JvmVendor.OPENJDK -> OpenJdkInstallConfig(platform, majorVersion, release, latest)
+            JvmVendor.ADOPTIUM -> AdoptiumJdkInstallConfig(platform, majorVersion, release, latest, autoUpdate)
+            JvmVendor.AZUL -> AzulJdkInstallConfig(platform, majorVersion, release, latest, autoUpdate)
+            JvmVendor.CORRETTO -> CorrettoJdkInstallConfig(platform, majorVersion, release, latest,autoUpdate)
+            JvmVendor.OPENJDK -> OpenJdkInstallConfig(platform, majorVersion, release, latest, autoUpdate)
         }
     }
 }

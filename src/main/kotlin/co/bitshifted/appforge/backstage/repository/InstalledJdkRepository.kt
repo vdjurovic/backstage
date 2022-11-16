@@ -11,7 +11,13 @@
 package co.bitshifted.appforge.backstage.repository
 
 import co.bitshifted.appforge.backstage.entity.InstalledJdk
+import co.bitshifted.appforge.common.model.JavaVersion
+import co.bitshifted.appforge.common.model.JvmVendor
 import org.springframework.data.repository.CrudRepository
+import org.springframework.data.repository.PagingAndSortingRepository
+import java.util.Optional
 
 interface InstalledJdkRepository : CrudRepository<InstalledJdk, String> {
+
+    fun findOneByVendorAndMajorVersion(vendor : JvmVendor, majorVersion : JavaVersion) : Optional<InstalledJdk>
 }

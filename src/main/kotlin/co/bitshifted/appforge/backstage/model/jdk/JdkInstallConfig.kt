@@ -19,7 +19,7 @@ import freemarker.template.Version
 import java.io.StringReader
 import java.io.StringWriter
 
-open class JdkInstallConfig(val platform : JavaPlatformDetails, val majorVersion : JavaVersion, val release : String, val latest : Boolean ) {
+open class JdkInstallConfig(val platform : JavaPlatformDetails, val majorVersion : JavaVersion, val release : String, val latest : Boolean, val autoUpdate : Boolean ) {
 
     val freeMarkerConfig = Configuration(Version(2,3,20))
     private val urlParamPackaging = "PACKAGING"

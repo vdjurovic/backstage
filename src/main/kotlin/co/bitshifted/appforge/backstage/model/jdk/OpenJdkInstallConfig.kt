@@ -12,7 +12,7 @@ package co.bitshifted.appforge.backstage.model.jdk
 
 import co.bitshifted.appforge.common.model.JavaVersion
 
-class OpenJdkInstallConfig(platform : JavaPlatformDetails, majorVersion : JavaVersion, release : String, latest : Boolean ) : JdkInstallConfig(platform, majorVersion, release, latest) {
+class OpenJdkInstallConfig(platform : JavaPlatformDetails, majorVersion : JavaVersion, release : String, latest : Boolean, autoUpdate : Boolean ) : JdkInstallConfig(platform, majorVersion, release, latest, autoUpdate) {
 
 
     override fun createParameters(): Map<String, String> {

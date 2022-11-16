@@ -12,7 +12,7 @@ package co.bitshifted.appforge.backstage.model.jdk
 
 import co.bitshifted.appforge.common.model.JavaVersion
 
-class CorrettoJdkInstallConfig (platform : JavaPlatformDetails, majorVersion : JavaVersion, release : String, latest : Boolean ) : JdkInstallConfig(platform, majorVersion, release, latest) {
+class CorrettoJdkInstallConfig (platform : JavaPlatformDetails, majorVersion : JavaVersion, release : String, latest : Boolean, autoUpdate : Boolean ) : JdkInstallConfig(platform, majorVersion, release, latest, autoUpdate) {
 
     override fun createParameters(): Map<String, String> {
         val output = mutableMapOf<String, String>()

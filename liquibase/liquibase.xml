@@ -145,5 +145,25 @@
     <changeSet id="update-jdk-version-size" dbms="mysql" author="vdjurovic">
         <modifyDataType tableName="installed_jdk" columnName="major_version" newDataType="varchar(16)" />
     </changeSet>
+    <changeSet id="restructure-jdk-tables" author="vdjurovic" dbms="mysql">
+        <dropColumn tableName="installed_jdk" columnName="jdk_release" />
+        <createTable tableName="installed_jdk_release">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true"  nullable="false" />
+            </column>
+            <column name="release" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="latest" type="boolean" defaultValue="false" />
+            <column name="installed_jdk_id" type="varchar(36)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="installed_jdk_release_fkey" baseTableName="installed_jdk_release" baseColumnNames="installed_jdk_id"
+                                 referencedTableName="installed_jdk" referencedColumnNames="id" />
+    </changeSet>
+    <changeSet id="fix-column-name" author="vdjurovic" dbms="mysql">
+        <renameColumn tableName="installed_jdk_release" oldColumnName="release" newColumnName="jdk_release" columnDataType="varchar(16)" />
+    </changeSet>
 
 </databaseChangeLog>

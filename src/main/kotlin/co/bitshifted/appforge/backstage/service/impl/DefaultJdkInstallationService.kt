@@ -10,12 +10,15 @@
 
 package co.bitshifted.appforge.backstage.service.impl
 
+import co.bitshifted.appforge.backstage.entity.InstalledJdk
 import co.bitshifted.appforge.backstage.entity.JdkInstallationTask
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
+import co.bitshifted.appforge.backstage.mappers.installedJdkMapper
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfig
 import co.bitshifted.appforge.backstage.model.jdk.JavaPlatformDetails
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfigFactory
+import co.bitshifted.appforge.backstage.repository.InstalledJdkRepository
 import co.bitshifted.appforge.backstage.repository.JdkInstallationTaskRepository
 import co.bitshifted.appforge.backstage.service.JdkInstallationService
 import co.bitshifted.appforge.backstage.service.JdkInstallationTaskWorker
@@ -28,20 +31,28 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.util.stream.Collectors
 
 @Service
+@Transactional
 class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") val yamlObjectMapper : ObjectMapper,
                                     @Autowired val jdkInstallTaskFactory : java.util.function.BiFunction<List<JdkInstallConfig>, String, JdkInstallationTaskWorker>,
                                     @Autowired val jdkInstallTaskRepository : JdkInstallationTaskRepository,
+                                    @Autowired val installedJdkRepository: InstalledJdkRepository,
                                     @Value("\${jdk.install.config.url}") val jdkConfigUrl : String) : JdkInstallationService {
 
     private val logger = logger(this)
+    private val mapper =  installedJdkMapper()
 
     override fun installJdk(input: List<JdkInstallRequestDTO>) : JdkInstallStatusDTO {
         val availableJdks = getAvailableJdks()
@@ -55,7 +66,21 @@ class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") va
     }
 
     override fun listInstalledJdks(): List<JavaPlatformInfoDTO> {
-        TODO("Not yet implemented")
+        val installedJdks = installedJdkRepository.findAll().map { mapper.toDto(it)  }
+        val infoList = mutableListOf<JavaPlatformInfoDTO>()
+//        groups.keys.forEach { jvmVendor ->
+//            val info = JavaPlatformInfoDTO()
+//            info.vendor = jvmVendor
+//            groups[jvmVendor]?.keys?.forEach { version ->
+//                info.supportedVersion = mutableListOf()
+//                val releaseDto = JavaReleaseDTO()
+//                releaseDto.majorVersion = version
+//                releaseDto.releases = groups[jvmVendor]?.get(version)?.stream()?.map { it.release }?.collect(Collectors.toList())
+//                info.supportedVersion.add(releaseDto)
+//            }
+//            infoList.add(info)
+//        }
+        return installedJdks
     }
 
     private fun getAvailableJdks() : List<JavaPlatformDetails> {
@@ -75,9 +100,18 @@ class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") va
         val installConfigList = mutableListOf<JdkInstallConfig>()
         input.forEach { outer ->
            val platformDetails = available.find { outer.vendor == it.vendor }  ?: throw BackstageException(ErrorInfo.JDK_VENDOR_UNKNOWN, outer.vendor.name)
-           val releaseDetails = platformDetails.supportedVersions.find { detail -> detail.majorVersion == outer.majorVersion && detail.releases.contains(outer.release) } ?: throw BackstageException(ErrorInfo.JDK_RELEASE_UNKNOWN, outer.release)
-            val latest = outer.release.equals(releaseDetails.releases[0])
-            installConfigList.add(JdkInstallConfigFactory.createInstallConfig(platformDetails, outer.majorVersion, outer.release, latest))
+            var isLatest : Boolean
+            var releaseString : String
+            if("latest" == outer.release) {
+                isLatest = true
+                releaseString = platformDetails.supportedVersions.find { rd -> rd.majorVersion == outer.majorVersion }?.releases?.get(0) ?: throw BackstageException(ErrorInfo.JDK_RELEASE_UNKNOWN, outer.release)
+            } else {
+                val releaseDetails = platformDetails.supportedVersions.find { detail -> detail.majorVersion == outer.majorVersion && detail.releases.contains(outer.release) } ?: throw BackstageException(ErrorInfo.JDK_RELEASE_UNKNOWN, outer.release)
+                isLatest = outer.release.equals(releaseDetails.releases[0])
+                releaseString = outer.release
+            }
+
+            installConfigList.add(JdkInstallConfigFactory.createInstallConfig(platformDetails, outer.majorVersion, releaseString, isLatest, outer.isAutoUpdate))
         }
         return installConfigList
     }

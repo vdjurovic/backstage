@@ -13,6 +13,8 @@ package co.bitshifted.appforge.backstage.service
 import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
 import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
 import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 
 interface JdkInstallationService {
 

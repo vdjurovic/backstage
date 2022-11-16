@@ -11,12 +11,18 @@
 package co.bitshifted.appforge.backstage.controller
 
 import co.bitshifted.appforge.backstage.service.JdkInstallationService
+import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
 import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
 import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -31,5 +37,10 @@ class JdkManagementController(@Autowired val jdkInstallationService: JdkInstalla
         return ResponseEntity
             .status(HttpStatus.ACCEPTED)
             .body(jdkInstallationService.installJdk(request))
+    }
+
+    @GetMapping
+    fun listInstalledJdks() : ResponseEntity<List<JavaPlatformInfoDTO>> {
+        return ResponseEntity.ok(jdkInstallationService.listInstalledJdks())
     }
 }
