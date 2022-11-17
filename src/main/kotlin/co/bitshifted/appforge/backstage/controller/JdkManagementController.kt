@@ -11,6 +11,7 @@
 package co.bitshifted.appforge.backstage.controller
 
 import co.bitshifted.appforge.backstage.service.JdkInstallationService
+import co.bitshifted.appforge.common.dto.InstalledJdkDTO
 import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
 import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
 import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
@@ -40,7 +41,7 @@ class JdkManagementController(@Autowired val jdkInstallationService: JdkInstalla
     }
 
     @GetMapping
-    fun listInstalledJdks() : ResponseEntity<List<JavaPlatformInfoDTO>> {
+    fun listInstalledJdks() : ResponseEntity<List<InstalledJdkDTO>> {
         return ResponseEntity.ok(jdkInstallationService.listInstalledJdks())
     }
 }

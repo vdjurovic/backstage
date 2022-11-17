@@ -12,6 +12,7 @@ package co.bitshifted.appforge.backstage.mappers
 
 import co.bitshifted.appforge.backstage.entity.InstalledJdk
 import co.bitshifted.appforge.backstage.entity.InstalledJdkRelease
+import co.bitshifted.appforge.common.dto.InstalledJdkDTO
 import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
 import co.bitshifted.appforge.common.dto.JavaReleaseDTO
 import org.mapstruct.Mapper
@@ -19,20 +20,19 @@ import org.mapstruct.Mapping
 import org.mapstruct.Named
 import java.util.stream.Collectors
 
-@Mapper
+@Mapper(uses = [InstalledJdkReleaseMapper::class])
 interface InstalledJdkMapper {
 
-    @Mapping(source = "releases", target = "supportedVersion", qualifiedByName = [ "releaseToDto"])
-    fun toDto(input : InstalledJdk) : JavaPlatformInfoDTO
+    fun toDto(input : InstalledJdk) : InstalledJdkDTO
 
-    companion object{
-        @Named(value = "releaseToDto")
-        @JvmStatic
-        fun releaseToDto(input : MutableSet<InstalledJdkRelease>) : List<JavaReleaseDTO> {
-            val releaseDto = JavaReleaseDTO()
-            releaseDto.majorVersion = input.first().installedJdk?.majorVersion
-            releaseDto.releases = input.stream().map { it.release }.collect(Collectors.toList())
-            return listOf(releaseDto)
-        }
-    }
+//    companion object{
+//        @Named(value = "releaseToDto")
+//        @JvmStatic
+//        fun releaseToDto(input : MutableSet<InstalledJdkRelease>) : List<JavaReleaseDTO> {
+//            val releaseDto = JavaReleaseDTO()
+//            releaseDto.majorVersion = input.first().installedJdk?.majorVersion
+//            releaseDto.releases = input.stream().map { it.release }.collect(Collectors.toList())
+//            return listOf(releaseDto)
+//        }
+//    }
 }

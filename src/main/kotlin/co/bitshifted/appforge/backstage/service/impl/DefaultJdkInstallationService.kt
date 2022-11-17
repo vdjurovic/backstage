@@ -23,6 +23,7 @@ import co.bitshifted.appforge.backstage.repository.JdkInstallationTaskRepository
 import co.bitshifted.appforge.backstage.service.JdkInstallationService
 import co.bitshifted.appforge.backstage.service.JdkInstallationTaskWorker
 import co.bitshifted.appforge.backstage.util.logger
+import co.bitshifted.appforge.common.dto.InstalledJdkDTO
 import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
 import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
 import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
@@ -65,22 +66,8 @@ class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") va
         return JdkInstallStatusDTO(out.taskId, out.status)
     }
 
-    override fun listInstalledJdks(): List<JavaPlatformInfoDTO> {
-        val installedJdks = installedJdkRepository.findAll().map { mapper.toDto(it)  }
-        val infoList = mutableListOf<JavaPlatformInfoDTO>()
-//        groups.keys.forEach { jvmVendor ->
-//            val info = JavaPlatformInfoDTO()
-//            info.vendor = jvmVendor
-//            groups[jvmVendor]?.keys?.forEach { version ->
-//                info.supportedVersion = mutableListOf()
-//                val releaseDto = JavaReleaseDTO()
-//                releaseDto.majorVersion = version
-//                releaseDto.releases = groups[jvmVendor]?.get(version)?.stream()?.map { it.release }?.collect(Collectors.toList())
-//                info.supportedVersion.add(releaseDto)
-//            }
-//            infoList.add(info)
-//        }
-        return installedJdks
+    override fun listInstalledJdks(): List<InstalledJdkDTO> {
+        return installedJdkRepository.findAll().map { mapper.toDto(it)  }
     }
 
     private fun getAvailableJdks() : List<JavaPlatformDetails> {

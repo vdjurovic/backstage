@@ -10,6 +10,7 @@
 
 package co.bitshifted.appforge.backstage.service
 
+import co.bitshifted.appforge.common.dto.InstalledJdkDTO
 import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
 import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
 import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
@@ -20,5 +21,5 @@ interface JdkInstallationService {
 
     fun installJdk(input : List<JdkInstallRequestDTO>) : JdkInstallStatusDTO
 
-    fun listInstalledJdks() : List<JavaPlatformInfoDTO>
+    fun listInstalledJdks() : List<InstalledJdkDTO>
 }

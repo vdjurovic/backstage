@@ -59,20 +59,20 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
     override fun run() {
         logger.info("JDK root directory: $jdkRootLocation")
         val currentTask = jdkInstallationTaskRepository.findById(taskId).get()
-        //val downloadsList = initDownloads()
+        val downloadsList = initDownloads()
         currentTask.status = JdkInstallationStatus.DOWNLOAD_IN_PROGRESS
         jdkInstallationTaskRepository.save(currentTask)
-//        CompletableFuture.allOf(*downloadsList.toTypedArray()).join()
+        CompletableFuture.allOf(*downloadsList.toTypedArray()).join()
         logger.info("All JDK downloads completed")
         // unpack downloads
         currentTask.status = JdkInstallationStatus.INSTALL_IN_PROGRESS
         jdkInstallationTaskRepository.save(currentTask)
-//        val unpackTaskList = unpackDownloads(downloadsList)
-//        CompletableFuture.allOf(*unpackTaskList.toTypedArray()).join()
+        val unpackTaskList = unpackDownloads(downloadsList)
+        CompletableFuture.allOf(*unpackTaskList.toTypedArray()).join()
         currentTask.status = JdkInstallationStatus.COMPLETED
         currentTask.completedOn = currentTimeUtc()
         // cleanup temporary files
-//        downloadsList.forEach { Files.delete(it.get().srcFile) }
+        downloadsList.forEach { Files.delete(it.get().srcFile) }
         // save JDK installation to DB
         val installedJdkList = mutableListOf<InstalledJdk>()
         installConfigList.forEach {
