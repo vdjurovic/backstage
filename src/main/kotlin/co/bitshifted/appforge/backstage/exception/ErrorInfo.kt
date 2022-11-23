@@ -27,5 +27,6 @@ enum class ErrorInfo (val errorCode : Int, val httpStatus : Int) {
     JDK_CONFIG_FETCH_ERROR(1600, HttpStatus.FAILED_DEPENDENCY.value()),
     JDK_VENDOR_UNKNOWN(1605, HttpStatus.NOT_FOUND.value()),
     JDK_RELEASE_UNKNOWN(1610, HttpStatus.NOT_FOUND.value()),
-    JDK_INSTALL_TASK_NOT_EXIST(1615, HttpStatus.PRECONDITION_REQUIRED.value())
+    JDK_INSTALL_TASK_NOT_EXIST(1615, HttpStatus.PRECONDITION_REQUIRED.value()),
+    JDK_NOT_FOUND(1620, HttpStatus.NOT_FOUND.value())
 }

@@ -11,6 +11,7 @@
 package co.bitshifted.appforge.backstage.entity
 
 import co.bitshifted.appforge.backstage.util.GENERATOR_STRATEGY_NAME
+import co.bitshifted.appforge.common.util.JdkVersionAware
 import org.hibernate.annotations.GenericGenerator
 import javax.persistence.*
 
@@ -26,5 +27,8 @@ class InstalledJdkRelease(
     var latest : Boolean = false,
     @ManyToOne(fetch = FetchType.LAZY)
     var installedJdk : InstalledJdk? = null
-) {
+) : JdkVersionAware{
+    override fun getVersion(): String {
+        return release ?: ""
+    }
 }

@@ -10,16 +10,19 @@
 
 package co.bitshifted.appforge.backstage.service
 
-import co.bitshifted.appforge.common.dto.InstalledJdkDTO
-import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
-import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
-import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
+import co.bitshifted.appforge.common.dto.jdk.InstalledJdkDTO
+import co.bitshifted.appforge.common.dto.jdk.JavaPlatformInfoDTO
+import co.bitshifted.appforge.common.dto.jdk.JdkInstallRequestDTO
+import co.bitshifted.appforge.common.dto.jdk.JdkInstallStatusDTO
+import co.bitshifted.appforge.common.dto.jdk.JdkRemovalStatusDTO
 
 interface JdkInstallationService {
 
     fun installJdk(input : List<JdkInstallRequestDTO>) : JdkInstallStatusDTO
 
     fun listInstalledJdks() : List<InstalledJdkDTO>
+
+    fun listAvailableJdks() : List<JavaPlatformInfoDTO>
+
+    fun removeJdkRelease(jdkId : String, releaseId : String)
 }

@@ -31,6 +31,6 @@ class InstalledJdk(
     @Column(name = "auto_update")
     var autoUpdate : Boolean = false,
     @OneToMany(mappedBy = "installedJdk", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    var releases : MutableSet<InstalledJdkRelease> = mutableSetOf()
+    var releases : MutableList<InstalledJdkRelease> = mutableListOf()
 ) {
 }

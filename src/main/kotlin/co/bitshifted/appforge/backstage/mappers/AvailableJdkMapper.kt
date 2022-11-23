@@ -10,13 +10,12 @@
 
 package co.bitshifted.appforge.backstage.mappers
 
-import co.bitshifted.appforge.backstage.entity.InstalledJdk
-import co.bitshifted.appforge.common.dto.jdk.InstalledJdkDTO
+import co.bitshifted.appforge.backstage.model.jdk.JavaPlatformDetails
+import co.bitshifted.appforge.common.dto.jdk.JavaPlatformInfoDTO
 import org.mapstruct.Mapper
 
-@Mapper(uses = [InstalledJdkReleaseMapper::class])
-interface InstalledJdkMapper {
+@Mapper(uses = [AvailableJdkReleaseMapper::class])
+interface AvailableJdkMapper {
 
-    fun toDto(input : InstalledJdk) : InstalledJdkDTO
-
+    fun toPlatformDetailsDTO(input : JavaPlatformDetails) : JavaPlatformInfoDTO
 }

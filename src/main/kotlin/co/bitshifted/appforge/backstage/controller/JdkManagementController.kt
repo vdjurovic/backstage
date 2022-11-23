@@ -11,23 +11,15 @@
 package co.bitshifted.appforge.backstage.controller
 
 import co.bitshifted.appforge.backstage.service.JdkInstallationService
-import co.bitshifted.appforge.common.dto.InstalledJdkDTO
-import co.bitshifted.appforge.common.dto.JavaPlatformInfoDTO
-import co.bitshifted.appforge.common.dto.JdkInstallRequestDTO
-import co.bitshifted.appforge.common.dto.JdkInstallStatusDTO
+import co.bitshifted.appforge.common.dto.jdk.InstalledJdkDTO
+import co.bitshifted.appforge.common.dto.jdk.JavaPlatformInfoDTO
+import co.bitshifted.appforge.common.dto.jdk.JdkInstallRequestDTO
+import co.bitshifted.appforge.common.dto.jdk.JdkInstallStatusDTO
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.Pageable
-import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/v1/jdks")
@@ -43,5 +35,16 @@ class JdkManagementController(@Autowired val jdkInstallationService: JdkInstalla
     @GetMapping
     fun listInstalledJdks() : ResponseEntity<List<InstalledJdkDTO>> {
         return ResponseEntity.ok(jdkInstallationService.listInstalledJdks())
+    }
+
+    @GetMapping("/available")
+    fun listAvailableJdks() : ResponseEntity<List<JavaPlatformInfoDTO>> {
+        return ResponseEntity.ok(jdkInstallationService.listAvailableJdks())
+    }
+
+    @DeleteMapping("{jdkId}/releases/{releaseId}")
+    fun removeJdkRelease(@PathVariable("jdkId") jdkId : String, @PathVariable("releaseId") releaseId : String) : ResponseEntity<String> {
+        jdkInstallationService.removeJdkRelease(jdkId, releaseId)
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("")
     }
 }

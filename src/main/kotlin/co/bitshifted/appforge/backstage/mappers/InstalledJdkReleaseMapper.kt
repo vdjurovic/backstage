@@ -11,7 +11,7 @@
 package co.bitshifted.appforge.backstage.mappers
 
 import co.bitshifted.appforge.backstage.entity.InstalledJdkRelease
-import co.bitshifted.appforge.common.dto.InstalledJdkReleaseDTO
+import co.bitshifted.appforge.common.dto.jdk.InstalledJdkReleaseDTO
 import org.mapstruct.Mapper
 
 @Mapper
