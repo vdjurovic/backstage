@@ -61,12 +61,12 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
         val currentTask = jdkInstallationTaskRepository.findById(taskId).get()
         val downloadsList = initDownloads()
         currentTask.status = JdkInstallationStatus.DOWNLOAD_IN_PROGRESS
-        jdkInstallationTaskRepository.save(currentTask)
+        jdkInstallationTaskRepository.saveAndFlush(currentTask)
         CompletableFuture.allOf(*downloadsList.toTypedArray()).join()
         logger.info("All JDK downloads completed")
         // unpack downloads
         currentTask.status = JdkInstallationStatus.INSTALL_IN_PROGRESS
-        jdkInstallationTaskRepository.save(currentTask)
+        jdkInstallationTaskRepository.saveAndFlush(currentTask)
         val unpackTaskList = unpackDownloads(downloadsList)
         CompletableFuture.allOf(*unpackTaskList.toTypedArray()).join()
         currentTask.status = JdkInstallationStatus.COMPLETED

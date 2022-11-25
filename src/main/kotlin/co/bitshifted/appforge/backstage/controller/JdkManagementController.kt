@@ -15,6 +15,7 @@ import co.bitshifted.appforge.common.dto.jdk.InstalledJdkDTO
 import co.bitshifted.appforge.common.dto.jdk.JavaPlatformInfoDTO
 import co.bitshifted.appforge.common.dto.jdk.JdkInstallRequestDTO
 import co.bitshifted.appforge.common.dto.jdk.JdkInstallStatusDTO
+import co.bitshifted.appforge.common.model.JdkInstallationStatus
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -30,6 +31,11 @@ class JdkManagementController(@Autowired val jdkInstallationService: JdkInstalla
         return ResponseEntity
             .status(HttpStatus.ACCEPTED)
             .body(jdkInstallationService.installJdk(request))
+    }
+
+    @GetMapping("/installations/{taskId}")
+    fun getJdkInstallationStatus(@PathVariable("taskId") taskId : String) : ResponseEntity<JdkInstallStatusDTO> {
+        return ResponseEntity.ok(jdkInstallationService.getInstallationStatus(taskId))
     }
 
     @GetMapping

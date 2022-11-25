@@ -13,8 +13,9 @@ package co.bitshifted.appforge.backstage.service.impl
 import co.bitshifted.appforge.backstage.entity.JdkInstallationTask
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
-import co.bitshifted.appforge.backstage.mappers.avaialbleJdkMapper
+import co.bitshifted.appforge.backstage.mappers.availableJdkMapper
 import co.bitshifted.appforge.backstage.mappers.installedJdkMapper
+import co.bitshifted.appforge.backstage.mappers.jdkInstallTaskMapper
 import co.bitshifted.appforge.backstage.model.jdk.JavaPlatformDetails
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfig
 import co.bitshifted.appforge.backstage.model.jdk.JdkInstallConfigFactory
@@ -57,7 +58,8 @@ class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") va
 
     private val logger = logger(this)
     private val mapper =  installedJdkMapper()
-    private val availableJdkMapper = avaialbleJdkMapper()
+    private val availableJdkMapper = availableJdkMapper()
+    private val jdkInstallTaskMapper = jdkInstallTaskMapper()
 
     override fun installJdk(input: List<JdkInstallRequestDTO>) : JdkInstallStatusDTO {
         val availableJdks = getAvailableJdks()
@@ -68,6 +70,11 @@ class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") va
         val out = jdkInstallTaskRepository.save(task)
         Thread(jdkInstallTaskFactory.apply(installConfigList, out.taskId ?: throw BackstageException(ErrorInfo.JDK_INSTALL_TASK_NOT_EXIST))).start()
         return JdkInstallStatusDTO(out.taskId, out.status)
+    }
+
+    override fun getInstallationStatus(taskId: String): JdkInstallStatusDTO {
+        var task = jdkInstallTaskRepository.findById(taskId).orElseThrow { BackstageException(ErrorInfo.JDK_INSTALL_TASK_NOT_EXIST, taskId) }
+        return jdkInstallTaskMapper.toDto(task)
     }
 
     override fun listInstalledJdks(): List<InstalledJdkDTO> {
@@ -84,12 +91,15 @@ class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") va
         val version = jdk.majorVersion
         val targetRelease = jdk.releases.find { it.id == releaseId }
         jdk.releases.remove(targetRelease)
-        if(targetRelease?.latest == true) {
+        if(targetRelease?.latest == true && jdk.releases.isNotEmpty()) {
             // find new latest version
             Collections.sort(jdk.releases, JdkVersionComparator());
             jdk.releases.last().latest = true
         }
         installedJdkRepository.save(jdk)
+        if(jdk.releases.isEmpty()) {
+            installedJdkRepository.deleteById(jdkId);
+        }
         // remove files
         CompletableFuture.runAsync() {
             val releaseRoot = Paths.get(jdkRootLocation, vendor.display, version.display, targetRelease?.release)

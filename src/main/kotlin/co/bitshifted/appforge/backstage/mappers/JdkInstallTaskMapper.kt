@@ -8,13 +8,14 @@
  *
  */
 
-package co.bitshifted.appforge.backstage.repository
+package co.bitshifted.appforge.backstage.mappers
 
 import co.bitshifted.appforge.backstage.entity.JdkInstallationTask
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.repository.CrudRepository
-import org.springframework.stereotype.Repository
+import co.bitshifted.appforge.common.dto.jdk.JdkInstallStatusDTO
+import org.mapstruct.Mapper
 
-@Repository
-interface JdkInstallationTaskRepository : JpaRepository<JdkInstallationTask, String> {
+@Mapper
+interface JdkInstallTaskMapper {
+
+    fun toDto(task : JdkInstallationTask) : JdkInstallStatusDTO
 }

@@ -20,6 +20,8 @@ interface JdkInstallationService {
 
     fun installJdk(input : List<JdkInstallRequestDTO>) : JdkInstallStatusDTO
 
+    fun getInstallationStatus(taskId : String) : JdkInstallStatusDTO
+
     fun listInstalledJdks() : List<InstalledJdkDTO>
 
     fun listAvailableJdks() : List<JavaPlatformInfoDTO>
