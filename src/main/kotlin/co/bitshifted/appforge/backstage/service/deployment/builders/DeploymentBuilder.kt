@@ -192,7 +192,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         val jvmConfig = builderConfig.deploymentConfig.jvmConfiguration
         val jreOutputDir = baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
         val jdkLocation =
-            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, jvmConfig.fixedVersion ?: "")
+            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, jvmConfig.release ?: "")
         if(jvmConfig.majorVersion == JavaVersion.JAVA_8) {
             FileUtils.copyDirectory(Paths.get(jdkLocation).resolve("jre").toFile(), jreOutputDir.toFile())
         } else {

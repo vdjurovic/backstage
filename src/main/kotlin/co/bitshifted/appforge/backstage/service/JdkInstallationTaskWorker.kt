@@ -24,19 +24,17 @@ import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.common.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.*
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
 
-@Transactional(readOnly = false)
 class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, val taskId : String) : Runnable {
 
     private val logger = logger(this)
@@ -55,6 +53,8 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
     lateinit var jdkInstallationTaskRepository: JdkInstallationTaskRepository
     @Autowired
     lateinit var installedJdkRepository: InstalledJdkRepository
+    @Autowired
+    lateinit var txManager : PlatformTransactionManager
 
     override fun run() {
         logger.info("JDK root directory: $jdkRootLocation")
@@ -74,18 +74,21 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
         // cleanup temporary files
         downloadsList.forEach { Files.delete(it.get().srcFile) }
         // save JDK installation to DB
-        val installedJdkList = mutableListOf<InstalledJdk>()
-        installConfigList.forEach {
-            val current = installedJdkRepository.findOneByVendorAndMajorVersion(it.platform.vendor, it.majorVersion).orElse(InstalledJdk(vendor = it.platform.vendor, majorVersion = it.majorVersion, autoUpdate = it.autoUpdate))
-            // reset latest flag
-            if(it.latest) {
-                current.releases.forEach { it.latest = false }
+        val txTemplate = TransactionTemplate(txManager)
+        txTemplate.execute {
+            val installedJdkList = mutableListOf<InstalledJdk>()
+            installConfigList.forEach {
+                val current = installedJdkRepository.findOneByVendorAndMajorVersion(it.platform.vendor, it.majorVersion).orElse(InstalledJdk(vendor = it.platform.vendor, majorVersion = it.majorVersion, autoUpdate = it.autoUpdate))
+                // reset latest flag
+                if(it.latest) {
+                    current.releases.forEach { it.latest = false }
+                }
+                current.releases.add(InstalledJdkRelease(release = it.release, latest = it.latest, installedJdk = current))
+                installedJdkList.add(current)
             }
-            current.releases.add(InstalledJdkRelease(release = it.release, latest = it.latest, installedJdk = current))
-            installedJdkList.add(current)
+            installedJdkRepository.saveAll(installedJdkList)
         }
 
-        installedJdkRepository.saveAll(installedJdkList)
         jdkInstallationTaskRepository.save(currentTask)
     }
 
@@ -125,7 +128,7 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
                         Files.copy(ins.body(), tmpFile, StandardCopyOption.REPLACE_EXISTING)
                         logger.debug("Copying data to file ${tmpFile.absolutePathString()}")
                     }
-                    .thenApply { response ->
+                    .thenApply {
                         logger.info("Completed JDK download for ${pair.first} and ${pair.second}")
                         JdkInstallationSource(config, tmpFile, pair.first, pair.second, extractFileName(downloadLink))
                     }
@@ -162,8 +165,10 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
         if(target == null) {
             return
         }
+        logger.debug("link target: ${target.absolutePathString()}")
         val parent = target.parent
         val existing = parent.resolve(BackstageConstants.LATEST_JAVA_DIR_LINK)
+        logger.debug("Existing link: ${existing.absolutePathString()}")
         logger.debug("latest link path: ${existing.absolutePathString()}")
        Files.deleteIfExists(existing)
         // create latest link

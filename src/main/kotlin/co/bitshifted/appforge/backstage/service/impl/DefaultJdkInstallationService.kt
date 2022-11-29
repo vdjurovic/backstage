@@ -48,7 +48,6 @@ import java.util.concurrent.CompletableFuture
 import kotlin.io.path.absolutePathString
 
 @Service
-@Transactional
 class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") val yamlObjectMapper : ObjectMapper,
                                     @Autowired val jdkInstallTaskFactory : java.util.function.BiFunction<List<JdkInstallConfig>, String, JdkInstallationTaskWorker>,
                                     @Autowired val jdkInstallTaskRepository : JdkInstallationTaskRepository,
@@ -67,7 +66,7 @@ class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") va
         val installConfigList = verifyReleaseMatches(input, availableJdks)
         // start installation in separate thread
         val task = JdkInstallationTask()
-        val out = jdkInstallTaskRepository.save(task)
+        val out = jdkInstallTaskRepository.saveAndFlush(task)
         Thread(jdkInstallTaskFactory.apply(installConfigList, out.taskId ?: throw BackstageException(ErrorInfo.JDK_INSTALL_TASK_NOT_EXIST))).start()
         return JdkInstallStatusDTO(out.taskId, out.status)
     }
@@ -85,6 +84,7 @@ class DefaultJdkInstallationService(@Autowired @Qualifier("yamlObjectMapper") va
         return getAvailableJdks().map { availableJdkMapper.toPlatformDetailsDTO(it) }
     }
 
+    @Transactional
     override fun removeJdkRelease(jdkId: String, releaseId: String) {
         val jdk = installedJdkRepository.findById(jdkId).orElseThrow { BackstageException(ErrorInfo.JDK_NOT_FOUND) }
         val vendor = jdk.vendor

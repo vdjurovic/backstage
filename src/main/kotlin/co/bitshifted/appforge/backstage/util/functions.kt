@@ -23,8 +23,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedOutputStream
 import java.io.IOException
+import java.nio.file.CopyOption
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -109,11 +111,13 @@ fun extractTarGzArchive(source: Path, targetDir: Path) : Path? {
         while (tarIn.nextTarEntry.also { entry = it } != null) {
             if (entry?.isDirectory == true) {
                 val dirPath = Files.createDirectories(targetDir.resolve(entry?.name))
-                if(topLevelPath == null) {
+                if(topLevelPath == null && !entry?.name.equals(".")) {
                     topLevelPath = dirPath
                 }
             } else {
-                Files.copy(tarIn.readAllBytes().inputStream(), targetDir.resolve(entry?.name))
+                val targetFile = targetDir.resolve(entry?.name)
+                Files.createDirectories(targetFile.parent)
+                Files.copy(tarIn.readAllBytes().inputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING)
                 Files.setPosixFilePermissions(
                     targetDir.resolve(entry?.name),
                     PosixFilePermissions.fromString(posixModeToString(entry?.mode ?: 420))
@@ -131,11 +135,13 @@ fun extractZipArchive(source : Path, targetDir : Path) : Path? {
         while(zipArchIn.nextZipEntry.also { entry = it } != null) {
             if(entry?.isDirectory == true) {
                 val dirPath = Files.createDirectories(targetDir.resolve(entry?.name))
-                if(topLevelPath == null) {
+                if(topLevelPath == null && !entry?.name.equals(".")) {
                     topLevelPath = dirPath
                 }
             } else {
-                Files.copy(zipArchIn.readAllBytes().inputStream(), targetDir.resolve(entry?.name))
+                val targetFile = targetDir.resolve(entry?.name)
+                Files.createDirectories(targetFile.parent)
+                Files.copy(zipArchIn.readAllBytes().inputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING)
                 Files.setPosixFilePermissions(
                     targetDir.resolve(entry?.name),
                     PosixFilePermissions.fromString("rwxrwxr-x")

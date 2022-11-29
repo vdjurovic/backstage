@@ -11,8 +11,17 @@
 package co.bitshifted.appforge.backstage.model.jdk
 
 import co.bitshifted.appforge.common.model.JavaVersion
+import co.bitshifted.appforge.common.model.OperatingSystem
 
 class OpenJdkInstallConfig(platform : JavaPlatformDetails, majorVersion : JavaVersion, release : String, latest : Boolean, autoUpdate : Boolean ) : JdkInstallConfig(platform, majorVersion, release, latest, autoUpdate) {
+
+    override fun inferOperatingSystem(os: OperatingSystem): String {
+        return when(os) {
+            OperatingSystem.MAC -> "macos"
+            OperatingSystem.LINUX -> os.display
+            OperatingSystem.WINDOWS -> os.display
+        }
+    }
 
 
     override fun createParameters(): Map<String, String> {
