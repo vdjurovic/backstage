@@ -10,6 +10,7 @@
 
 package co.bitshifted.appforge.backstage.service
 
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.JavaVersion
 import co.bitshifted.appforge.common.model.JvmVendor
 import co.bitshifted.appforge.common.model.OperatingSystem
@@ -17,7 +18,7 @@ import java.net.URI
 
 interface ResourceMapping {
 
-    fun getJdkLocation(vendor : JvmVendor, version : JavaVersion, os : OperatingSystem, exact : String = "") : URI
+    fun getJdkLocation(vendor : JvmVendor, version : JavaVersion, os : OperatingSystem, arch : CpuArch, release : String) : URI
 
     fun getLaunchcodeSourceLocation() : URI
 

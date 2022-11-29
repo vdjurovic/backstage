@@ -26,6 +26,7 @@ import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.service.ReleaseService
 import co.bitshifted.appforge.backstage.service.ResourceMapping
 import co.bitshifted.appforge.backstage.util.logger
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.JavaVersion
 import co.bitshifted.appforge.common.model.OperatingSystem
 import freemarker.template.Configuration
@@ -192,7 +193,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         val jvmConfig = builderConfig.deploymentConfig.jvmConfiguration
         val jreOutputDir = baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
         val jdkLocation =
-            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, jvmConfig.release ?: "")
+            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, CpuArch.X64,jvmConfig.release ?: "latest")
         if(jvmConfig.majorVersion == JavaVersion.JAVA_8) {
             FileUtils.copyDirectory(Paths.get(jdkLocation).resolve("jre").toFile(), jreOutputDir.toFile())
         } else {
@@ -218,7 +219,8 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         val pb = ProcessBuilder("make", "all")
         pb.directory(File(launchCodeDir.absolutePathString()))
         val path = System.getenv("PATH")
-        pb.environment().put("PATH", "/usr/bin:/usr/local/bin:/usr/local/go/bin:\$USER/go/bin:/bin:/sbin")
+        val userHome = System.getProperty("user.home")
+        pb.environment().put("PATH", "/usr/bin:/usr/local/bin:/usr/local/go/bin:$userHome/go/bin:/bin:/sbin")
         pb.environment().put("PWD", launchCodeDir.absolutePathString())
 
         println("PATH: $path")
