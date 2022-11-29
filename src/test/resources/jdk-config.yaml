@@ -1,0 +1,148 @@
+---
+- vendor: ADOPTIUM
+  download-url-format: https://github.com/adoptium/${REPO}/releases/download/jdk-${VERSION_BASE}%2B${BUMP}/OpenJDK${MAJOR_VERSION}U-jre_${ARCH}_${OS}_hotspot_${VERSION_BASE}_${BUMP}.${PACKAGING}
+  checksum-url-format: https://github.com/adoptium/${REPO}/releases/download/jdk-${VERSION_BASE}%2B${BUMP}/OpenJDK${MAJOR_VERSION}U-jre_${ARCH}_${OS}_hotspot_${VERSION_BASE}_${BUMP}.${PACKAGING}.sha256.txt
+  supported-versions:
+    - major-version: "19"
+      releases:
+        - 19.0.1+10
+        - 19+36
+    - major-version: "18"
+      releases:
+        - 18.0.2.1+1
+        - 18.0.2+9
+        - 18.0.1.1+10
+        - 18+36
+    - major-version: "17"
+      releases:
+        - 17.0.5+8
+        - 17.0.4.1+1
+        - 17.0.4+8
+        - 17.0.3+7
+        - 17.0.2+8
+  parameters:
+    19:
+      repo: temurin19-binaries
+    18:
+      repo: temurin18-binaries
+    17:
+      repo: temurin17-binaries
+- vendor: AZUL
+  download-url-format: https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${VERSION_BASE}-${OS}_${ARCH}.${PACKAGING}
+  public-key-url: https://www.azul.com/wp-content/uploads/2021/05/0xB1998361219BD9C9.txt
+  supported-versions:
+    - major-version: "19"
+      releases:
+        - 19.0.1+10
+        - 19+36
+    - major-version: "18"
+      releases:
+        - 18.0.2.1+1
+        - 18.0.2+9
+        - 18.0.1+10
+        - 18+37
+    - major-version: "17"
+      releases:
+        - 17.0.5+8
+        - 17.0.4.1+1
+        - 17.0.4+8
+        - 17.0.3+7
+        - 17.0.2+8
+        - 17.0.1+12
+        - 17+35
+  parameters:
+    19.0.1+10:
+      zulu-version: 19.30.11
+    19+36:
+      zulu-version: 19.28.81
+    18.0.2.1+1:
+      zulu-version: 18.32.13
+    18.0.2+9:
+      zulu-version: 18.32.11
+    18.0.1+10:
+      zulu-version: 18.30.11
+    18+37:
+      zulu-version: 18.28.13
+    17.0.5+8:
+      zulu-version: 17.38.21
+    17.0.4.1+1:
+      zulu-version: 17.36.17
+    17.0.4+8:
+      zulu-version: 17.36.13
+    17.0.3+7:
+      zulu-version: 17.34.19
+    17.0.2+8:
+      zulu-version: 17.32.13
+    17.0.1+12:
+      zulu-version: 17.30.15
+    17+35:
+      zulu-version: 17.28.13
+- vendor: CORRETTO
+  download-url-format: https://corretto.aws/downloads/resources/${CORRETTO_VERSION}/amazon-corretto-${CORRETTO_VERSION}-${OS}-${ARCH}.${PACKAGING}
+  public-key-url-format: https://corretto.aws/downloads/resources/${KEY_VERSION}/${KEY_ID}.pub
+  supported-versions:
+    - major-version: "19"
+      releases:
+        - 19.0.1.10.1
+        - 19.0.0.36.1
+    - major-version: "18"
+      releases:
+        - 18.0.2.9.1
+        - 18.0.1.10.1
+        - 18.0.0.37.1
+        - 18.0.0.35.1
+    - major-version: "17"
+      releases:
+        - 17.0.5.8.1
+        - 17.0.4.9.1
+        - 17.0.4.8.1
+        - 17.0.3.6.1
+        - 17.0.2.8.1
+        - 17.0.1.12.1
+        - 17.0.0.35.2
+        - 17.0.0.35.1
+  parameters:
+    19:
+      key-version: 19.0.0.36.1
+      key-id: B04F24E3
+    18:
+      key-version: 18.0.0.35.1
+      key-id: B04F24E3
+    17:
+      key-version: 17.0.0.35.1
+      key-id: B04F24E3
+- vendor: OPENJDK
+  download-url-format: https://download.java.net/java/GA/jdk${VERSION_BASE}/${HASH}/${BUMP}/GPL/openjdk-${VERSION_BASE}_${OS}-${ARCH}_bin.${PACKAGING}
+  checksum-url-format: https://download.java.net/java/GA/jdk${VERSION_BASE}/${HASH}/${BUMP}/GPL/openjdk-${VERSION_BASE}_${OS}-${ARCH}_bin.${PACKAGING}.sha256
+  supported-versions:
+    - major-version: "19"
+      releases:
+        - 19.0.1+10
+        - 19+36
+    - major-version: "18"
+      releases:
+        - 18.0.2+9
+        - 18.0.1.1+2
+        - 18+36
+    - major-version: "17"
+      releases:
+        - 17.0.2+8
+        - 17.0.1+12
+        - 17+35
+  parameters:
+    19.0.1+10:
+      hash: afdd2e245b014143b62ccb916125e3ce
+    19+36:
+      hash: 877d6127e982470ba2a7faa31cc93d04
+    18.0.2+9:
+      hash: f6ad4b4450fd4d298113270ec84f30ee
+    18.0.1.1+13:
+      hash: 65ae32619e2f40f3a9af3af1851d6e19
+    18+36:
+      hash: 43f95e8614114aeaa8e8a5fcf20a682d
+    17.0.2+8:
+      hash: dfd4a8d0985749f896bed50d7138ee7f
+    17.0.1+12:
+      hash: 2a2082e5a09d4267845be086888add4f
+    17+35:
+      hash: 0d483333a00540d886896bac774ff48b

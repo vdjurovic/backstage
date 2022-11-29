@@ -16,3 +16,8 @@ fun applicationMapper() : ApplicationMapper = Mappers.getMapper(ApplicationMappe
 
 fun deploymentConfigMapper() : DeploymentConfigMapper = Mappers.getMapper(DeploymentConfigMapper::class.java)
 
+fun installedJdkMapper() : InstalledJdkMapper = Mappers.getMapper(InstalledJdkMapper::class.java)
+
+fun availableJdkMapper() : AvailableJdkMapper = Mappers.getMapper(AvailableJdkMapper::class.java)
+
+fun jdkInstallTaskMapper() : JdkInstallTaskMapper = Mappers.getMapper(JdkInstallTaskMapper::class.java)
