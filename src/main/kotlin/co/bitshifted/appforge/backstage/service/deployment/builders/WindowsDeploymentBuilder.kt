@@ -16,6 +16,7 @@ import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.backstage.util.safeAppName
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.OperatingSystem
 import java.io.FileWriter
 import java.nio.file.Files
@@ -34,46 +35,49 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
     lateinit var modulesDir: Path
 
     fun build(): Boolean {
-        logger.info("Creating Windows deployment in directory {}", builder.windowsDir)
-        try {
-            createDirectoryStructure()
-            builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.WINDOWS)
-            builder.copyResources(builder.windowsDir)
-            builder.buildJdkImage(builder.windowsDir, modulesDir, OperatingSystem.WINDOWS)
-            copyLauncher()
-            copyWindowsIcons()
-            copySplashScreen()
-            createInstaller()
-            logger.info("Successfully created Windows deployment in directory {}", builder.windowsDir)
-            return true
-        } catch (th: Throwable) {
-            logger.error("Error building Windows deployment", th)
-            throw th
+        val archs = builder.builderConfig.deploymentConfig.applicationInfo.windows.supportedCpuArchitectures
+        archs.forEach {
+            logger.info("Creating Windows deployment in directory {}", builder.getWindowsDir(it))
+            try {
+                createDirectoryStructure(it)
+                builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.WINDOWS)
+                builder.copyResources(builder.getWindowsDir(it))
+                builder.buildJdkImage(builder.getWindowsDir(it), modulesDir, OperatingSystem.WINDOWS, it)
+                copyLauncher(it)
+                copyWindowsIcons(it)
+                copySplashScreen(it)
+                createInstaller(it)
+                logger.info("Successfully created Windows deployment in directory {}", builder.getWindowsDir(it))
+                return true
+            } catch (th: Throwable) {
+                logger.error("Error building Windows deployment", th)
+                throw th
+            }
         }
+        return true
     }
 
-    private fun createDirectoryStructure() {
+    private fun createDirectoryStructure(arch: CpuArch) {
         classpathDir = Files.createDirectories(
             Paths.get(
-                builder.windowsDir.absolutePathString(),
-                BackstageConstants.OUTPUT_CLASSPATH_DIR
+                builder.getWindowsDir(arch).absolutePathString(), BackstageConstants.OUTPUT_CLASSPATH_DIR
             )
         )
         logger.info("Created classpath directory at {}", classpathDir.toFile().absolutePath)
         modulesDir = Files.createDirectories(
             Paths.get(
-                builder.windowsDir.absolutePathString(),
+                builder.getWindowsDir(arch).absolutePathString(),
                 BackstageConstants.OUTPUT_MODULES_DIR
             )
         )
         logger.info("Created modules directory at {}", modulesDir.toFile().absolutePath)
     }
 
-    private fun copyLauncher() {
+    private fun copyLauncher(arch: CpuArch) {
+        var launcherName = String.format(BackstageConstants.LAUNCHER_NAME_FORMAT_LINUX, arch.display)
         val launcherPath = Path.of(
             builder.launchCodeDir.absolutePathString(),
-            BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR,
-            BackstageConstants.LAUNCHER_NAME_WINDOWS
+            BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR, launcherName
         )
 
         var exeName = builder.builderConfig.deploymentConfig.applicationInfo.exeName
@@ -81,59 +85,69 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
             exeName = "$exeName.exe"
         }
         logger.debug(
-            "Copying Windows launcher from {} to {}", launcherPath.absolutePathString(), builder.windowsDir.resolve(
+            "Copying Windows launcher from {} to {}", launcherPath.absolutePathString(), builder.getWindowsDir(arch).resolve(
                 exeName
             )
         )
         Files.copy(
             launcherPath,
-            builder.windowsDir.resolve(exeName),
+            builder.getWindowsDir(arch).resolve(exeName),
             StandardCopyOption.COPY_ATTRIBUTES
         )
     }
 
-    private fun copyWindowsIcons() {
+    private fun copyWindowsIcons(arch: CpuArch) {
         builder.builderConfig.deploymentConfig.applicationInfo.windows.icons.forEach {
             val name = if (it.target != null) it.target else it.source
-            val target = builder.windowsDir.resolve(name)
+            val target = builder.getWindowsDir(arch).resolve(name)
             logger.debug("Icon target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input
+            builder.builderConfig.contentService?.get(
+                it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)
+            )?.input
                 .use {
                     Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
                 }
         }
     }
 
-    private fun copySplashScreen() {
+    private fun copySplashScreen(arch: CpuArch) {
         val splash = builder.builderConfig.deploymentConfig.applicationInfo.splashScreen
-        if (splash!= null) {
+        if (splash != null) {
             val name = if (splash.target != null) splash.target else splash.source
-            val target = builder.windowsDir.resolve(name)
+            val target = builder.getWindowsDir(arch).resolve(name)
             logger.debug("Splash screen target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.builderConfig.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
+            builder.builderConfig.contentService?.get(
+                splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)
+            )?.input.use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
     }
 
-    private fun getTemplateData() : MutableMap<String, Any> {
+    private fun getTemplateData(arch: CpuArch): MutableMap<String, Any> {
         val data = mutableMapOf<String, Any>()
         data["exe"] = builder.builderConfig.deploymentConfig.applicationInfo.exeName
         data["appName"] = builder.builderConfig.deploymentConfig.applicationInfo.name
         data["appSafeName"] = safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)
         data["version"] = builder.builderConfig.deploymentConfig.version
-        data["licenseFile"] = builder.windowsDir.resolve(builder.builderConfig.deploymentConfig.applicationInfo.license.target).absolutePathString()
-        data["contentDir"] = builder.windowsDir.absolutePathString()
-        val installerExeName = String.format("%s-%s-windows.exe", safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name), builder.builderConfig.deploymentConfig.version)
+        data["licenseFile"] =
+            builder.getWindowsDir(arch).resolve(builder.builderConfig.deploymentConfig.applicationInfo.license.target)
+                .absolutePathString()
+        data["contentDir"] = builder.getWindowsDir(arch).absolutePathString()
+        val installerExeName = String.format(
+            "%s-%s-windows-%s.exe",
+            safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name),
+            builder.builderConfig.deploymentConfig.version, arch.display
+        )
         data["installerExe"] = builder.installerDir.resolve(installerExeName).absolutePathString()
         return data
     }
 
-    private fun createInstaller() {
+    private fun createInstaller(arch: CpuArch) {
         logger.info("Creating installer in directory {}", builder.builderConfig.baseDir.absolutePathString())
-        val data = getTemplateData()
+        val data = getTemplateData(arch)
         val template = builder.freemarkerConfig.getTemplate(installerTemplate)
         val installerFile = builder.builderConfig.baseDir.resolve(installerConfigFileName)
         val writer = FileWriter(installerFile.toFile())

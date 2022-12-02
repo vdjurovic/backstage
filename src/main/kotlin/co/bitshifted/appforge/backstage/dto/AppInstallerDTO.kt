@@ -10,12 +10,14 @@
 
 package co.bitshifted.appforge.backstage.dto
 
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.OperatingSystem
 
 
 data class AppInstallerDTO(
     val applicationId : String? = null,
     val operatingSystem: OperatingSystem? = null,
+    val cpuArch: CpuArch? = null,
     val extension : String? = null,
     val fileName : String? = null,
     val fileHash : String? = null,

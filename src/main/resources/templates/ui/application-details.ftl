@@ -44,7 +44,7 @@
                         Download installer for your operating system
                     </h2>
                     <#list installers as installer >
-                    <a class="btn btn-primary btn-rounded" href="/v1/applications/${installer.applicationId}/installers/${installer.fileHash}">${installer.operatingSystem} (.${installer.extension})</a>
+                    <a class="btn btn-primary btn-rounded" href="/v1/applications/${installer.applicationId}/installers/${installer.fileHash}">${installer.operatingSystem?lower_case?capitalize} ${installer.cpuArch?lower_case} (.${installer.extension})</a>
                     </#list>
 
                     <h3 class="box-title mt-5">Description</h3>

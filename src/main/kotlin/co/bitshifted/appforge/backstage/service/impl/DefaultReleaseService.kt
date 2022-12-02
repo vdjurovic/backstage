@@ -25,6 +25,7 @@ import co.bitshifted.appforge.backstage.repository.ApplicationReleaseRepository
 import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.service.ReleaseService
 import co.bitshifted.appforge.backstage.util.logger
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.OperatingSystem
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.codec.digest.DigestUtils
@@ -55,7 +56,7 @@ class DefaultReleaseService(
 
     private val logger = logger(this)
     private val timestampFormatter = DateTimeFormatterBuilder().appendPattern("YYYYMMddHHmmss").toFormatter()
-    private val installerExtensions = mapOf<OperatingSystem, String>(
+    private val installerExtensions = mapOf(
         OperatingSystem.WINDOWS to "exe",
         OperatingSystem.MAC to "dmg",
         OperatingSystem.LINUX to "tar.gz"
@@ -151,7 +152,8 @@ class DefaultReleaseService(
             val installerFiles = FileUtils.listFiles(installersDir.toFile(), arrayOf( installerExtensions[it]), false)
             logger.debug("Installer files: {}", installerFiles)
            for(file in installerFiles) {
-               installersList.add(getAppInstallerData(applicationId, it, file, installerExtensions[it] ?: ""))
+               var arch = inferArchFromFileName(file)
+               installersList.add(getAppInstallerData(applicationId, it, file, installerExtensions[it] ?: "", arch))
            }
         }
         val installerFile = Paths.get(releaseStorageLocation, applicationId, releaseId, BackstageConstants.OUTPUT_INSTALLERS_FILE).toFile()
@@ -159,12 +161,29 @@ class DefaultReleaseService(
         logger.info("Wrote installers.json file at {}", installerFile.absolutePath)
     }
 
-    private fun getAppInstallerData(applicationId: String, os: OperatingSystem, installerFile : File, extension : String) : AppInstallerDTO {
+    private fun getAppInstallerData(applicationId: String, os: OperatingSystem, installerFile : File, extension : String, arch: CpuArch) : AppInstallerDTO {
         logger.debug("Calculating hash for installer file {}", installerFile.absolutePath)
         val installerHash = digester.digestAsHex(installerFile)
         contentService.save(installerFile.inputStream())
         return AppInstallerDTO(applicationId = applicationId, operatingSystem =  os , extension =  extension,
-            fileHash =  installerHash, fileName = installerFile.name, size = installerFile.length())
+            fileHash =  installerHash, fileName = installerFile.name, size = installerFile.length(), cpuArch = arch)
+    }
+
+    private fun getSupportedCpuArchitectures(deploymentConfig: DeploymentConfig, operatingSystem: OperatingSystem) : Set<CpuArch> {
+        return when(operatingSystem) {
+            OperatingSystem.LINUX -> deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
+            OperatingSystem.MAC -> deploymentConfig.applicationInfo.mac.supportedCpuArchitectures
+            OperatingSystem.WINDOWS -> deploymentConfig.applicationInfo.windows.supportedCpuArchitectures
+        }
+    }
+
+    private fun inferArchFromFileName(file : File) : CpuArch {
+        if(file.name.contains(CpuArch.X64.display)) {
+            return CpuArch.X64
+        } else if (file.name.contains(CpuArch.AARCH64.display)) {
+            return CpuArch.AARCH64
+        }
+        throw IllegalArgumentException("File name does not contain any CPU architecture: ${file.name}")
     }
 
 }

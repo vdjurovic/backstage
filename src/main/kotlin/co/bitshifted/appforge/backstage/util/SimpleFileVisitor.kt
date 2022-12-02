@@ -21,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.fileSize
+import kotlin.math.pow
 
 class SimpleFileVisitor(val baseDir : Path, val archiveOs : TarArchiveOutputStream) : FileVisitor<Path> {
 
@@ -38,7 +39,9 @@ class SimpleFileVisitor(val baseDir : Path, val archiveOs : TarArchiveOutputStre
         val entry = TarArchiveEntry(targetFile.toString())
         entry.size = Files.size(file)
         if(Files.isExecutable(file)) {
-            entry.mode = 0x0755
+            entry.mode = 33261 // decimal equivalen of octal 100755
+        } else {
+            entry.mode = 33188  // decimal equivalen of octal 100644
         }
         archiveOs.putArchiveEntry(entry)
         archiveOs.write(file?.toFile()?.readBytes())

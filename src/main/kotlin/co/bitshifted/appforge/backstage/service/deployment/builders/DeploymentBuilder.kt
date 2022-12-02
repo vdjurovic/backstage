@@ -82,9 +82,9 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     @Autowired
     lateinit var syncroConfig : SyncroConfig
     lateinit var launchCodeDir: Path
-    lateinit var linuxDir: Path
-    lateinit var windowsDir: Path
-    lateinit var macDir: Path
+    private lateinit var linuxDir: Path
+    private lateinit var windowsDir: Path
+    private lateinit var macDir: Path
     lateinit var installerDir : Path
 
     fun build(): Boolean {
@@ -111,17 +111,34 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         return true
     }
 
+    fun getLinuxDir(arch : CpuArch) : Path {
+        return linuxDir.resolve(arch.display)
+    }
+
+    fun getMacDir(arch : CpuArch) : Path {
+        return macDir.resolve(arch.display)
+    }
+
+    fun getWindowsDir(arch : CpuArch) : Path {
+        return windowsDir.resolve(arch.display)
+    }
+
     private fun createDirectoryStructure() {
         logger.debug("Creating directory structure for deployment in {}", builderConfig.baseDir.absolutePathString())
         launchCodeDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OUTPUT_LAUNCHER_DIR))
         logger.debug("Created Launchcode output directory at {}", launchCodeDir.absolutePathString())
         linuxDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.LINUX.display))
         logger.debug("Created Linux output directory at {}", linuxDir.absolutePathString())
+        Files.createDirectories(linuxDir.resolve(CpuArch.X64.display))
+        Files.createDirectories(linuxDir.resolve(CpuArch.AARCH64.display))
         windowsDir =
             Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.WINDOWS.display))
         logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
+        Files.createDirectories(windowsDir.resolve(CpuArch.X64.display))
         macDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.MAC.display))
         logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
+        Files.createDirectories(macDir.resolve(CpuArch.X64.display))
+        Files.createDirectories(macDir.resolve(CpuArch.AARCH64.display))
         installerDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), DEPLOYMENT_INSTALLERS_DIR))
         logger.debug("Created installers output directory at {}", installerDir.absolutePathString())
     }
@@ -188,12 +205,12 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         }
     }
 
-    fun buildJdkImage(baseDir: Path, modulesDir: Path, os : OperatingSystem) {
+    fun buildJdkImage(baseDir: Path, modulesDir: Path, os : OperatingSystem, arch : CpuArch) {
         logger.info("Building JDK image for {}", os.name)
         val jvmConfig = builderConfig.deploymentConfig.jvmConfiguration
         val jreOutputDir = baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
         val jdkLocation =
-            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, CpuArch.X64,jvmConfig.release ?: "latest")
+            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, arch,jvmConfig.release ?: "latest")
         if(jvmConfig.majorVersion == JavaVersion.JAVA_8) {
             FileUtils.copyDirectory(Paths.get(jdkLocation).resolve("jre").toFile(), jreOutputDir.toFile())
         } else {

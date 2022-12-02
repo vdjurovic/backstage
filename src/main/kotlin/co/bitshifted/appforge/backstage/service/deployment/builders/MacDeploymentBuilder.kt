@@ -16,12 +16,14 @@ import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.backstage.util.safeAppName
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.OperatingSystem
 import org.apache.commons.io.FileUtils
 import java.io.FileWriter
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
@@ -35,7 +37,7 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
     private val infoPlistTemplate = "mac/info.plist.ftl"
     private val infoPlistFile = "Info.plist"
     private val createDmgTemplate = "mac/create-dmg.sh.ftl"
-    private val createDmgScriptFileName = "create-dmg.sh"
+    private val createDmgScriptNameFormat = "create-dmg-%s.sh"
     private val mbBytes = 1_000_000
     private val dsStoreInput = "/templates/mac/DS_Store"
     private val dsStoreFile = "DS_Store"
@@ -43,55 +45,69 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
     private val backgroundImageFile = "appforge-background.png"
 
     val logger = logger(this)
-    lateinit var classpathDir: Path
-    lateinit var modulesDir: Path
-    lateinit var resourcesDir : Path
-    lateinit var macOsDir : Path
 
     fun build() : Boolean {
-        logger.info("Creating Mac OS X deployment in directory {}", builder.macDir)
-        try {
-            createDirectoryStructure()
-            builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.MAC)
-            builder.copyResources(macOsDir)
-            builder.buildJdkImage(macOsDir, modulesDir, OperatingSystem.MAC)
-            copyLauncher()
-            copyMacIcons()
-            copySplashScreen()
-            createInfoPlist()
-            moveNonExecutableFiles()
-            createInstaller()
-            logger.info("Successfully created Mac OS X deployment in directory {}", builder.macDir)
-            return true
-        } catch(th : Throwable) {
-            logger.error("Error building Mac OS X deployment", th)
-            throw  th
+        val archs = builder.builderConfig.deploymentConfig.applicationInfo.mac.supportedCpuArchitectures
+        archs.forEach {
+            logger.info("Creating Mac OS X deployment in directory {}", builder.getMacDir(it))
+            try {
+                createDirectoryStructure(it)
+                builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.MAC)
+                builder.copyResources(getMacOsDir(it))
+                builder.buildJdkImage(getMacOsDir(it), getModulesDir(it), OperatingSystem.MAC, it)
+                copyLauncher(it)
+                copyMacIcons(it)
+                copySplashScreen(it)
+                createInfoPlist(it)
+                moveNonExecutableFiles(it)
+                createInstaller(it)
+                logger.info("Successfully created Mac OS X deployment in directory {}", builder.getMacDir(it))
+            } catch(th : Throwable) {
+                logger.error("Error building Mac OS X deployment", th)
+                throw  th
+            }
         }
+        return true
     }
 
-    private fun createDirectoryStructure() {
-        macOsDir = Files.createDirectories(builder.macDir.resolve(appBundleMacOSDirPath))
-        classpathDir = Files.createDirectories(builder.macDir.resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_CLASSPATH_DIR))
-        logger.info("Created classpath directory at {}", classpathDir.toFile().absolutePath)
-        modulesDir = Files.createDirectories(builder.macDir.resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_MODULES_DIR))
-        logger.info("Created modules directory at {}", modulesDir.toFile().absolutePath)
-        resourcesDir = Files.createDirectories(builder.macDir.resolve(appBundleResourcesDirPath))
-        logger.info("Created Resources directory in {}", resourcesDir.absolutePathString())
+    private fun getClasspathDir(arch: CpuArch) : Path {
+        return builder.getMacDir(arch).resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_CLASSPATH_DIR)
     }
 
-    private fun copyLauncher() {
+    private fun getModulesDir(arch: CpuArch) : Path {
+        return builder.getMacDir(arch).resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_MODULES_DIR)
+    }
+
+    private fun getMacOsDir(arch: CpuArch) : Path {
+        return builder.getMacDir(arch).resolve(appBundleMacOSDirPath)
+    }
+
+    private fun getResourcesDir(arch: CpuArch) : Path {
+        return builder.getMacDir(arch).resolve(appBundleResourcesDirPath)
+    }
+
+    private fun createDirectoryStructure(arch : CpuArch) {
+        Files.createDirectories(Paths.get(builder.getMacDir(arch).absolutePathString(), appBundleMacOSDirPath))
+        Files.createDirectories(builder.getMacDir(arch).resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_CLASSPATH_DIR))
+        logger.info("Created classpath directory at {}", getClasspathDir(arch).toFile().absolutePath)
+        Files.createDirectories(builder.getMacDir(arch).resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_MODULES_DIR))
+        logger.info("Created modules directory at {}", getModulesDir(arch).toFile().absolutePath)
+        Files.createDirectories(Paths.get(builder.getMacDir(arch).absolutePathString(), appBundleResourcesDirPath))
+        logger.info("Created Resources directory in {}", getResourcesDir(arch).absolutePathString())
+    }
+
+    private fun copyLauncher(arch: CpuArch) {
+        var launcherName = String.format(BackstageConstants.LAUNCHER_NAME_FORMAT_MAC, arch.display)
         val launcherPath = Path.of(builder.launchCodeDir.absolutePathString(),
-            BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR,
-            BackstageConstants.LAUNCHER_NAME_MAC
-        )
-        logger.debug("Copying Mac OS X launcher from {} to {}", launcherPath.absolutePathString(), macOsDir.resolve(BackstageConstants.LAUNCHER_NAME_MAC))
-        Files.copy(launcherPath, macOsDir.resolve(builder.builderConfig.deploymentConfig.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
+            BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR, launcherName)
+        logger.debug("Copying Mac OS X launcher from {} to {}", launcherPath.absolutePathString(), getMacOsDir(arch).resolve(launcherName))
+        Files.copy(launcherPath, getMacOsDir(arch).resolve(builder.builderConfig.deploymentConfig.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
     }
 
-    private fun copyMacIcons() {
+    private fun copyMacIcons(arch: CpuArch) {
         builder.builderConfig.deploymentConfig.applicationInfo.mac.icons.forEach {
             val name = if (it.target != null) it.target else it.source
-            val target = resourcesDir.resolve(name)
+            val target = getResourcesDir(arch).resolve(name)
             logger.debug("Icon target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
             builder.builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
@@ -100,22 +116,22 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
         }
     }
 
-    private fun copySplashScreen() {
+    private fun copySplashScreen(arch: CpuArch) {
         val splash = builder.builderConfig.deploymentConfig.applicationInfo.splashScreen
         if (splash!= null) {
             val name = if (splash.target != null) splash.target else splash.source
-            val target = resourcesDir.resolve(name)
+            val target = getResourcesDir(arch).resolve(name)
             logger.debug("Splash screen target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
             builder.builderConfig.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
             // create symlink to splash screen
-            Files.createSymbolicLink(macOsDir.resolve(name), macOsDir.relativize(resourcesDir.resolve(target.fileName)))
+            Files.createSymbolicLink(getMacOsDir(arch).resolve(name), getMacOsDir(arch).relativize(getResourcesDir(arch).resolve(target.fileName)))
         }
     }
 
-    private fun getTemplateData() : MutableMap<String, Any> {
+    private fun getTemplateData(arch: CpuArch) : MutableMap<String, Any> {
         val data = mutableMapOf<String, Any>()
         data["appName"] = builder.builderConfig.deploymentConfig.applicationInfo.name
         data["appExecutable"] = builder.builderConfig.deploymentConfig.applicationInfo.exeName
@@ -125,16 +141,17 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
         data["appVersion"] = builder.builderConfig.deploymentConfig.version
         data["installerDir"] = builder.installerDir.absolutePathString()
         data["appSafeName"] = safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)
-        data["macOutputDir"] = builder.macDir.absolutePathString()
-        val dirSizeBytes = FileUtils.sizeOfDirectory(builder.macDir.toFile())
+        data["macOutputDir"] = builder.getMacDir(arch).absolutePathString()
+        data["cpuArch"] = arch.display
+        val dirSizeBytes = FileUtils.sizeOfDirectory(builder.getMacDir(arch).toFile())
         data["sizeInMb"] = (dirSizeBytes / mbBytes) + 2
         return data
     }
 
-    private fun createInfoPlist() {
-        val data = getTemplateData()
+    private fun createInfoPlist(arch: CpuArch) {
+        val data = getTemplateData(arch)
         val template = builder.freemarkerConfig.getTemplate(infoPlistTemplate)
-        val targetPath = macOsDir.parent.resolve(infoPlistFile)
+        val targetPath = getMacOsDir(arch).parent.resolve(infoPlistFile)
         val writer = FileWriter(targetPath.toFile())
         writer.use {
             template.process(data, writer)
@@ -143,7 +160,9 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
 
     // Mac OS bundle signing fails if there are non-executable files in Content/MacOS directory.
     // this function moves them
-    private fun moveNonExecutableFiles() {
+    private fun moveNonExecutableFiles(arch: CpuArch) {
+        val macOsDir = getMacOsDir(arch)
+        val resourcesDir = getResourcesDir(arch)
         Files.list(macOsDir).forEach {
             if (it.isDirectory()) {
                 try {
@@ -165,14 +184,15 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
         Files.createSymbolicLink(source, target)
     }
 
-    private fun createInstaller() {
+    private fun createInstaller(arch: CpuArch) {
         logger.info("Creating Mac OS X installer")
         val dsStore = this.javaClass.getResourceAsStream(dsStoreInput)
         Files.copy(dsStore, builder.installerDir.resolve(dsStoreFile))
         val bgImage = this.javaClass.getResourceAsStream(backgroundImgInput)
         Files.copy(bgImage, builder.installerDir.resolve(backgroundImageFile))
-        val data = getTemplateData()
+        val data = getTemplateData(arch)
         val template = builder.freemarkerConfig.getTemplate(createDmgTemplate)
+        val createDmgScriptFileName = String.format(createDmgScriptNameFormat, arch.display)
         val installerFile = builder.installerDir.resolve(createDmgScriptFileName)
         val writer = FileWriter(installerFile.toFile())
         writer.use {
@@ -183,7 +203,7 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
         val pb = ProcessBuilder("./$createDmgScriptFileName")
         pb.directory(builder.installerDir.toFile())
         pb.environment().put("PWD", builder.installerDir.absolutePathString())
-        logger.debug("create-dmg.sh: working directory={}", builder.installerDir.absolutePathString())
+        logger.debug("create-dmg-${arch.display}.sh: working directory={}", builder.installerDir.absolutePathString())
         val process = pb.start()
         if (process.waitFor() == 0) {
             logger.info(process.inputReader().use { it.readText() })
