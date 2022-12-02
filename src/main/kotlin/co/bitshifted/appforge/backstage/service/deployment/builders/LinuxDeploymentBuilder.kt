@@ -10,7 +10,7 @@
 
 package co.bitshifted.appforge.backstage.service.deployment.builders
 
-import co.bitshifted.appforge.backstage.BackstageConstants.LAUNCHER_NAME_LINUX
+import co.bitshifted.appforge.backstage.BackstageConstants.LAUNCHER_NAME_FORMAT_LINUX
 import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_CLASSPATH_DIR
 import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR
 import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_MODULES_DIR
@@ -19,6 +19,7 @@ import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.util.directoryToTarGz
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.backstage.util.safeAppName
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.OperatingSystem
 import org.apache.commons.io.FileUtils
 import java.io.FileWriter
@@ -26,7 +27,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
-import java.util.stream.Collector
 import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
 
@@ -35,48 +35,57 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     private val desktopEntryTemplate = "linux/desktop-entry.desktop.ftl"
     private val installerTemplate = "linux/install-script.sh.ftl"
     private val installerFileName = "installer.sh"
-    private val contentArchiveName = "content.tar.gz"
     val logger = logger(this)
-    lateinit var classpathDir : Path
-    lateinit var modulesDir : Path
 
     fun build(): Boolean {
-        logger.info("Creating Linux deployment in directory {}", builder.linuxDir)
-        try {
-            createDirectoryStructure()
-            builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.LINUX)
-            builder.copyResources(builder.linuxDir)
-            builder.buildJdkImage(builder.linuxDir, modulesDir, OperatingSystem.LINUX)
-            copyLauncher()
-            copyLinuxIcons()
-            copySplashScreen()
-            createDesktopEntry()
-            createInstaller()
-            logger.info("Successfully created Linux deployment in directory {}", builder.linuxDir)
-            return true
-        } catch (th: Throwable) {
-            logger.error("Error building Linux deployment", th)
-            throw th
+        val archs = builder.builderConfig.deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
+        archs.forEach {
+            logger.info("Creating Linux deployment in directory {}", builder.getLinuxDir(it))
+            try {
+                createDirectoryStructure(it)
+                builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.LINUX)
+                builder.copyResources(builder.getLinuxDir(it))
+                builder.buildJdkImage(builder.getLinuxDir(it), getModulesDir(it), OperatingSystem.LINUX, it)
+                copyLauncher(it)
+                copyLinuxIcons(it)
+                copySplashScreen(it)
+                createDesktopEntry(it)
+                createInstaller(it)
+                logger.info("Successfully created Linux deployment in directory {}", builder.getLinuxDir(it))
+            } catch (th: Throwable) {
+                logger.error("Error building Linux deployment", th)
+                throw th
+            }
         }
+        return true
     }
 
-    private fun createDirectoryStructure() {
-        classpathDir = Files.createDirectories(Paths.get(builder.linuxDir.absolutePathString(), OUTPUT_CLASSPATH_DIR))
-        logger.info("Created classpath directory at {}", classpathDir.toFile().absolutePath)
-        modulesDir = Files.createDirectories(Paths.get(builder.linuxDir.absolutePathString(), OUTPUT_MODULES_DIR))
-        logger.info("Created modules directory at {}", modulesDir.toFile().absolutePath)
+    private fun getClasspathDir(arch: CpuArch) : Path {
+        return builder.getLinuxDir(arch).resolve(OUTPUT_CLASSPATH_DIR)
     }
 
-    private fun copyLauncher() {
-        val launcherPath = Path.of(builder.launchCodeDir.absolutePathString(), OUTPUT_LAUNCHER_DIST_DIR, LAUNCHER_NAME_LINUX)
-        logger.debug("Copying Linux launcher from {} to {}", launcherPath.absolutePathString(), builder.linuxDir.resolve(LAUNCHER_NAME_LINUX))
-        Files.copy(launcherPath, builder.linuxDir.resolve(builder.builderConfig.deploymentConfig.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
+    private fun getModulesDir(arch: CpuArch) : Path {
+        return builder.getLinuxDir(arch).resolve(OUTPUT_MODULES_DIR)
     }
 
-    private fun copyLinuxIcons() {
+    private fun createDirectoryStructure(arch : CpuArch) {
+        Files.createDirectories(Paths.get(builder.getLinuxDir(arch).absolutePathString(), OUTPUT_CLASSPATH_DIR))
+        logger.info("Created classpath directory at {}", getClasspathDir(arch).toFile().absolutePath)
+        Files.createDirectories(Paths.get(builder.getLinuxDir(arch).absolutePathString(), OUTPUT_MODULES_DIR))
+        logger.info("Created modules directory at {}", getModulesDir(arch).toFile().absolutePath)
+    }
+
+    private fun copyLauncher(arch : CpuArch) {
+        var launcherName = String.format(LAUNCHER_NAME_FORMAT_LINUX, arch.display)
+        val launcherPath = Path.of(builder.launchCodeDir.absolutePathString(), OUTPUT_LAUNCHER_DIST_DIR, launcherName)
+        logger.debug("Copying Linux launcher from {} to {}", launcherPath.absolutePathString(), builder.getLinuxDir(arch).resolve(launcherName))
+        Files.copy(launcherPath, builder.getLinuxDir(arch).resolve(builder.builderConfig.deploymentConfig.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
+    }
+
+    private fun copyLinuxIcons(arch : CpuArch) {
         builder.builderConfig.deploymentConfig.applicationInfo.linux.icons.forEach {
             val name = if (it.target != null) it.target else it.source
-            val target = builder.linuxDir.resolve(name)
+            val target = builder.getLinuxDir(arch).resolve(name)
             logger.debug("Icon target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
             builder.builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
@@ -85,11 +94,11 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         }
     }
 
-    private fun copySplashScreen() {
+    private fun copySplashScreen(arch : CpuArch) {
         val splash = builder.builderConfig.deploymentConfig.applicationInfo.splashScreen
         if (splash!= null) {
             val name = if (splash.target != null) splash.target else splash.source
-            val target = builder.linuxDir.resolve(name)
+            val target = builder.getLinuxDir(arch).resolve(name)
             logger.debug("Splash screen target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
             builder.builderConfig.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
@@ -98,7 +107,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         }
     }
 
-    private fun getTemplateData() : MutableMap<String, Any> {
+    private fun getTemplateData(arch: CpuArch) : MutableMap<String, Any> {
         logger.debug("Linux desktop categories: {}", builder.builderConfig.deploymentConfig.applicationInfo.linux.categories)
         val data = mutableMapOf<String, Any>()
         data["icon"] = builder.builderConfig.deploymentConfig.applicationInfo.linux.icons[0].target
@@ -112,17 +121,17 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         data["appUrl"] = builder.builderConfig.deploymentConfig.applicationInfo.homePageUrl ?: ""
         data["publisher"] = builder.builderConfig.deploymentConfig.applicationInfo.publisher
         // find all executable files
-        val fileList = FileUtils.listFiles(builder.linuxDir.toFile(), null, true)
-        val exeFiles = fileList.filter { it.canExecute() }.map { builder.linuxDir.relativize(it.toPath()).toString() }
+        val fileList = FileUtils.listFiles(builder.getLinuxDir(arch).toFile(), null, true)
+        val exeFiles = fileList.filter { it.canExecute() }.map { builder.getLinuxDir(arch).relativize(it.toPath()).toString() }
         data["exeFiles"] = exeFiles
         return data
     }
 
-    private fun createDesktopEntry() {
-        val data = getTemplateData()
+    private fun createDesktopEntry(arch: CpuArch) {
+        val data = getTemplateData(arch)
         val template = builder.freemarkerConfig.getTemplate(desktopEntryTemplate)
         val safeName = data["appSafeName"]
-        val targetPath = builder.linuxDir.resolve("${safeName}.desktop")
+        val targetPath = builder.getLinuxDir(arch).resolve("${safeName}.desktop")
 
         val writer = FileWriter(targetPath.toFile())
         writer.use {
@@ -130,10 +139,10 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         }
     }
 
-    private fun createInstaller() {
+    private fun createInstaller(arch: CpuArch) {
         logger.info("Creating installer in directory {}", builder.installerDir.absolutePathString())
-        val data = getTemplateData()
-        val installerWorkDirName = String.format("linux/%s-%s-linux", data["appSafeName"], data["version"])
+        val data = getTemplateData(arch)
+        val installerWorkDirName = String.format("linux/%s-%s-linux-%s", data["appSafeName"], data["version"], arch.display)
         val workDir = builder.installerDir.resolve(installerWorkDirName)
         Files.createDirectories(workDir)
         logger.debug("Linux installer working directory: {}", workDir.absolutePathString())
@@ -147,8 +156,8 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         // copy content
         val contentDir = workDir.resolve("content")
         Files.createDirectories(contentDir)
-        FileUtils.copyDirectory(builder.linuxDir.toFile(), contentDir.toFile())
-        val installerName = String.format("%s-%s-linux.tar.gz",  data["appSafeName"], data["version"])
+        FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
+        val installerName = String.format("%s-%s-linux-%s.tar.gz",  data["appSafeName"], data["version"], arch.display)
         val installerPath = builder.installerDir.resolve(installerName)
         logger.debug("Linux installer name: {}", installerName)
         directoryToTarGz(workDir.parent, installerPath)
