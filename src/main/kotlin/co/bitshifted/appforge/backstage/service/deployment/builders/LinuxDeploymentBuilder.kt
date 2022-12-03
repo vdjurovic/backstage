@@ -50,7 +50,8 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
                 copyLinuxIcons(it)
                 copySplashScreen(it)
                 createDesktopEntry(it)
-                createInstaller(it)
+                createTarGzPackage(it)
+                createDebPackage(it)
                 logger.info("Successfully created Linux deployment in directory {}", builder.getLinuxDir(it))
             } catch (th: Throwable) {
                 logger.error("Error building Linux deployment", th)
@@ -120,6 +121,11 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         data["version"] = builder.builderConfig.deploymentConfig.version
         data["appUrl"] = builder.builderConfig.deploymentConfig.applicationInfo.homePageUrl ?: ""
         data["publisher"] = builder.builderConfig.deploymentConfig.applicationInfo.publisher
+        data["deb_arch"] = when(arch){
+            CpuArch.X64 ->  "amd64"
+            CpuArch.AARCH64 -> "arm64"
+        }
+        data["description"] = builder.builderConfig.deploymentConfig.applicationInfo.description
         // find all executable files
         val fileList = FileUtils.listFiles(builder.getLinuxDir(arch).toFile(), null, true)
         val exeFiles = fileList.filter { it.canExecute() }.map { builder.getLinuxDir(arch).relativize(it.toPath()).toString() }
@@ -139,13 +145,13 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         }
     }
 
-    private fun createInstaller(arch: CpuArch) {
-        logger.info("Creating installer in directory {}", builder.installerDir.absolutePathString())
+    private fun createTarGzPackage(arch: CpuArch) {
+        logger.info("Creating tar.gz package in directory {}", builder.installerDir.absolutePathString())
         val data = getTemplateData(arch)
         val installerWorkDirName = String.format("linux/%s-%s-linux-%s", data["appSafeName"], data["version"], arch.display)
         val workDir = builder.installerDir.resolve(installerWorkDirName)
         Files.createDirectories(workDir)
-        logger.debug("Linux installer working directory: {}", workDir.absolutePathString())
+        logger.debug("Linux .tar.gz package working directory: {}", workDir.absolutePathString())
         val template = builder.freemarkerConfig.getTemplate(installerTemplate)
         val installerFile = workDir.resolve(installerFileName)
         val writer = FileWriter(installerFile.toFile())
@@ -163,5 +169,25 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         directoryToTarGz(workDir.parent, installerPath)
         // cleanup
         FileUtils.deleteDirectory(workDir.toFile())
+    }
+
+    private fun createDebPackage(arch: CpuArch) {
+        logger.info("Creating .deb package in directory {}", builder.installerDir.absolutePathString())
+        val data = getTemplateData(arch)
+        val debWorkDirName = String.format("deb-%s", arch.display)
+        val debWorkDir = builder.installerDir.resolve(debWorkDirName)
+        Files.createDirectories(debWorkDir)
+        logger.debug("Linux .deb package working directory: {}", debWorkDir.absolutePathString())
+        // create .deb package directories
+        val debianDir = Files.createDirectories(debWorkDir.resolve("DEBIAN"))
+        val contentDir = Files.createDirectories(Path.of(debWorkDir.absolutePathString(), "/opt", safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)))
+        val controlFileTemplate = builder.freemarkerConfig.getTemplate("linux/deb-control.ftl")
+        val controlFile = debianDir.resolve("control")
+        val writer = FileWriter(controlFile.toFile())
+        writer.use {
+            controlFileTemplate.process(data, writer)
+        }
+        // copy content
+        FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
     }
 }
