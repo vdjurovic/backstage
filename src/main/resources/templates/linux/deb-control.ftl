@@ -1,9 +1,10 @@
 Package: ${appSafeName}
-Maintainer: Maintainer Name <email@address.com>
+<#if publisher?has_content && publisher_email?has_content>
+Maintainer: ${publisher} <${publisher_email}>
+</#if>
 Version: ${version}
 Architecture: ${deb_arch}
 Description: ${description}
-Section: https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-section
 Homepage: ${appUrl}
 
 

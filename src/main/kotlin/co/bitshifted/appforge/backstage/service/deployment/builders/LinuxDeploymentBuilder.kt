@@ -15,11 +15,13 @@ import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_CLASSPATH_DIR
 import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR
 import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.appforge.backstage.exception.BackstageException
+import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.util.directoryToTarGz
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.backstage.util.safeAppName
 import co.bitshifted.appforge.common.model.CpuArch
+import co.bitshifted.appforge.common.model.LinuxPackageType
 import co.bitshifted.appforge.common.model.OperatingSystem
 import org.apache.commons.io.FileUtils
 import java.io.FileWriter
@@ -27,14 +29,22 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.setPosixFilePermissions
 
 class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 
     private val desktopEntryTemplate = "linux/desktop-entry.desktop.ftl"
     private val installerTemplate = "linux/install-script.sh.ftl"
+    private val debianControlFileTemplate = "linux/deb-control.ftl"
+    private val debianPostInstFileTemplate = "linux/deb-postinst.ftl"
+    private val debianControlDir = "DEBIAN"
+    private val debianControlFileName = "control"
+    private val debianPostInstFileName = "postinst"
     private val installerFileName = "installer.sh"
+    private val appSafeNameDataKey = "appSafeName"
     val logger = logger(this)
 
     fun build(): Boolean {
@@ -115,12 +125,13 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         data["exe"] = builder.builderConfig.deploymentConfig.applicationInfo.exeName
         data["appName"] = builder.builderConfig.deploymentConfig.applicationInfo.name
         data["comment"] = builder.builderConfig.deploymentConfig.applicationInfo.headline
-        data["appSafeName"] = safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)
+        data[appSafeNameDataKey] = safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)
         data["categories"] = builder.builderConfig.deploymentConfig.applicationInfo.linux.categories.stream().collect(Collectors.joining(";"))
         logger.debug("template categories: {}", data["categories"])
         data["version"] = builder.builderConfig.deploymentConfig.version
         data["appUrl"] = builder.builderConfig.deploymentConfig.applicationInfo.homePageUrl ?: ""
-        data["publisher"] = builder.builderConfig.deploymentConfig.applicationInfo.publisher
+        data["publisher"] = builder.builderConfig.deploymentConfig.applicationInfo.publisher ?: ""
+        data["publisher_email"] = builder.builderConfig.deploymentConfig.applicationInfo.publisherEmail ?: ""
         data["deb_arch"] = when(arch){
             CpuArch.X64 ->  "amd64"
             CpuArch.AARCH64 -> "arm64"
@@ -163,7 +174,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         val contentDir = workDir.resolve("content")
         Files.createDirectories(contentDir)
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
-        val installerName = String.format("%s-%s-linux-%s.tar.gz",  data["appSafeName"], data["version"], arch.display)
+        val installerName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.TAR_GZ)
         val installerPath = builder.installerDir.resolve(installerName)
         logger.debug("Linux installer name: {}", installerName)
         directoryToTarGz(workDir.parent, installerPath)
@@ -179,15 +190,43 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         Files.createDirectories(debWorkDir)
         logger.debug("Linux .deb package working directory: {}", debWorkDir.absolutePathString())
         // create .deb package directories
-        val debianDir = Files.createDirectories(debWorkDir.resolve("DEBIAN"))
-        val contentDir = Files.createDirectories(Path.of(debWorkDir.absolutePathString(), "/opt", safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)))
-        val controlFileTemplate = builder.freemarkerConfig.getTemplate("linux/deb-control.ftl")
-        val controlFile = debianDir.resolve("control")
+        val debianDir = Files.createDirectories(debWorkDir.resolve(debianControlDir))
+        val contentDir = Files.createDirectories(Path.of(debWorkDir.absolutePathString(), "/opt", data[appSafeNameDataKey].toString()))
+        val controlFileTemplate = builder.freemarkerConfig.getTemplate(debianControlFileTemplate)
+        val controlFile = debianDir.resolve(debianControlFileName)
         val writer = FileWriter(controlFile.toFile())
         writer.use {
             controlFileTemplate.process(data, writer)
         }
+        // create post installation script
+        val postInstFileTemplate = builder.freemarkerConfig.getTemplate(debianPostInstFileTemplate)
+        val postInstFile = debianDir.resolve(debianPostInstFileName)
+        val postInstWriter = FileWriter(postInstFile.toFile())
+        postInstWriter.use {
+            postInstFileTemplate.process(data, postInstWriter)
+        }
+        postInstFile.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
         // copy content
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
+        // create .deb package
+        val packageFinalName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.DEB)
+        val pb = ProcessBuilder("dpkg-deb", "--verbose", "--build", debWorkDirName, packageFinalName)
+        pb.directory(builder.installerDir.toFile())
+        val process = pb.start()
+        if (process.waitFor() == 0) {
+            logger.info(process.inputReader().use { it.readText() })
+            logger.info("Debian package created successfully")
+        } else {
+            logger.error("Error encountered while building Debian package. Details:")
+            logger.error(process.inputReader().use { it.readText() })
+            logger.error(process.errorReader().use { it.readText() })
+            throw DeploymentException("Failed to build Debian package installer")
+        }
+        // cleanup
+        FileUtils.deleteDirectory(debWorkDir.toFile())
+    }
+
+    private fun linuxPackageFinalName(appName : String, version : String, arch : CpuArch, type : LinuxPackageType) : String {
+        return String.format("%s-%s-linux-%s%s", appName, version, arch.display, type.display)
     }
 }
