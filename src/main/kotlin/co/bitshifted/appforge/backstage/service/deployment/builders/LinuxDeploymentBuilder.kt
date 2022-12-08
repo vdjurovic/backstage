@@ -24,7 +24,6 @@ import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.LinuxPackageType
 import co.bitshifted.appforge.common.model.OperatingSystem
 import org.apache.commons.io.FileUtils
-import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -41,10 +40,12 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     private val installerTemplate = "linux/install-script.sh.ftl"
     private val debianControlFileTemplate = "linux/deb-control.ftl"
     private val debianPostInstFileTemplate = "linux/deb-postinst.ftl"
+    private val debianPostRmFileTemplate = "linux/deb-postrm.ftl"
     private val rpmSpecFileTemplate = "linux/rpm-build-spec.ftl"
     private val debianControlDir = "DEBIAN"
     private val debianControlFileName = "control"
     private val debianPostInstFileName = "postinst"
+    private val debianPostRmFileName = "postrm"
     private val installerFileName = "installer.sh"
     private val appSafeNameDataKey = "appSafeName"
     val logger = logger(this)
@@ -151,9 +152,6 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         data["publisher_email"] = builder.builderConfig.deploymentConfig.applicationInfo.publisherEmail ?: ""
         data["description"] = builder.builderConfig.deploymentConfig.applicationInfo.description
         // find all executable files
-        val fileList = FileUtils.listFiles(builder.getLinuxDir(arch).toFile(), null, true)
-        val exeFiles = fileList.filter { it.canExecute() }.map { builder.getLinuxDir(arch).relativize(it.toPath()).toString() }
-        data["exeFiles"] = exeFiles
         data["rpmRelease"] = "1"
         data["debArch"] = generateTargetArchitectureString(arch, LinuxPackageType.DEB)
         return data
@@ -172,12 +170,8 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         val workDir = builder.installerDir.resolve(installerWorkDirName)
         Files.createDirectories(workDir)
         logger.debug("Linux .tar.gz package working directory: {}", workDir.absolutePathString())
-        val template = builder.freemarkerConfig.getTemplate(installerTemplate)
         val installerFile = workDir.resolve(installerFileName)
-        val writer = FileWriter(installerFile.toFile())
-        writer.use {
-            template.process(data, writer)
-        }
+        builder.generateFromTemplate(installerTemplate, installerFile, data)
         installerFile.toFile().setExecutable(true)
         // copy content
         val contentDir = workDir.resolve("content")
@@ -203,38 +197,23 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         // create .deb package directories
         val debianDir = Files.createDirectories(debWorkDir.resolve(debianControlDir))
         val contentDir = Files.createDirectories(Path.of(debWorkDir.absolutePathString(), "/opt", data[appSafeNameDataKey].toString()))
-        val controlFileTemplate = builder.freemarkerConfig.getTemplate(debianControlFileTemplate)
         val controlFile = debianDir.resolve(debianControlFileName)
-        val writer = FileWriter(controlFile.toFile())
-        writer.use {
-            controlFileTemplate.process(data, writer)
-        }
+        builder.generateFromTemplate(debianControlFileTemplate, controlFile, data)
         // create post installation script
-        val postInstFileTemplate = builder.freemarkerConfig.getTemplate(debianPostInstFileTemplate)
         val postInstFile = debianDir.resolve(debianPostInstFileName)
-        val postInstWriter = FileWriter(postInstFile.toFile())
-        postInstWriter.use {
-            postInstFileTemplate.process(data, postInstWriter)
-        }
+        builder.generateFromTemplate(debianPostInstFileTemplate, postInstFile, data)
         postInstFile.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+        // create postrm file
+        val postRmFile = debianDir.resolve(debianPostRmFileName)
+        builder.generateFromTemplate(debianPostRmFileTemplate, postRmFile, data)
+        postRmFile.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
         // copy content
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
         // generate desktop entry file
         createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
         // create .deb package
         val packageFinalName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.DEB)
-        val pb = ProcessBuilder("dpkg-deb", "--verbose", "--build", debWorkDirName, packageFinalName)
-        pb.directory(builder.installerDir.toFile())
-        val process = pb.start()
-        if (process.waitFor() == 0) {
-            logger.info(process.inputReader().use { it.readText() })
-            logger.info("Debian package created successfully")
-        } else {
-            logger.error("Error encountered while building Debian package. Details:")
-            logger.error(process.inputReader().use { it.readText() })
-            logger.error(process.errorReader().use { it.readText() })
-            throw DeploymentException("Failed to build Debian package installer")
-        }
+        builder.runExternalProgram(listOf("dpkg-deb", "--verbose", "--build", debWorkDirName, packageFinalName), builder.installerDir.toFile())
         // cleanup
         FileUtils.deleteDirectory(debWorkDir.toFile())
     }
@@ -289,19 +268,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             return
         }
         // build command in form: rpmbuild --define "_topdir `pwd`" -bb ./SPECS/rpm-build.spec
-        val pb = ProcessBuilder("rpmbuild", "--define", "_topdir ${rpmWorkDir.absolutePathString()}", "-bb", "SPECS/$specFileName")
-        logger.debug("RPM build command: {}", pb.command())
-        pb.directory(rpmWorkDir.toFile())
-        val process = pb.start()
-        if (process.waitFor() == 0) {
-            logger.info(process.inputReader().use { it.readText() })
-            logger.info("RPM package created successfully")
-        } else {
-            logger.error("Error encountered while building RPM package. Details:")
-            logger.error(process.inputReader().use { it.readText() })
-            logger.error(process.errorReader().use { it.readText() })
-            throw DeploymentException("Failed to build RPM package installer")
-        }
+        builder.runExternalProgram(listOf("rpmbuild", "--define", "_topdir ${rpmWorkDir.absolutePathString()}", "-bb", "SPECS/$specFileName"), rpmWorkDir.toFile())
 
         // copy RPM to installers directory
         val rpmPackageName = "$rpmBuildDirName.rpm"

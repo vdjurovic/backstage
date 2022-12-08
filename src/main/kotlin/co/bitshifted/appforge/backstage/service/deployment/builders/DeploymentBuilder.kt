@@ -233,6 +233,22 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         }
     }
 
+    fun runExternalProgram(cmdLine : List<String>, workingDirectory : File) {
+        val pb = ProcessBuilder(*cmdLine.toTypedArray())
+        logger.debug("Running command: {} in working directory {}", pb.command(), workingDirectory.absolutePath)
+        pb.directory(workingDirectory)
+        val process = pb.start()
+        if (process.waitFor() == 0) {
+            logger.info(process.inputReader().use { it.readText() })
+            logger.info("Command executes successfully")
+        } else {
+            logger.error("Error encountered while running command. Details:")
+            logger.error(process.inputReader().use { it.readText() })
+            logger.error(process.errorReader().use { it.readText() })
+            throw DeploymentException("Failed to run command: $cmdLine")
+        }
+    }
+
     private fun buildLaunchers() {
         val sourceRoot = resourceMapping.getLaunchcodeSourceLocation()
         logger.debug("Launchcode source location: {}", sourceRoot.toString())
