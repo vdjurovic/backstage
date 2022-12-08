@@ -3,7 +3,7 @@ Package: ${appSafeName}
 Maintainer: ${publisher} <${publisher_email}>
 </#if>
 Version: ${version}
-Architecture: ${deb_arch}
+Architecture: ${debArch}
 Description: ${description}
 Homepage: ${appUrl}
 

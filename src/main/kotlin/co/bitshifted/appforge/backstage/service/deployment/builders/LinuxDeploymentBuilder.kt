@@ -36,18 +36,28 @@ import kotlin.io.path.setPosixFilePermissions
 
 class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 
-    private val desktopEntryTemplate = "linux/desktop-entry.desktop.ftl"
+    private val desktopEntryLocalTemplate = "linux/desktop-entry-local.ftl"
+    private val desktopEntryGlobalTemplate = "linux/desktop-entry-global.ftl"
     private val installerTemplate = "linux/install-script.sh.ftl"
     private val debianControlFileTemplate = "linux/deb-control.ftl"
     private val debianPostInstFileTemplate = "linux/deb-postinst.ftl"
+    private val rpmSpecFileTemplate = "linux/rpm-build-spec.ftl"
     private val debianControlDir = "DEBIAN"
     private val debianControlFileName = "control"
     private val debianPostInstFileName = "postinst"
     private val installerFileName = "installer.sh"
     private val appSafeNameDataKey = "appSafeName"
     val logger = logger(this)
+    private lateinit var rpmSpecsDir : Path
+    private lateinit var rpmBuildrootDir : Path
+    private lateinit var rpmWorkDir : Path
+    private lateinit var rpmsDir : Path
 
     fun build(): Boolean {
+        val packageTypes = builder.builderConfig.deploymentConfig.applicationInfo.linux.packageTypes
+        if(packageTypes.contains(LinuxPackageType.RPM)) {
+            createRpmDirs()
+        }
         val archs = builder.builderConfig.deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
         archs.forEach {
             logger.info("Creating Linux deployment in directory {}", builder.getLinuxDir(it))
@@ -59,9 +69,15 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
                 copyLauncher(it)
                 copyLinuxIcons(it)
                 copySplashScreen(it)
-                createDesktopEntry(it)
-                createTarGzPackage(it)
-                createDebPackage(it)
+                if(packageTypes.contains(LinuxPackageType.TAR_GZ)) {
+                    createTarGzPackage(it)
+                }
+                if(packageTypes.contains(LinuxPackageType.DEB)) {
+                    createDebPackage(it)
+                }
+                if(packageTypes.contains(LinuxPackageType.RPM)) {
+                    createRpmPackage(it)
+                }
                 logger.info("Successfully created Linux deployment in directory {}", builder.getLinuxDir(it))
             } catch (th: Throwable) {
                 logger.error("Error building Linux deployment", th)
@@ -129,31 +145,24 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         data["categories"] = builder.builderConfig.deploymentConfig.applicationInfo.linux.categories.stream().collect(Collectors.joining(";"))
         logger.debug("template categories: {}", data["categories"])
         data["version"] = builder.builderConfig.deploymentConfig.version
+        data["rpmVersion"] = builder.builderConfig.deploymentConfig.version.replace("-", "_")
         data["appUrl"] = builder.builderConfig.deploymentConfig.applicationInfo.homePageUrl ?: ""
         data["publisher"] = builder.builderConfig.deploymentConfig.applicationInfo.publisher ?: ""
         data["publisher_email"] = builder.builderConfig.deploymentConfig.applicationInfo.publisherEmail ?: ""
-        data["deb_arch"] = when(arch){
-            CpuArch.X64 ->  "amd64"
-            CpuArch.AARCH64 -> "arm64"
-        }
         data["description"] = builder.builderConfig.deploymentConfig.applicationInfo.description
         // find all executable files
         val fileList = FileUtils.listFiles(builder.getLinuxDir(arch).toFile(), null, true)
         val exeFiles = fileList.filter { it.canExecute() }.map { builder.getLinuxDir(arch).relativize(it.toPath()).toString() }
         data["exeFiles"] = exeFiles
+        data["rpmRelease"] = "1"
+        data["debArch"] = generateTargetArchitectureString(arch, LinuxPackageType.DEB)
         return data
     }
 
-    private fun createDesktopEntry(arch: CpuArch) {
-        val data = getTemplateData(arch)
-        val template = builder.freemarkerConfig.getTemplate(desktopEntryTemplate)
-        val safeName = data["appSafeName"]
-        val targetPath = builder.getLinuxDir(arch).resolve("${safeName}.desktop")
-
-        val writer = FileWriter(targetPath.toFile())
-        writer.use {
-            template.process(data, writer)
-        }
+    private fun createDesktopEntry(templateName : String, targetDirectory : Path, data : Map<String, Any>) {
+        val safeName = data[appSafeNameDataKey]
+        val targetPath = targetDirectory.resolve("${safeName}.desktop")
+        builder.generateFromTemplate(templateName, targetPath, data)
     }
 
     private fun createTarGzPackage(arch: CpuArch) {
@@ -174,6 +183,8 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         val contentDir = workDir.resolve("content")
         Files.createDirectories(contentDir)
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
+        // generate desktop entry file
+        createDesktopEntry(desktopEntryLocalTemplate, contentDir, data)
         val installerName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.TAR_GZ)
         val installerPath = builder.installerDir.resolve(installerName)
         logger.debug("Linux installer name: {}", installerName)
@@ -208,6 +219,8 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         postInstFile.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
         // copy content
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
+        // generate desktop entry file
+        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
         // create .deb package
         val packageFinalName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.DEB)
         val pb = ProcessBuilder("dpkg-deb", "--verbose", "--build", debWorkDirName, packageFinalName)
@@ -227,6 +240,71 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     }
 
     private fun linuxPackageFinalName(appName : String, version : String, arch : CpuArch, type : LinuxPackageType) : String {
-        return String.format("%s-%s-linux-%s%s", appName, version, arch.display, type.display)
+        return String.format("%s-%s-linux-%s%s", appName, version, generateTargetArchitectureString(arch, type), type.display)
+    }
+
+    private fun generateTargetArchitectureString(arch: CpuArch, packageType: LinuxPackageType) : String {
+        when(packageType) {
+            LinuxPackageType.DEB -> return if(arch == CpuArch.X64) return "amd64" else "arm64"
+            LinuxPackageType.RPM -> return if(arch == CpuArch.X64) return "x86_64" else "arm64"
+            LinuxPackageType.TAR_GZ -> return arch.display
+        }
+    }
+
+    private fun createRpmDirs() {
+        logger.info("Creating .rpm directories in directory {}", builder.installerDir.absolutePathString())
+        val rpmWorkDirName = "rpmbuild"
+        rpmWorkDir = builder.installerDir.resolve(rpmWorkDirName)
+        Files.createDirectories(rpmWorkDir)
+        logger.debug("Linux .rpm package working directory: {}", rpmWorkDir.absolutePathString())
+        // create RPM dir hierarchy
+        val rpmBuildDir = rpmWorkDir.resolve("BUILD")
+        Files.createDirectories(rpmBuildDir)
+        rpmBuildrootDir = rpmWorkDir.resolve("BUILDROOT")
+        Files.createDirectories(rpmBuildrootDir)
+        rpmsDir = rpmWorkDir.resolve("RPMS")
+        Files.createDirectories(rpmsDir)
+        rpmSpecsDir = rpmWorkDir.resolve("SPECS")
+        Files.createDirectories(rpmSpecsDir)
+    }
+
+    private fun createRpmPackage(arch: CpuArch) {
+        logger.info("Creating .rpm package in directory {}", builder.installerDir.absolutePathString())
+        val data = getTemplateData(arch)
+        data["cpuArch"] = generateTargetArchitectureString(arch, LinuxPackageType.RPM)
+        // copy content
+        val rpmBuildDirName = String.format("%s-%s-%s.%s", data[appSafeNameDataKey], data["rpmVersion"],data["rpmRelease"], generateTargetArchitectureString(arch, LinuxPackageType.RPM))
+        val contentDir = Path.of(rpmBuildrootDir.absolutePathString(), rpmBuildDirName, "opt", data[appSafeNameDataKey].toString())
+        Files.createDirectories(contentDir)
+        FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
+        // create global desktop entry file
+        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
+        // generate spec file
+        val specFileName = "build-spec-${arch.display}.spec"
+        val specFile = rpmSpecsDir.resolve(specFileName)
+        builder.generateFromTemplate(rpmSpecFileTemplate, specFile, data)
+        // build package
+        if(arch == CpuArch.AARCH64) {
+            logger.error("RPM packages currently not supported for ARM architecture")
+            return
+        }
+        // build command in form: rpmbuild --define "_topdir `pwd`" -bb ./SPECS/rpm-build.spec
+        val pb = ProcessBuilder("rpmbuild", "--define", "_topdir ${rpmWorkDir.absolutePathString()}", "-bb", "SPECS/$specFileName")
+        logger.debug("RPM build command: {}", pb.command())
+        pb.directory(rpmWorkDir.toFile())
+        val process = pb.start()
+        if (process.waitFor() == 0) {
+            logger.info(process.inputReader().use { it.readText() })
+            logger.info("RPM package created successfully")
+        } else {
+            logger.error("Error encountered while building RPM package. Details:")
+            logger.error(process.inputReader().use { it.readText() })
+            logger.error(process.errorReader().use { it.readText() })
+            throw DeploymentException("Failed to build RPM package installer")
+        }
+
+        // copy RPM to installers directory
+        val rpmPackageName = "$rpmBuildDirName.rpm"
+        FileUtils.copyFile(Path.of(rpmsDir.absolutePathString(), data["cpuArch"].toString(), rpmPackageName).toFile(), Path.of(builder.installerDir.absolutePathString(), rpmPackageName).toFile())
     }
 }

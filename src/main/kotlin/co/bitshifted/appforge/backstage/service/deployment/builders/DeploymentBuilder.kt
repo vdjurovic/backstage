@@ -95,14 +95,14 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             buildLaunchers()
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
-            cacheDeploymentFiles(linuxDir)
-            val windowsBuilder = WindowsDeploymentBuilder(this)
-            windowsBuilder.build()
-            cacheDeploymentFiles(windowsDir)
-            val macBuilder = MacDeploymentBuilder(this)
-            macBuilder.build()
-            cacheDeploymentFiles(macDir)
-            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
+//            cacheDeploymentFiles(linuxDir)
+//            val windowsBuilder = WindowsDeploymentBuilder(this)
+//            windowsBuilder.build()
+//            cacheDeploymentFiles(windowsDir)
+//            val macBuilder = MacDeploymentBuilder(this)
+//            macBuilder.build()
+//            cacheDeploymentFiles(macDir)
+//            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
             logger.info("Deployment created successfully!")
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
@@ -223,7 +223,14 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             }
             toolRunner.createRuntimeImage(jdkModules, moduleDirs, jreOutputDir)
         }
+    }
 
+    fun generateFromTemplate(templateLocation : String, target : Path, data: Map<String, Any>) {
+        val template = freemarkerConfig.getTemplate(templateLocation)
+        val writer = FileWriter(target.toFile())
+        writer.use {
+            template.process(data, writer)
+        }
     }
 
     private fun buildLaunchers() {
