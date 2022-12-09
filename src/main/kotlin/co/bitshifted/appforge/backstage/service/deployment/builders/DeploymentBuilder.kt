@@ -95,14 +95,14 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             buildLaunchers()
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
-//            cacheDeploymentFiles(linuxDir)
+            cacheDeploymentFiles(linuxDir)
 //            val windowsBuilder = WindowsDeploymentBuilder(this)
 //            windowsBuilder.build()
 //            cacheDeploymentFiles(windowsDir)
 //            val macBuilder = MacDeploymentBuilder(this)
 //            macBuilder.build()
 //            cacheDeploymentFiles(macDir)
-//            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
+            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
             logger.info("Deployment created successfully!")
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
@@ -129,16 +129,26 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         logger.debug("Created Launchcode output directory at {}", launchCodeDir.absolutePathString())
         linuxDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.LINUX.display))
         logger.debug("Created Linux output directory at {}", linuxDir.absolutePathString())
-        Files.createDirectories(linuxDir.resolve(CpuArch.X64.display))
-        Files.createDirectories(linuxDir.resolve(CpuArch.AARCH64.display))
+        val linuxCpuArchs = builderConfig.deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
+        if(linuxCpuArchs.contains(CpuArch.X64)) {
+            Files.createDirectories(linuxDir.resolve(CpuArch.X64.display))
+        }
+        if(linuxCpuArchs.contains(CpuArch.AARCH64)) {
+            Files.createDirectories(linuxDir.resolve(CpuArch.AARCH64.display))
+        }
         windowsDir =
             Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.WINDOWS.display))
         logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
         Files.createDirectories(windowsDir.resolve(CpuArch.X64.display))
         macDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.MAC.display))
         logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
-        Files.createDirectories(macDir.resolve(CpuArch.X64.display))
-        Files.createDirectories(macDir.resolve(CpuArch.AARCH64.display))
+        val macCpuArchs = builderConfig.deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
+        if(macCpuArchs.contains(CpuArch.X64)) {
+            Files.createDirectories(macDir.resolve(CpuArch.X64.display))
+        }
+        if(macCpuArchs.contains(CpuArch.AARCH64)) {
+            Files.createDirectories(macDir.resolve(CpuArch.AARCH64.display))
+        }
         installerDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), DEPLOYMENT_INSTALLERS_DIR))
         logger.debug("Created installers output directory at {}", installerDir.absolutePathString())
     }

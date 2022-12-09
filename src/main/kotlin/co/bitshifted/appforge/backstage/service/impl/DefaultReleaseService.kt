@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.ZoneId
@@ -57,13 +58,13 @@ class DefaultReleaseService(
     private val logger = logger(this)
     private val timestampFormatter = DateTimeFormatterBuilder().appendPattern("YYYYMMddHHmmss").toFormatter()
     private val installerExtensions = mapOf(
-        OperatingSystem.WINDOWS to "exe",
-        OperatingSystem.MAC to "dmg",
-        OperatingSystem.LINUX to "tar.gz"
+        OperatingSystem.WINDOWS to arrayOf("exe"),
+        OperatingSystem.MAC to arrayOf("dmg"),
+        OperatingSystem.LINUX to arrayOf("tar.gz", "deb", "rpm")
     )
     private val mapper = ObjectMapper()
     val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
-    val releaseInfoFileNamePattern = "release-info-%s.xml"
+    val releaseInfoFileNamePattern = "release-info-%s-%s.xml"
 
     override fun initRelease(deploymentConfig: DeploymentConfig): String {
         logger.info(
@@ -126,21 +127,25 @@ class DefaultReleaseService(
         logger.info("Creating release info file")
         val osTargetDir = baseDir.resolve(os.display)
         logger.debug("OS target directory: {}", osTargetDir.absolutePathString())
-        val filesList = FileUtils.listFiles(osTargetDir.toFile(), null, true)
-        val entries = filesList.map {
-            val target = osTargetDir.relativize(it.toPath()).toString()
-            val hash = digester.digestAsHex(it)
-            ReleaseEntry(hash, target, it.canExecute())
+        CpuArch.values().forEach {
+            val archTargetDir = osTargetDir.resolve(it.display)
+            if(Files.exists(archTargetDir, LinkOption.NOFOLLOW_LINKS)) {
+                val filesList = FileUtils.listFiles(archTargetDir.toFile(), null, true)
+                val entries = filesList.map {
+                    val target = archTargetDir.relativize(it.toPath()).toString()
+                    val hash = digester.digestAsHex(it)
+                    ReleaseEntry(hash, target, it.canExecute())
+                }
+                val releaseInfoFile = Paths.get(releaseStorageLocation, applicationId, releaseID, String.format(releaseInfoFileNamePattern, os.display, it.display))
+                Files.createDirectories(releaseInfoFile.parent)
+                val releaseInfo = ReleaseInfo(applicationId, releaseID, timestamp, entries)
+                val ctx = JAXBContext.newInstance(ReleaseInfo::class.java)
+                val marshaller = ctx.createMarshaller()
+                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true)
+                marshaller.marshal(releaseInfo, releaseInfoFile.toFile())
+                logger.info("Created release info XML file in {}", releaseInfoFile.absolutePathString())
+            }
         }
-
-        val releaseInfoFile = Paths.get(releaseStorageLocation, applicationId, releaseID, String.format(releaseInfoFileNamePattern, os.display))
-        Files.createDirectories(releaseInfoFile.parent)
-        val releaseInfo = ReleaseInfo(applicationId, releaseID, timestamp, entries)
-        val ctx = JAXBContext.newInstance(ReleaseInfo::class.java)
-        val marshaller = ctx.createMarshaller()
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true)
-        marshaller.marshal(releaseInfo, releaseInfoFile.toFile())
-        logger.info("Created release info XML file in {}", releaseInfoFile.absolutePathString())
     }
 
     private fun createInstallersFile(baseDir: Path, applicationId: String, releaseId : String, osList : Set<OperatingSystem>) {
@@ -149,11 +154,11 @@ class DefaultReleaseService(
         val installersList = mutableListOf<AppInstallerDTO>()
 
         osList.forEach {
-            val installerFiles = FileUtils.listFiles(installersDir.toFile(), arrayOf( installerExtensions[it]), false)
+            val installerFiles = FileUtils.listFiles(installersDir.toFile(), installerExtensions[it], false)
             logger.debug("Installer files: {}", installerFiles)
            for(file in installerFiles) {
                var arch = inferArchFromFileName(file)
-               installersList.add(getAppInstallerData(applicationId, it, file, installerExtensions[it] ?: "", arch))
+               installersList.add(getAppInstallerData(applicationId, it, file, file.extension, arch))
            }
         }
         val installerFile = Paths.get(releaseStorageLocation, applicationId, releaseId, BackstageConstants.OUTPUT_INSTALLERS_FILE).toFile()
@@ -169,18 +174,10 @@ class DefaultReleaseService(
             fileHash =  installerHash, fileName = installerFile.name, size = installerFile.length(), cpuArch = arch)
     }
 
-    private fun getSupportedCpuArchitectures(deploymentConfig: DeploymentConfig, operatingSystem: OperatingSystem) : Set<CpuArch> {
-        return when(operatingSystem) {
-            OperatingSystem.LINUX -> deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
-            OperatingSystem.MAC -> deploymentConfig.applicationInfo.mac.supportedCpuArchitectures
-            OperatingSystem.WINDOWS -> deploymentConfig.applicationInfo.windows.supportedCpuArchitectures
-        }
-    }
-
     private fun inferArchFromFileName(file : File) : CpuArch {
-        if(file.name.contains(CpuArch.X64.display)) {
+        if(file.name.contains(CpuArch.X64.display) || file.name.contains("x86_64") || file.name.contains("amd64")) {
             return CpuArch.X64
-        } else if (file.name.contains(CpuArch.AARCH64.display)) {
+        } else if (file.name.contains(CpuArch.AARCH64.display) || file.name.contains("arm64")) {
             return CpuArch.AARCH64
         }
         throw IllegalArgumentException("File name does not contain any CPU architecture: ${file.name}")

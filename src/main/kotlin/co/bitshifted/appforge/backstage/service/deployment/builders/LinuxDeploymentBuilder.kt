@@ -70,15 +70,15 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
                 copyLauncher(it)
                 copyLinuxIcons(it)
                 copySplashScreen(it)
-                if(packageTypes.contains(LinuxPackageType.TAR_GZ)) {
-                    createTarGzPackage(it)
-                }
+//                if(packageTypes.contains(LinuxPackageType.TAR_GZ)) {
+//                    createTarGzPackage(it)
+//                }
                 if(packageTypes.contains(LinuxPackageType.DEB)) {
                     createDebPackage(it)
                 }
-                if(packageTypes.contains(LinuxPackageType.RPM)) {
-                    createRpmPackage(it)
-                }
+//                if(packageTypes.contains(LinuxPackageType.RPM)) {
+//                    createRpmPackage(it)
+//                }
                 logger.info("Successfully created Linux deployment in directory {}", builder.getLinuxDir(it))
             } catch (th: Throwable) {
                 logger.error("Error building Linux deployment", th)
@@ -273,5 +273,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         // copy RPM to installers directory
         val rpmPackageName = "$rpmBuildDirName.rpm"
         FileUtils.copyFile(Path.of(rpmsDir.absolutePathString(), data["cpuArch"].toString(), rpmPackageName).toFile(), Path.of(builder.installerDir.absolutePathString(), rpmPackageName).toFile())
+        // clean up RPM work dir
+        FileUtils.deleteDirectory(rpmWorkDir.toFile())
     }
 }

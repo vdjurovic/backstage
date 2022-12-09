@@ -20,8 +20,11 @@ ${description}
 /opt/${appSafeName}/
 
 %post
-echo "Running post install script"
-chmod 777 /opt/${appSafeName}
+APPFORGE_GROUP_NAME="appforge"
+echo "Running post installation script"
+groupadd -f $APPFORGE_GROUP_NAME
+chgrp -Rv $APPFORGE_GROUP_NAME /opt/${appSafeName}
+find /opt/${appSafeName} -type d -exec chmod g+s {} \;
 ln -s /opt/${appSafeName}/${appSafeName}.desktop /usr/share/applications/${appSafeName}.desktop
 
 %postun
