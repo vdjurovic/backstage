@@ -15,29 +15,50 @@ import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_CLASSPATH_DIR
 import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR
 import co.bitshifted.appforge.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.appforge.backstage.exception.BackstageException
+import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.util.directoryToTarGz
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.backstage.util.safeAppName
 import co.bitshifted.appforge.common.model.CpuArch
+import co.bitshifted.appforge.common.model.LinuxPackageType
 import co.bitshifted.appforge.common.model.OperatingSystem
 import org.apache.commons.io.FileUtils
-import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.setPosixFilePermissions
 
 class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 
-    private val desktopEntryTemplate = "linux/desktop-entry.desktop.ftl"
+    private val desktopEntryLocalTemplate = "linux/desktop-entry-local.ftl"
+    private val desktopEntryGlobalTemplate = "linux/desktop-entry-global.ftl"
     private val installerTemplate = "linux/install-script.sh.ftl"
+    private val debianControlFileTemplate = "linux/deb-control.ftl"
+    private val debianPostInstFileTemplate = "linux/deb-postinst.ftl"
+    private val debianPostRmFileTemplate = "linux/deb-postrm.ftl"
+    private val rpmSpecFileTemplate = "linux/rpm-build-spec.ftl"
+    private val debianControlDir = "DEBIAN"
+    private val debianControlFileName = "control"
+    private val debianPostInstFileName = "postinst"
+    private val debianPostRmFileName = "postrm"
     private val installerFileName = "installer.sh"
+    private val appSafeNameDataKey = "appSafeName"
     val logger = logger(this)
+    private lateinit var rpmSpecsDir : Path
+    private lateinit var rpmBuildrootDir : Path
+    private lateinit var rpmWorkDir : Path
+    private lateinit var rpmsDir : Path
 
     fun build(): Boolean {
+        val packageTypes = builder.builderConfig.deploymentConfig.applicationInfo.linux.packageTypes
+        if(packageTypes.contains(LinuxPackageType.RPM)) {
+            createRpmDirs()
+        }
         val archs = builder.builderConfig.deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
         archs.forEach {
             logger.info("Creating Linux deployment in directory {}", builder.getLinuxDir(it))
@@ -49,8 +70,15 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
                 copyLauncher(it)
                 copyLinuxIcons(it)
                 copySplashScreen(it)
-                createDesktopEntry(it)
-                createInstaller(it)
+                if(packageTypes.contains(LinuxPackageType.TAR_GZ)) {
+                    createTarGzPackage(it)
+                }
+                if(packageTypes.contains(LinuxPackageType.DEB)) {
+                    createDebPackage(it)
+                }
+                if(packageTypes.contains(LinuxPackageType.RPM)) {
+                    createRpmPackage(it)
+                }
                 logger.info("Successfully created Linux deployment in directory {}", builder.getLinuxDir(it))
             } catch (th: Throwable) {
                 logger.error("Error building Linux deployment", th)
@@ -114,54 +142,138 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         data["exe"] = builder.builderConfig.deploymentConfig.applicationInfo.exeName
         data["appName"] = builder.builderConfig.deploymentConfig.applicationInfo.name
         data["comment"] = builder.builderConfig.deploymentConfig.applicationInfo.headline
-        data["appSafeName"] = safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)
+        data[appSafeNameDataKey] = safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)
         data["categories"] = builder.builderConfig.deploymentConfig.applicationInfo.linux.categories.stream().collect(Collectors.joining(";"))
         logger.debug("template categories: {}", data["categories"])
         data["version"] = builder.builderConfig.deploymentConfig.version
+        data["rpmVersion"] = builder.builderConfig.deploymentConfig.version.replace("-", "_")
         data["appUrl"] = builder.builderConfig.deploymentConfig.applicationInfo.homePageUrl ?: ""
-        data["publisher"] = builder.builderConfig.deploymentConfig.applicationInfo.publisher
+        data["publisher"] = builder.builderConfig.deploymentConfig.applicationInfo.publisher ?: ""
+        data["publisher_email"] = builder.builderConfig.deploymentConfig.applicationInfo.publisherEmail ?: ""
+        data["description"] = builder.builderConfig.deploymentConfig.applicationInfo.description
         // find all executable files
-        val fileList = FileUtils.listFiles(builder.getLinuxDir(arch).toFile(), null, true)
-        val exeFiles = fileList.filter { it.canExecute() }.map { builder.getLinuxDir(arch).relativize(it.toPath()).toString() }
-        data["exeFiles"] = exeFiles
+        data["rpmRelease"] = "1"
+        data["debArch"] = generateTargetArchitectureString(arch, LinuxPackageType.DEB)
         return data
     }
 
-    private fun createDesktopEntry(arch: CpuArch) {
-        val data = getTemplateData(arch)
-        val template = builder.freemarkerConfig.getTemplate(desktopEntryTemplate)
-        val safeName = data["appSafeName"]
-        val targetPath = builder.getLinuxDir(arch).resolve("${safeName}.desktop")
-
-        val writer = FileWriter(targetPath.toFile())
-        writer.use {
-            template.process(data, writer)
-        }
+    private fun createDesktopEntry(templateName : String, targetDirectory : Path, data : Map<String, Any>) {
+        val safeName = data[appSafeNameDataKey]
+        val targetPath = targetDirectory.resolve("${safeName}.desktop")
+        builder.generateFromTemplate(templateName, targetPath, data)
     }
 
-    private fun createInstaller(arch: CpuArch) {
-        logger.info("Creating installer in directory {}", builder.installerDir.absolutePathString())
+    private fun createTarGzPackage(arch: CpuArch) {
+        logger.info("Creating tar.gz package in directory {}", builder.installerDir.absolutePathString())
         val data = getTemplateData(arch)
         val installerWorkDirName = String.format("linux/%s-%s-linux-%s", data["appSafeName"], data["version"], arch.display)
         val workDir = builder.installerDir.resolve(installerWorkDirName)
         Files.createDirectories(workDir)
-        logger.debug("Linux installer working directory: {}", workDir.absolutePathString())
-        val template = builder.freemarkerConfig.getTemplate(installerTemplate)
+        logger.debug("Linux .tar.gz package working directory: {}", workDir.absolutePathString())
         val installerFile = workDir.resolve(installerFileName)
-        val writer = FileWriter(installerFile.toFile())
-        writer.use {
-            template.process(data, writer)
-        }
+        builder.generateFromTemplate(installerTemplate, installerFile, data)
         installerFile.toFile().setExecutable(true)
         // copy content
         val contentDir = workDir.resolve("content")
         Files.createDirectories(contentDir)
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
-        val installerName = String.format("%s-%s-linux-%s.tar.gz",  data["appSafeName"], data["version"], arch.display)
+        // generate desktop entry file
+        createDesktopEntry(desktopEntryLocalTemplate, contentDir, data)
+        val installerName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.TAR_GZ)
         val installerPath = builder.installerDir.resolve(installerName)
         logger.debug("Linux installer name: {}", installerName)
         directoryToTarGz(workDir.parent, installerPath)
         // cleanup
         FileUtils.deleteDirectory(workDir.toFile())
+    }
+
+    private fun createDebPackage(arch: CpuArch) {
+        logger.info("Creating .deb package in directory {}", builder.installerDir.absolutePathString())
+        val data = getTemplateData(arch)
+        val debWorkDirName = String.format("deb-%s", arch.display)
+        val debWorkDir = builder.installerDir.resolve(debWorkDirName)
+        Files.createDirectories(debWorkDir)
+        logger.debug("Linux .deb package working directory: {}", debWorkDir.absolutePathString())
+        // create .deb package directories
+        val debianDir = Files.createDirectories(debWorkDir.resolve(debianControlDir))
+        val contentDir = Files.createDirectories(Path.of(debWorkDir.absolutePathString(), "/opt", data[appSafeNameDataKey].toString()))
+        val controlFile = debianDir.resolve(debianControlFileName)
+        builder.generateFromTemplate(debianControlFileTemplate, controlFile, data)
+        // create post installation script
+        val postInstFile = debianDir.resolve(debianPostInstFileName)
+        builder.generateFromTemplate(debianPostInstFileTemplate, postInstFile, data)
+        postInstFile.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+        // create postrm file
+        val postRmFile = debianDir.resolve(debianPostRmFileName)
+        builder.generateFromTemplate(debianPostRmFileTemplate, postRmFile, data)
+        postRmFile.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+        // copy content
+        FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
+        // generate desktop entry file
+        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
+        // create .deb package
+        val packageFinalName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.DEB)
+        builder.runExternalProgram(listOf("dpkg-deb", "--verbose", "--build", debWorkDirName, packageFinalName), builder.installerDir.toFile())
+        // cleanup
+        FileUtils.deleteDirectory(debWorkDir.toFile())
+    }
+
+    private fun linuxPackageFinalName(appName : String, version : String, arch : CpuArch, type : LinuxPackageType) : String {
+        return String.format("%s-%s-linux-%s%s", appName, version, generateTargetArchitectureString(arch, type), type.display)
+    }
+
+    private fun generateTargetArchitectureString(arch: CpuArch, packageType: LinuxPackageType) : String {
+        when(packageType) {
+            LinuxPackageType.DEB -> return if(arch == CpuArch.X64) return "amd64" else "arm64"
+            LinuxPackageType.RPM -> return if(arch == CpuArch.X64) return "x86_64" else "arm64"
+            LinuxPackageType.TAR_GZ -> return arch.display
+        }
+    }
+
+    private fun createRpmDirs() {
+        logger.info("Creating .rpm directories in directory {}", builder.installerDir.absolutePathString())
+        val rpmWorkDirName = "rpmbuild"
+        rpmWorkDir = builder.installerDir.resolve(rpmWorkDirName)
+        Files.createDirectories(rpmWorkDir)
+        logger.debug("Linux .rpm package working directory: {}", rpmWorkDir.absolutePathString())
+        // create RPM dir hierarchy
+        val rpmBuildDir = rpmWorkDir.resolve("BUILD")
+        Files.createDirectories(rpmBuildDir)
+        rpmBuildrootDir = rpmWorkDir.resolve("BUILDROOT")
+        Files.createDirectories(rpmBuildrootDir)
+        rpmsDir = rpmWorkDir.resolve("RPMS")
+        Files.createDirectories(rpmsDir)
+        rpmSpecsDir = rpmWorkDir.resolve("SPECS")
+        Files.createDirectories(rpmSpecsDir)
+    }
+
+    private fun createRpmPackage(arch: CpuArch) {
+        logger.info("Creating .rpm package in directory {}", builder.installerDir.absolutePathString())
+        val data = getTemplateData(arch)
+        data["cpuArch"] = generateTargetArchitectureString(arch, LinuxPackageType.RPM)
+        // copy content
+        val rpmBuildDirName = String.format("%s-%s-%s.%s", data[appSafeNameDataKey], data["rpmVersion"],data["rpmRelease"], generateTargetArchitectureString(arch, LinuxPackageType.RPM))
+        val contentDir = Path.of(rpmBuildrootDir.absolutePathString(), rpmBuildDirName, "opt", data[appSafeNameDataKey].toString())
+        Files.createDirectories(contentDir)
+        FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
+        // create global desktop entry file
+        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
+        // generate spec file
+        val specFileName = "build-spec-${arch.display}.spec"
+        val specFile = rpmSpecsDir.resolve(specFileName)
+        builder.generateFromTemplate(rpmSpecFileTemplate, specFile, data)
+        // build package
+        if(arch == CpuArch.AARCH64) {
+            logger.error("RPM packages currently not supported for ARM architecture")
+            return
+        }
+        // build command in form: rpmbuild --define "_topdir `pwd`" -bb ./SPECS/rpm-build.spec
+        builder.runExternalProgram(listOf("rpmbuild", "--define", "_topdir ${rpmWorkDir.absolutePathString()}", "-bb", "SPECS/$specFileName"), rpmWorkDir.toFile())
+
+        // copy RPM to installers directory
+        val rpmPackageName = "$rpmBuildDirName.rpm"
+        FileUtils.copyFile(Path.of(rpmsDir.absolutePathString(), data["cpuArch"].toString(), rpmPackageName).toFile(), Path.of(builder.installerDir.absolutePathString(), rpmPackageName).toFile())
+        // clean up RPM work dir
+        FileUtils.deleteDirectory(rpmWorkDir.toFile())
     }
 }
