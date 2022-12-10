@@ -43,10 +43,11 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
                 builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.WINDOWS)
                 builder.copyResources(builder.getWindowsDir(it))
                 builder.buildJdkImage(builder.getWindowsDir(it), modulesDir, OperatingSystem.WINDOWS, it)
+                val templateData = getTemplateData(it)
                 copyLauncher(it)
                 copyWindowsIcons(it)
                 copySplashScreen(it)
-                createInstaller(it)
+                createInstaller(templateData)
                 logger.info("Successfully created Windows deployment in directory {}", builder.getWindowsDir(it))
                 return true
             } catch (th: Throwable) {
@@ -74,7 +75,7 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
     }
 
     private fun copyLauncher(arch: CpuArch) {
-        var launcherName = String.format(BackstageConstants.LAUNCHER_NAME_FORMAT_LINUX, arch.display)
+        var launcherName = String.format(BackstageConstants.LAUNCHER_NAME_FORMAT_WINDOWS, arch.display)
         val launcherPath = Path.of(
             builder.launchCodeDir.absolutePathString(),
             BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR, launcherName
@@ -145,30 +146,12 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
         return data
     }
 
-    private fun createInstaller(arch: CpuArch) {
+    private fun createInstaller(data : Map<String, Any>) {
         logger.info("Creating installer in directory {}", builder.builderConfig.baseDir.absolutePathString())
-        val data = getTemplateData(arch)
-        val template = builder.freemarkerConfig.getTemplate(installerTemplate)
         val installerFile = builder.builderConfig.baseDir.resolve(installerConfigFileName)
-        val writer = FileWriter(installerFile.toFile())
-        writer.use {
-            template.process(data, writer)
-        }
+        builder.generateFromTemplate(installerTemplate, installerFile, data)
         // run NSIS compiler
-        val pb = ProcessBuilder(nsisCompilerCmd, installerConfigFileName)
-        pb.directory(builder.builderConfig.baseDir.toFile())
-        pb.environment().put("PWD", builder.builderConfig.baseDir.absolutePathString())
-        logger.debug("makensis: working directory={}", builder.builderConfig.baseDir.absolutePathString())
-        val process = pb.start()
-        if (process.waitFor() == 0) {
-            logger.info(process.inputReader().use { it.readText() })
-            logger.info("NSIS installer created successfully")
-        } else {
-            logger.error("Error encountered while NSIS installer. Details:")
-            logger.error(process.inputReader().use { it.readText() })
-            logger.error(process.errorReader().use { it.readText() })
-            throw DeploymentException("Failed to build NSIS installer")
-        }
+        builder.runExternalProgram(listOf(nsisCompilerCmd, installerConfigFileName), builder.builderConfig.baseDir.toFile(), mapOf("PWD" to builder.builderConfig.baseDir.absolutePathString()))
         // make installer executable
         val installerExe = Path.of(data["installerExe"].toString()).toFile()
         installerExe.setExecutable(true)

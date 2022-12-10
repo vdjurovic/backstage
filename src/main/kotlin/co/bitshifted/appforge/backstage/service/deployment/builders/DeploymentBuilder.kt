@@ -129,16 +129,26 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         logger.debug("Created Launchcode output directory at {}", launchCodeDir.absolutePathString())
         linuxDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.LINUX.display))
         logger.debug("Created Linux output directory at {}", linuxDir.absolutePathString())
-        Files.createDirectories(linuxDir.resolve(CpuArch.X64.display))
-        Files.createDirectories(linuxDir.resolve(CpuArch.AARCH64.display))
+        val linuxCpuArchs = builderConfig.deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
+        if(linuxCpuArchs.contains(CpuArch.X64)) {
+            Files.createDirectories(linuxDir.resolve(CpuArch.X64.display))
+        }
+        if(linuxCpuArchs.contains(CpuArch.AARCH64)) {
+            Files.createDirectories(linuxDir.resolve(CpuArch.AARCH64.display))
+        }
         windowsDir =
             Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.WINDOWS.display))
         logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
         Files.createDirectories(windowsDir.resolve(CpuArch.X64.display))
         macDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.MAC.display))
         logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
-        Files.createDirectories(macDir.resolve(CpuArch.X64.display))
-        Files.createDirectories(macDir.resolve(CpuArch.AARCH64.display))
+        val macCpuArchs = builderConfig.deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
+        if(macCpuArchs.contains(CpuArch.X64)) {
+            Files.createDirectories(macDir.resolve(CpuArch.X64.display))
+        }
+        if(macCpuArchs.contains(CpuArch.AARCH64)) {
+            Files.createDirectories(macDir.resolve(CpuArch.AARCH64.display))
+        }
         installerDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), DEPLOYMENT_INSTALLERS_DIR))
         logger.debug("Created installers output directory at {}", installerDir.absolutePathString())
     }
@@ -223,7 +233,31 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             }
             toolRunner.createRuntimeImage(jdkModules, moduleDirs, jreOutputDir)
         }
+    }
 
+    fun generateFromTemplate(templateLocation : String, target : Path, data: Map<String, Any>) {
+        val template = freemarkerConfig.getTemplate(templateLocation)
+        val writer = FileWriter(target.toFile())
+        writer.use {
+            template.process(data, writer)
+        }
+    }
+
+    fun runExternalProgram(cmdLine : List<String>, workingDirectory : File, environment : Map<String, String> = emptyMap()) {
+        val pb = ProcessBuilder(*cmdLine.toTypedArray())
+        logger.debug("Running command: {} in working directory {}", pb.command(), workingDirectory.absolutePath)
+        pb.directory(workingDirectory)
+        pb.environment().putAll(environment)
+        val process = pb.start()
+        if (process.waitFor() == 0) {
+            logger.info(process.inputReader().use { it.readText() })
+            logger.info("Command executes successfully")
+        } else {
+            logger.error("Error encountered while running command. Details:")
+            logger.error(process.inputReader().use { it.readText() })
+            logger.error(process.errorReader().use { it.readText() })
+            throw DeploymentException("Failed to run command: $cmdLine")
+        }
     }
 
     private fun buildLaunchers() {
