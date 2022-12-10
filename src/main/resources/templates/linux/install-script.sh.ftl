@@ -13,4 +13,6 @@ mkdir -p $TARGET_DIR
 
 cp -rv $CONTENT/* $TARGET_DIR
 # process .desktop file
-sed "s|__HOME_DIR__|$HOME|g" $CONTENT/$APP_NAME.desktop > $SHARE_DIR/$APP_NAME.desktop
+sed "s|__HOME_DIR__|$HOME|g" $CONTENT/$APP_NAME.desktop > $TARGET_DIR/$APP_NAME.desktop
+ln -s $TARGET_DIR/$APP_NAME.desktop $SHARE_DIR/$APP_NAME.desktop
+

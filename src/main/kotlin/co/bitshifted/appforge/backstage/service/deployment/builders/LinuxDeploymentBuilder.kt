@@ -70,15 +70,15 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
                 copyLauncher(it)
                 copyLinuxIcons(it)
                 copySplashScreen(it)
-//                if(packageTypes.contains(LinuxPackageType.TAR_GZ)) {
-//                    createTarGzPackage(it)
-//                }
+                if(packageTypes.contains(LinuxPackageType.TAR_GZ)) {
+                    createTarGzPackage(it)
+                }
                 if(packageTypes.contains(LinuxPackageType.DEB)) {
                     createDebPackage(it)
                 }
-//                if(packageTypes.contains(LinuxPackageType.RPM)) {
-//                    createRpmPackage(it)
-//                }
+                if(packageTypes.contains(LinuxPackageType.RPM)) {
+                    createRpmPackage(it)
+                }
                 logger.info("Successfully created Linux deployment in directory {}", builder.getLinuxDir(it))
             } catch (th: Throwable) {
                 logger.error("Error building Linux deployment", th)

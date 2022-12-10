@@ -96,12 +96,12 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
             cacheDeploymentFiles(linuxDir)
-//            val windowsBuilder = WindowsDeploymentBuilder(this)
-//            windowsBuilder.build()
-//            cacheDeploymentFiles(windowsDir)
-//            val macBuilder = MacDeploymentBuilder(this)
-//            macBuilder.build()
-//            cacheDeploymentFiles(macDir)
+            val windowsBuilder = WindowsDeploymentBuilder(this)
+            windowsBuilder.build()
+            cacheDeploymentFiles(windowsDir)
+            val macBuilder = MacDeploymentBuilder(this)
+            macBuilder.build()
+            cacheDeploymentFiles(macDir)
             releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
             logger.info("Deployment created successfully!")
         } catch (ex: Throwable) {
@@ -243,10 +243,11 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         }
     }
 
-    fun runExternalProgram(cmdLine : List<String>, workingDirectory : File) {
+    fun runExternalProgram(cmdLine : List<String>, workingDirectory : File, environment : Map<String, String> = emptyMap()) {
         val pb = ProcessBuilder(*cmdLine.toTypedArray())
         logger.debug("Running command: {} in working directory {}", pb.command(), workingDirectory.absolutePath)
         pb.directory(workingDirectory)
+        pb.environment().putAll(environment)
         val process = pb.start()
         if (process.waitFor() == 0) {
             logger.info(process.inputReader().use { it.readText() })

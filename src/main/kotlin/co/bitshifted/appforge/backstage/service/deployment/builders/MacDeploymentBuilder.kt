@@ -55,12 +55,13 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
                 builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.MAC)
                 builder.copyResources(getMacOsDir(it))
                 builder.buildJdkImage(getMacOsDir(it), getModulesDir(it), OperatingSystem.MAC, it)
+                val templateData = getTemplateData(it)
                 copyLauncher(it)
                 copyMacIcons(it)
                 copySplashScreen(it)
-                createInfoPlist(it)
+                createInfoPlist(it, templateData)
                 moveNonExecutableFiles(it)
-                createInstaller(it)
+                createInstaller(it, templateData)
                 logger.info("Successfully created Mac OS X deployment in directory {}", builder.getMacDir(it))
             } catch(th : Throwable) {
                 logger.error("Error building Mac OS X deployment", th)
@@ -148,14 +149,9 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
         return data
     }
 
-    private fun createInfoPlist(arch: CpuArch) {
-        val data = getTemplateData(arch)
-        val template = builder.freemarkerConfig.getTemplate(infoPlistTemplate)
+    private fun createInfoPlist(arch: CpuArch, data : Map<String, Any>) {
         val targetPath = getMacOsDir(arch).parent.resolve(infoPlistFile)
-        val writer = FileWriter(targetPath.toFile())
-        writer.use {
-            template.process(data, writer)
-        }
+        builder.generateFromTemplate(infoPlistTemplate, targetPath, data)
     }
 
     // Mac OS bundle signing fails if there are non-executable files in Content/MacOS directory.
@@ -184,35 +180,17 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
         Files.createSymbolicLink(source, target)
     }
 
-    private fun createInstaller(arch: CpuArch) {
+    private fun createInstaller(arch: CpuArch, data : Map<String, Any>) {
         logger.info("Creating Mac OS X installer")
         val dsStore = this.javaClass.getResourceAsStream(dsStoreInput)
         Files.copy(dsStore, builder.installerDir.resolve(dsStoreFile))
         val bgImage = this.javaClass.getResourceAsStream(backgroundImgInput)
         Files.copy(bgImage, builder.installerDir.resolve(backgroundImageFile))
-        val data = getTemplateData(arch)
-        val template = builder.freemarkerConfig.getTemplate(createDmgTemplate)
         val createDmgScriptFileName = String.format(createDmgScriptNameFormat, arch.display)
         val installerFile = builder.installerDir.resolve(createDmgScriptFileName)
-        val writer = FileWriter(installerFile.toFile())
-        writer.use {
-            template.process(data, writer)
-        }
+        builder.generateFromTemplate(createDmgTemplate, installerFile, data)
         installerFile.toFile().setExecutable(true)
         // invoke installer creation
-        val pb = ProcessBuilder("./$createDmgScriptFileName")
-        pb.directory(builder.installerDir.toFile())
-        pb.environment().put("PWD", builder.installerDir.absolutePathString())
-        logger.debug("create-dmg-${arch.display}.sh: working directory={}", builder.installerDir.absolutePathString())
-        val process = pb.start()
-        if (process.waitFor() == 0) {
-            logger.info(process.inputReader().use { it.readText() })
-            logger.info("Mac OS DMG image created successfully")
-        } else {
-            logger.error("Error encountered while creating Mac OS DMG image. Details:")
-            logger.error(process.inputReader().use { it.readText() })
-            logger.error(process.errorReader().use { it.readText() })
-            throw DeploymentException("Failed to build Mac DMG image")
-        }
+        builder.runExternalProgram(listOf("./$createDmgScriptFileName"), builder.installerDir.toFile(), mapOf("PWD" to builder.installerDir.absolutePathString()))
     }
 }
