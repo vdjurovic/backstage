@@ -98,13 +98,13 @@ class DefaultReleaseService(
         currentReleaseRepository.save(currentRelease)
     }
 
-    override fun checkForNewRelease(applicationId: String, currentRelease: String, os : OperatingSystem): Optional<String> {
+    override fun checkForNewRelease(applicationId: String, currentRelease: String, os : OperatingSystem, cpuArch: CpuArch): Optional<String> {
         logger.info("Checking new release for application ID {} and current release {}", applicationId, currentRelease)
         val latestRelease = currentReleaseRepository.findByApplicationId(applicationId).orElseThrow { BackstageException(ErrorInfo.RELEASE_NOT_FOUND, applicationId) }
         if(currentRelease == latestRelease.releaseId) {
             return Optional.empty()
         } else {
-            val releaseInfoFile = Paths.get(releaseStorageLocation, applicationId, latestRelease.releaseId, String.format(releaseInfoFileNamePattern, os.display))
+            val releaseInfoFile = Paths.get(releaseStorageLocation, applicationId, latestRelease.releaseId, String.format(releaseInfoFileNamePattern, os.display, cpuArch.display))
             val data = Files.readString(releaseInfoFile)
             return Optional.of(data)
         }

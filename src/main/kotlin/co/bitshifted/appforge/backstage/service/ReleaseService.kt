@@ -12,6 +12,7 @@ package co.bitshifted.appforge.backstage.service
 
 import co.bitshifted.appforge.backstage.dto.AppInstallerDTO
 import co.bitshifted.appforge.backstage.model.DeploymentConfig
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.OperatingSystem
 import java.nio.file.Path
 import java.util.Optional
@@ -22,7 +23,7 @@ interface ReleaseService {
 
     fun completeRelease(baseDir : Path, deploymentConfig : DeploymentConfig, releaseId : String)
 
-    fun checkForNewRelease(applicationId : String, currentRelease : String, os : OperatingSystem) : Optional<String>
+    fun checkForNewRelease(applicationId : String, currentRelease : String, os : OperatingSystem, cpuArch : CpuArch) : Optional<String>
 
     fun getInstallersList(applicationId: String) : List<AppInstallerDTO>
 
