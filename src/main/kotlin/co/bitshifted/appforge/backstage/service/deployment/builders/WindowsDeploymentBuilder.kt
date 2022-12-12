@@ -40,7 +40,7 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
             logger.info("Creating Windows deployment in directory {}", builder.getWindowsDir(it))
             try {
                 createDirectoryStructure(it)
-                builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.WINDOWS)
+                builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.WINDOWS, it)
                 builder.copyResources(builder.getWindowsDir(it))
                 builder.buildJdkImage(builder.getWindowsDir(it), modulesDir, OperatingSystem.WINDOWS, it)
                 val templateData = getTemplateData(it)

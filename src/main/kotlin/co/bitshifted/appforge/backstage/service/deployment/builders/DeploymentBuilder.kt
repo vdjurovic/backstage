@@ -187,8 +187,10 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         builderConfig.deploymentConfig.jvmConfiguration.dependencies.add(syncroDep)
     }
 
-    fun copyDependencies(modulesDir: Path, classpathDir: Path, os : OperatingSystem) {
-        builderConfig.deploymentConfig.jvmConfiguration.collectDependencies(os).forEach {
+    fun copyDependencies(modulesDir: Path, classpathDir: Path, os : OperatingSystem, arch : CpuArch) {
+        builderConfig.deploymentConfig.jvmConfiguration.collectDependencies(os)
+            .filter { !it.isPlatformSpecific || (it.isPlatformSpecific && it.supportedOs == os && it.supportedCpuArch == arch) }
+            .forEach {
             var targetDIr: Path
             if (it.isModular) {
                 targetDIr = modulesDir
@@ -251,7 +253,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         val process = pb.start()
         if (process.waitFor() == 0) {
             logger.info(process.inputReader().use { it.readText() })
-            logger.info("Command executes successfully")
+            logger.info("Command executed successfully")
         } else {
             logger.error("Error encountered while running command. Details:")
             logger.error(process.inputReader().use { it.readText() })
