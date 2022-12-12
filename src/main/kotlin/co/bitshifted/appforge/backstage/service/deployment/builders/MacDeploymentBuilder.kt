@@ -52,7 +52,7 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
             logger.info("Creating Mac OS X deployment in directory {}", builder.getMacDir(it))
             try {
                 createDirectoryStructure(it)
-                builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.MAC)
+                builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.MAC, it)
                 builder.copyResources(getMacOsDir(it))
                 builder.buildJdkImage(getMacOsDir(it), getModulesDir(it), OperatingSystem.MAC, it)
                 val templateData = getTemplateData(it)

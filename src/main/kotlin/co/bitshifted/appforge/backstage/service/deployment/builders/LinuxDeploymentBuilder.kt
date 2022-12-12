@@ -64,7 +64,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             logger.info("Creating Linux deployment in directory {}", builder.getLinuxDir(it))
             try {
                 createDirectoryStructure(it)
-                builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.LINUX)
+                builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.LINUX, it)
                 builder.copyResources(builder.getLinuxDir(it))
                 builder.buildJdkImage(builder.getLinuxDir(it), getModulesDir(it), OperatingSystem.LINUX, it)
                 copyLauncher(it)
@@ -84,6 +84,10 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
                 logger.error("Error building Linux deployment", th)
                 throw th
             }
+        }
+        if(packageTypes.contains(LinuxPackageType.RPM)) {
+            // clean up RPM work dir
+            FileUtils.deleteDirectory(rpmWorkDir.toFile())
         }
         return true
     }
@@ -248,6 +252,9 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     }
 
     private fun createRpmPackage(arch: CpuArch) {
+        if(arch == CpuArch.AARCH64) {
+            logger.warn("Building RPM packages for AARCH64 is not supported at the moment.")
+        }
         logger.info("Creating .rpm package in directory {}", builder.installerDir.absolutePathString())
         val data = getTemplateData(arch)
         data["cpuArch"] = generateTargetArchitectureString(arch, LinuxPackageType.RPM)
@@ -273,7 +280,5 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         // copy RPM to installers directory
         val rpmPackageName = "$rpmBuildDirName.rpm"
         FileUtils.copyFile(Path.of(rpmsDir.absolutePathString(), data["cpuArch"].toString(), rpmPackageName).toFile(), Path.of(builder.installerDir.absolutePathString(), rpmPackageName).toFile())
-        // clean up RPM work dir
-        FileUtils.deleteDirectory(rpmWorkDir.toFile())
     }
 }
