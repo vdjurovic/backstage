@@ -22,6 +22,7 @@ class JavaPlatformDetails(
     @JsonProperty("public-key-url") val publicKeyUrl : String = "",
     @JsonProperty(" public-key-url-format") val publicKeyUrlFormat: String = "",
     @JsonProperty("supported-versions") val supportedVersions : List<JavaReleaseDetails> = listOf(),
+    @JsonProperty("max-concurrent-downloads") val maxConcurrentDownloads : Int = 0,
     val parameters : Map<String, Map<String, String>> = mapOf()
     ) {
 }

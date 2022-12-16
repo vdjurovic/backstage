@@ -10,10 +10,11 @@
 
 package co.bitshifted.appforge.backstage.service.impl
 
-import co.bitshifted.appforge.backstage.deleteDirectory
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.JavaVersion
 import co.bitshifted.appforge.common.model.JvmVendor
 import co.bitshifted.appforge.common.model.OperatingSystem
+import org.apache.commons.io.FileUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -35,8 +36,8 @@ class FileSystemResourceMappingTest {
         val syncroJarLocation = Files.createTempFile("backstage-syncro", ".jar")
 
         val mapping = FileSystemResourceMapping(jdkRoot.toAbsolutePath().toString(), launchcodeRoot.absolutePathString(), syncroJarLocation.absolutePathString())
-        val result = mapping.getJdkLocation(JvmVendor.OPENJDK, JavaVersion.JAVA_11, OperatingSystem.LINUX)
+        val result = mapping.getJdkLocation(JvmVendor.OPENJDK, JavaVersion.JAVA_11, OperatingSystem.LINUX, CpuArch.X64, "11.0.2")
         Assertions.assertEquals(Path.of(result).toFile().absolutePath, latest.toFile().absolutePath)
-        deleteDirectory(jdkRoot.toFile())
+        FileUtils.deleteDirectory(jdkRoot.toFile())
     }
 }

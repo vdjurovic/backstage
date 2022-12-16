@@ -21,6 +21,7 @@ object JdkInstallConfigFactory {
             JvmVendor.AZUL -> AzulJdkInstallConfig(platform, majorVersion, release, latest, autoUpdate)
             JvmVendor.CORRETTO -> CorrettoJdkInstallConfig(platform, majorVersion, release, latest,autoUpdate)
             JvmVendor.OPENJDK -> OpenJdkInstallConfig(platform, majorVersion, release, latest, autoUpdate)
+            JvmVendor.ORACLE -> OracleJdkInstallConfig(platform, majorVersion, release, latest, autoUpdate)
         }
     }
 }

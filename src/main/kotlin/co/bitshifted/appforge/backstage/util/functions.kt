@@ -103,15 +103,18 @@ fun directoryToTarGz(sourceDir: Path, target: Path) {
  * @param targetDir directory to which archive is extracted
  * @return path of the top-level entry (usually directory inside archive)
  */
-fun extractTarGzArchive(source: Path, targetDir: Path) : Path? {
+fun extractTarGzArchive(source: Path, targetDir: Path, logger: Logger) : Path? {
     var topLevelPath : Path? = null
     val gzipIn = GzipCompressorInputStream(Files.newInputStream(source))
     TarArchiveInputStream(gzipIn).use { tarIn ->
         var entry: TarArchiveEntry?
         while (tarIn.nextTarEntry.also { entry = it } != null) {
+            logger.debug("Extracting entry ${entry?.name}")
             if (entry?.isDirectory == true) {
-                val dirPath = Files.createDirectories(targetDir.resolve(entry?.name))
-                if(topLevelPath == null && !entry?.name.equals(".")) {
+                val cleanEntry = cleanArchiveEntryPath(entry?.name ?: "")
+                logger.debug("Clean entry name: $cleanEntry")
+                val dirPath = Files.createDirectories(targetDir.resolve(cleanEntry))
+                if(topLevelPath == null) {
                     topLevelPath = dirPath
                 }
             } else {
@@ -128,14 +131,17 @@ fun extractTarGzArchive(source: Path, targetDir: Path) : Path? {
     return topLevelPath
 }
 
-fun extractZipArchive(source : Path, targetDir : Path) : Path? {
+fun extractZipArchive(source : Path, targetDir : Path, logger: Logger) : Path? {
     var topLevelPath : Path? = null
     ZipArchiveInputStream(Files.newInputStream(source)).use { zipArchIn ->
         var entry : ZipArchiveEntry?
         while(zipArchIn.nextZipEntry.also { entry = it } != null) {
+            logger.debug("Extracting entry ${entry?.name}")
             if(entry?.isDirectory == true) {
-                val dirPath = Files.createDirectories(targetDir.resolve(entry?.name))
-                if(topLevelPath == null && !entry?.name.equals(".")) {
+                val cleanEntry = cleanArchiveEntryPath(entry?.name ?: "")
+                logger.debug("Clean entry name: $cleanEntry")
+                val dirPath = Files.createDirectories(targetDir.resolve(cleanEntry))
+                if(topLevelPath == null) {
                     topLevelPath = dirPath
                 }
             } else {
@@ -150,6 +156,13 @@ fun extractZipArchive(source : Path, targetDir : Path) : Path? {
         }
     }
     return topLevelPath
+}
+
+fun cleanArchiveEntryPath(entryName : String) : String {
+    if(entryName.startsWith("./")) {
+        return entryName.substring(2)
+    }
+    return entryName
 }
 
 fun posixModeToString(mode: Int): String {

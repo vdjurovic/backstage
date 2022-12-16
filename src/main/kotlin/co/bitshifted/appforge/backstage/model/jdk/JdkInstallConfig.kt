@@ -29,6 +29,7 @@ open class JdkInstallConfig(val platform : JavaPlatformDetails, val majorVersion
     private val urlParameterBump = "BUMP"
     private val urlParameterMajorVersion = "MAJOR_VERSION"
     protected val urlParamCorrettoVersion = "CORRETTO_VERSION"
+    protected val urlParameterRelease = "RELEASE"
 
     fun createDownloadLink(os : OperatingSystem, arch : CpuArch) : String {
         val inputString = platform.downloadUrlFormat

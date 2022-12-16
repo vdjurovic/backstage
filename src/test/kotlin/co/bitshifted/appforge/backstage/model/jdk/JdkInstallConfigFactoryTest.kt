@@ -38,7 +38,7 @@ class JdkInstallConfigFactoryTest {
         val expectedDownloadUrl = "https://github.com/adoptium/temurin19-binaries/releases/download/jdk-19.0.1%2B10/OpenJDK19U-jre_x64_linux_hotspot_19.0.1_10.tar.gz"
         val adoptium = platformConfig.find { it.vendor == JvmVendor.ADOPTIUM }
         assertNotNull(adoptium)
-        val installConfig = JdkInstallConfigFactory.createInstallConfig(adoptium ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1+10", false)
+        val installConfig = JdkInstallConfigFactory.createInstallConfig(adoptium ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1+10", false, autoUpdate = false)
         val downloadUrl = installConfig.createDownloadLink(OperatingSystem.LINUX, CpuArch.X64)
         assertNotNull(downloadUrl)
         println("URL: $downloadUrl")
@@ -50,14 +50,14 @@ class JdkInstallConfigFactoryTest {
         val expectedDownloadUrl = "https://cdn.azul.com/zulu/bin/zulu19.30.11-ca-jdk19.0.1-linux_x64.tar.gz"
         val azul = platformConfig.find { it.vendor == JvmVendor.AZUL }
         assertNotNull(azul)
-        val installConfig = JdkInstallConfigFactory.createInstallConfig(azul ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1+10", false)
+        val installConfig = JdkInstallConfigFactory.createInstallConfig(azul ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1+10", false, autoUpdate = false)
         val downloadUrl = installConfig.createDownloadLink(OperatingSystem.LINUX, CpuArch.X64)
         assertNotNull(downloadUrl)
         println("URL: $downloadUrl")
         assertEquals(expectedDownloadUrl, downloadUrl)
         // test link with short version
         val expectedShortUrl = "https://cdn.azul.com/zulu/bin/zulu19.28.81-ca-jdk19.0.0-linux_x64.tar.gz"
-        val shortInstallConfig = JdkInstallConfigFactory.createInstallConfig(azul, JavaVersion.JAVA_19, "19+36", false)
+        val shortInstallConfig = JdkInstallConfigFactory.createInstallConfig(azul, JavaVersion.JAVA_19, "19+36", false, autoUpdate = false)
         val shortDownloadUrl = shortInstallConfig.createDownloadLink(OperatingSystem.LINUX, CpuArch.X64)
         println("URL: $shortDownloadUrl")
         assertEquals(expectedShortUrl, shortDownloadUrl)
@@ -68,7 +68,7 @@ class JdkInstallConfigFactoryTest {
         val expectedDownloadUrl = "https://corretto.aws/downloads/resources/19.0.1.10.1/amazon-corretto-19.0.1.10.1-linux-x64.tar.gz"
         val corretto = platformConfig.find { it.vendor == JvmVendor.CORRETTO }
         assertNotNull(corretto)
-        val installConfig = JdkInstallConfigFactory.createInstallConfig(corretto ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1.10.1", false)
+        val installConfig = JdkInstallConfigFactory.createInstallConfig(corretto ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1.10.1", false, autoUpdate = false)
         val downloadUrl = installConfig.createDownloadLink(OperatingSystem.LINUX, CpuArch.X64)
         assertNotNull(downloadUrl)
         println("URL: $downloadUrl")
@@ -80,8 +80,20 @@ class JdkInstallConfigFactoryTest {
         val expectedDownloadUrl = "https://download.java.net/java/GA/jdk18.0.2/f6ad4b4450fd4d298113270ec84f30ee/9/GPL/openjdk-18.0.2_linux-x64_bin.tar.gz"
         val openjdk = platformConfig.find { it.vendor == JvmVendor.OPENJDK }
         assertNotNull(openjdk)
-        val installConfig = JdkInstallConfigFactory.createInstallConfig(openjdk ?: throw Exception("java platform is null"), JavaVersion.JAVA_18, "18.0.2+9", false)
+        val installConfig = JdkInstallConfigFactory.createInstallConfig(openjdk ?: throw Exception("java platform is null"), JavaVersion.JAVA_18, "18.0.2+9", false, autoUpdate = false)
         val downloadUrl = installConfig.createDownloadLink(OperatingSystem.LINUX, CpuArch.X64)
+        assertNotNull(downloadUrl)
+        println("URL: $downloadUrl")
+        assertEquals(expectedDownloadUrl, downloadUrl)
+    }
+
+    @Test
+    fun testOracleJdkInstallConfig() {
+        val expectedDownloadUrl = "https://download.oracle.com/java/17/archive/jdk-17.0.3.1_macos-x64_bin.tar.gz"
+        val oracle = platformConfig.find { it.vendor == JvmVendor.ORACLE }
+        assertNotNull(oracle)
+        val installConfig = JdkInstallConfigFactory.createInstallConfig(oracle ?: throw Exception("java platform is null"), JavaVersion.JAVA_17, "17.0.3.1", true, autoUpdate = false)
+        val downloadUrl = installConfig.createDownloadLink(OperatingSystem.MAC, CpuArch.X64)
         assertNotNull(downloadUrl)
         println("URL: $downloadUrl")
         assertEquals(expectedDownloadUrl, downloadUrl)

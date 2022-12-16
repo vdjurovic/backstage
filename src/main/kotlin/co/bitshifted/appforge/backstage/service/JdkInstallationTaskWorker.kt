@@ -143,14 +143,14 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
         downloadsList.forEach { installSrc ->
             logger.debug("file name: ${installSrc.get().fileName}, latest: ${installSrc.get().latest}")
             if(installSrc.get().os == OperatingSystem.WINDOWS) {
-                unpackTaskList.add(CompletableFuture.supplyAsync { extractZipArchive(installSrc.get().srcFile, jdkInstallDirectory(installSrc.get())) }
+                unpackTaskList.add(CompletableFuture.supplyAsync { extractZipArchive(installSrc.get().srcFile, jdkInstallDirectory(installSrc.get()), logger) }
                     .thenApply {
                         if(installSrc.get().latest) {
                             applyLatestLink(it)
                         }
                     })
             } else {
-                unpackTaskList.add(CompletableFuture.supplyAsync { extractTarGzArchive(installSrc.get().srcFile, jdkInstallDirectory(installSrc.get())) }
+                unpackTaskList.add(CompletableFuture.supplyAsync { extractTarGzArchive(installSrc.get().srcFile, jdkInstallDirectory(installSrc.get()), logger) }
                     .thenApply {
                         if(installSrc.get().latest) {
                             applyLatestLink(it)
@@ -163,6 +163,7 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
 
     private fun applyLatestLink(target : Path?) {
         if(target == null) {
+            logger.info("Link target is null")
             return
         }
         logger.debug("link target: ${target.absolutePathString()}")
@@ -173,6 +174,7 @@ class JdkInstallationTaskWorker(val installConfigList: List<JdkInstallConfig>, v
        Files.deleteIfExists(existing)
         // create latest link
         logger.info("Creating link to target directory ${target.fileName}")
-        Files.createSymbolicLink(parent.resolve(BackstageConstants.LATEST_JAVA_DIR_LINK), target)
+        val result = Files.createSymbolicLink(parent.resolve(BackstageConstants.LATEST_JAVA_DIR_LINK), target)
+        logger.info("Symbolic link to installation: ${result.absolutePathString()}")
     }
 }
