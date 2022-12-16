@@ -34,7 +34,7 @@ class JdkInstallConfigTest {
         val adoptium = out.find { it.vendor == JvmVendor.ADOPTIUM }
         assertNotNull(adoptium)
 
-        val installConfig = JdkInstallConfig(adoptium ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1+10", false)
+        val installConfig = JdkInstallConfig(adoptium ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1+10", false, autoUpdate = false)
         val downloadUrl = installConfig.createDownloadLink(OperatingSystem.LINUX, CpuArch.X64)
         assertNotNull(downloadUrl)
         println("URL: $downloadUrl")

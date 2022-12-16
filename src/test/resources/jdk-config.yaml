@@ -146,3 +146,24 @@
       hash: 2a2082e5a09d4267845be086888add4f
     17+35:
       hash: 0d483333a00540d886896bac774ff48b
+- vendor: ORACLE
+  download-url-format: https://download.oracle.com/java/${VERSION_BASE}/archive/jdk-${RELEASE}_${OS}-${ARCH}_bin.${PACKAGING}
+  checksum-url-format: https://download.oracle.com/java/${VERSION_BASE}/archive/jdk-${RELEASE}_${OS}-${ARCH}_bin.${PACKAGING}.sha256
+  supported-versions:
+    - major-version: "19"
+      releases:
+        - 19.0.1
+        - 19
+    - major-version: "18"
+      releases:
+        - 18.0.2.1
+        - 18.0.2
+        - 18.0.1.1
+        - 18.0.1
+    - major-version: "17"
+      releases:
+        - 17.0.5
+        - 17.0.4.1
+        - 17.0.4
+        - 17.0.3.1
+        - 17.0.3
