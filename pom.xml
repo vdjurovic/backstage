@@ -30,7 +30,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <java.version>17</java.version>
         <!-- library version -->
-        <hashids.version>1.0.3</hashids.version>
         <mapstruct.version>1.4.2.Final</mapstruct.version>
         <mockito.version>4.6.0</mockito.version>
         <commons-codec.version>1.15</commons-codec.version>
@@ -38,16 +37,12 @@
         <commons-compress.version>1.21</commons-compress.version>
         <appforge-common.version>0.1.0-SNAPSHOT</appforge-common.version>
         <jackson.version>2.13.3</jackson.version>
+        <uuid-creator.version>5.2.0</uuid-creator.version>
         <spring-boot.version>2.7.0</spring-boot.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.hashids</groupId>
-                <artifactId>hashids</artifactId>
-                <version>${hashids.version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
@@ -95,6 +90,11 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.github.f4b6a3</groupId>
+                <artifactId>uuid-creator</artifactId>
+                <version>${uuid-creator.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
@@ -134,8 +134,8 @@
             <artifactId>kotlin-stdlib-jdk8</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.hashids</groupId>
-            <artifactId>hashids</artifactId>
+            <groupId>com.github.f4b6a3</groupId>
+            <artifactId>uuid-creator</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mapstruct</groupId>
