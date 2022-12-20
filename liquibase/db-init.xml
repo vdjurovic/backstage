@@ -1,0 +1,135 @@
+<!--
+  ~ /*
+  ~  * Copyright (c) 2022  Bitshift D.O.O (http://bitshifted.co)
+  ~  *
+  ~  * This Source Code Form is subject to the terms of the Mozilla Public
+  ~  * License, v. 2.0. If a copy of the MPL was not distributed with this
+  ~  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  ~  */
+  -->
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="initial-tables" author="vdjurovic" dbms="mysql">
+        <!-- applications table -->
+        <createTable tableName="application">
+            <column name="app_id" type="varchar(36)" >
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="app_name" type="varchar(128)">
+                <constraints nullable="false" />
+            </column>
+            <column name="headline" type="varchar(256)" />
+            <column name="app_description" type="longtext(2048)" />
+            <column name="home_page_url" type="varchar(512)" />
+            <column name="publisher" type="varchar(512)" />
+            <column name="publisher_email" type="varchar(128)" />
+        </createTable>
+
+        <!-- deployment table -->
+        <createTable tableName="deployment">
+            <column name="deployment_id" type="varchar(36)">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="submitted_at" type="timestamptz">
+                <constraints nullable="false" />
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false" />
+            </column>
+            <column name="details" type="varchar(256)" />
+            <column name="app_id" type="varchar(36)" />
+            <column name="required_data" type="clob" />
+        </createTable>
+        <addForeignKeyConstraint baseTableName="deployment" baseColumnNames="app_id" constraintName="app_id_fkey" referencedTableName="application"
+                                 referencedColumnNames="app_id" />
+
+        <!-- app_release table -->
+        <createTable tableName="app_release">
+            <column name="release_id" type="varchar(36)">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="application_id" type="varchar(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="deployment_id" type="varchar(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="release_timestamp" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="app_version" type="varchar(32)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="release_app_fkey" baseTableName="app_release" baseColumnNames="application_id"
+                                 referencedTableName="application" referencedColumnNames="app_id" />
+        <addForeignKeyConstraint constraintName="release_deployment_fkey" baseTableName="app_release" baseColumnNames="deployment_id"
+                                 referencedTableName="deployment" referencedColumnNames="deployment_id" />
+
+        <!-- current_release table -->
+        <createTable tableName="current_release">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="application_id" type="varchar(36)">
+                <constraints nullable="false" />
+            </column>
+            <column name="release_id" type="varchar(36)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="current_reease_app_fkey" baseTableName="current_release" baseColumnNames="application_id"
+                                 referencedTableName="application" referencedColumnNames="app_id" />
+        <addForeignKeyConstraint constraintName="current_release_release_fkey" baseTableName="current_release" baseColumnNames="release_id"
+                                 referencedTableName="app_release" referencedColumnNames="release_id" />
+
+        <!-- installed_jdk table -->
+        <createTable tableName="installed_jdk">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true"  nullable="false" />
+            </column>
+            <column name="vendor" type="varchar(32)">
+                <constraints nullable="false" />
+            </column>
+            <column name="major_version" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="auto_update" type="boolean" defaultValue="false" />
+        </createTable>
+
+        <!-- installed_jdk_release table -->
+        <createTable tableName="installed_jdk_release">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true"  nullable="false" />
+            </column>
+            <column name="jdk_release" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="latest" type="boolean" defaultValue="false" />
+            <column name="installed_jdk_id" type="varchar(36)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="installed_jdk_release_fkey" baseTableName="installed_jdk_release" baseColumnNames="installed_jdk_id"
+                                 referencedTableName="installed_jdk" referencedColumnNames="id" />
+
+        <!-- jdk_installation_task table -->
+        <createTable tableName="jdk_installation_task" >
+            <column name="task_id" type="varchar(36)" >
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="started_on" type="timestamptz" >
+                <constraints nullable="false" />
+            </column>
+            <column name="status" type="varchar(32)">
+                <constraints nullable="false" />
+            </column>
+            <column name="completed_on" type="timestamptz" />
+        </createTable>
+
+    </changeSet>
+</databaseChangeLog>

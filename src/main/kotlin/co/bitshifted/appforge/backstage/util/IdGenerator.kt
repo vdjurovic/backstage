@@ -11,16 +11,14 @@
 package co.bitshifted.appforge.backstage.util
 
 import co.bitshifted.appforge.backstage.BackstageConstants
-import org.hashids.Hashids
+import com.github.f4b6a3.uuid.UuidCreator
 import org.hibernate.engine.spi.SharedSessionContractImplementor
 import org.hibernate.id.IdentifierGenerator
 import java.io.Serializable
 import java.time.ZonedDateTime
-import java.util.*
 
 /**
- * Generates unique alphanumeric IDs based on current timestamp in UTC timezone, and on random generated number.
- * It should guarantee that all IDs are unique, regardless of installation (with low collision probability).
+ * Generates time-ordered UUID in UUID 7 format.
  *
  * @author Vladimir Djurovic
  */
@@ -29,23 +27,10 @@ const val GENERATOR_STRATEGY_NAME = "co.bitshifted.appforge.backstage.util.IdGen
 
 class IdGenerator : IdentifierGenerator {
 
-    /**
-     * Salt for generated IDs. Not intended to be secure, just a common base for all installations.
-     */
-    private val HASH_SALT = "Backstage"
 
-    /**
-     * Minimum length for hashes.
-     */
-    private val MIN_HASH_LENGTH = 8
-
-    private val RANDOM_BOUND = 100000L
-
-    private val GENERATOR  = Hashids(HASH_SALT, MIN_HASH_LENGTH)
-    private val RANDOM = Random()
 
     override fun generate(session: SharedSessionContractImplementor?, obj: Any?): Serializable {
-        val now: Long = ZonedDateTime.now(BackstageConstants.UTC_TIME_ZONE).toEpochSecond()
-        return GENERATOR.encode(now, RANDOM.nextLong(RANDOM_BOUND))
+        val instant = ZonedDateTime.now(BackstageConstants.UTC_TIME_ZONE).toInstant()
+        return UuidCreator.getTimeOrdered(instant, null, null).toString()
     }
 }
