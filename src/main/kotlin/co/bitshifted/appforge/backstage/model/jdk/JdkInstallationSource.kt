@@ -16,7 +16,7 @@ import co.bitshifted.appforge.common.model.JvmVendor
 import co.bitshifted.appforge.common.model.OperatingSystem
 import java.nio.file.Path
 
-class JdkInstallationSource(config : JdkInstallConfig, val srcFile : Path, val os : OperatingSystem, val arch : CpuArch, val fileName : String) {
+class JdkInstallationSource(config : JdkInstallConfig, val srcFile : Path, val os : OperatingSystem, val arch : CpuArch, val fileName : String, val error : Throwable? = null) {
 
 
     val vendor : JvmVendor

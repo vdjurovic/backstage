@@ -31,7 +31,7 @@ open class JdkInstallConfig(val platform : JavaPlatformDetails, val majorVersion
     protected val urlParamCorrettoVersion = "CORRETTO_VERSION"
     protected val urlParameterRelease = "RELEASE"
 
-    fun createDownloadLink(os : OperatingSystem, arch : CpuArch) : String {
+    open fun createDownloadLink(os : OperatingSystem, arch : CpuArch) : String {
         val inputString = platform.downloadUrlFormat
         val template = Template("download-url", StringReader(inputString), freeMarkerConfig)
         val model = createModel(os, arch)

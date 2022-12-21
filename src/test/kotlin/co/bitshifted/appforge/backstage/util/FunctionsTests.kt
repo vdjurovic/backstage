@@ -23,7 +23,7 @@ class FunctionsTests {
         val archivePathUrl = this.javaClass.getResource("/testarchive.tar.gz")
         val archivePath = Path.of(archivePathUrl.toURI())
         val tmpDir = Files.createTempDirectory("tar_gz_unpack_test_")
-        val out = extractTarGzArchive(archivePath, tmpDir)
+        val out = extractTarGzArchive(archivePath, tmpDir, logger(this))
         val expected = tmpDir.resolve("archive")
         Assertions.assertEquals(expected.absolutePathString(), out?.absolutePathString())
     }
@@ -33,7 +33,7 @@ class FunctionsTests {
         val archivePathUrl = this.javaClass.getResource("/testarchive.zip")
         val archivePath = Path.of(archivePathUrl.toURI())
         val tmpDir = Files.createTempDirectory("zip_unpack_test_")
-        val out = extractZipArchive(archivePath, tmpDir)
+        val out = extractZipArchive(archivePath, tmpDir, logger(this))
         val expected = tmpDir.resolve("archive")
         Assertions.assertEquals(expected.absolutePathString(), out?.absolutePathString())
     }

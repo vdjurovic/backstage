@@ -10,6 +10,7 @@
 
 package co.bitshifted.appforge.backstage.model.jdk
 
+import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.JavaVersion
 import co.bitshifted.appforge.common.model.OperatingSystem
 
@@ -28,11 +29,24 @@ class AzulJdkInstallConfig(platform : JavaPlatformDetails, majorVersion : JavaVe
     }
 
     override fun getVersionBase(version: String): String {
-        val parts = version.split("+")
-        var version = parts[0]
-        if (!version.contains(".")) {
-            version = "$version.0.0"
+        if(majorVersion == JavaVersion.JAVA_8) {
+            var version = release.replace("u", ".0.").replace(Regex("b[0-9]+$"), "")
+            return version
+        } else {
+            val parts = version.split("+")
+            var version = parts[0]
+            if (!version.contains(".")) {
+                version = "$version.0.0"
+            }
+            return version
         }
-        return version
+    }
+
+    override fun createDownloadLink(os: OperatingSystem, arch: CpuArch): String {
+        var link = super.createDownloadLink(os, arch)
+        if(majorVersion in arrayOf( JavaVersion.JAVA_8, JavaVersion.JAVA_11) && arch == CpuArch.AARCH64 && os == OperatingSystem.LINUX) {
+            link = link.replace("/zulu/bin", "/zulu-embedded/bin")
+        }
+        return link
     }
 }
