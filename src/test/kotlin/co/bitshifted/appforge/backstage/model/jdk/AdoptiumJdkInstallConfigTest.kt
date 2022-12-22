@@ -19,24 +19,26 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
-class JdkInstallConfigTest {
+class AdoptiumJdkInstallConfigTest {
 
     private val yamlLocation = "/jdk-config.yaml"
+    private val platformConfig : List<JavaPlatformDetails>
 
-    @Test
-    fun testValidDownloadUrl() {
+    init {
         val mapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
         val content = javaClass.getResourceAsStream(yamlLocation)
-        val out = mapper.readValue(content,  object : TypeReference<List<JavaPlatformDetails>>(){})
-        val adoptium = out.find { it.vendor == JvmVendor.ADOPTIUM }
-        assertNotNull(adoptium)
+        platformConfig = mapper.readValue(content,  object : TypeReference<List<JavaPlatformDetails>>(){})
+    }
 
-        val installConfig = JdkInstallConfig(adoptium ?: throw Exception("java platform is null"), JavaVersion.JAVA_19, "19.0.1+10", false, autoUpdate = false)
+    @Test
+    fun testCustomizeDownloadLinkForJava8() {
+        val expectedUrl = "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u352-b08/OpenJDK8U-jdk_x64_linux_hotspot_8u352b08.tar.gz"
+        val adoptium = platformConfig.find { it.vendor == JvmVendor.ADOPTIUM }
+        Assertions.assertNotNull(adoptium)
+        val installConfig = JdkInstallConfigFactory.createInstallConfig(adoptium ?: throw Exception("java platform is null") , JavaVersion.JAVA_8, "8u352-b08", true, autoUpdate = false)
         val downloadUrl = installConfig.createDownloadLink(OperatingSystem.LINUX, CpuArch.X64)
-        assertNotNull(downloadUrl)
-        println("URL: $downloadUrl")
+        Assertions.assertEquals(expectedUrl, downloadUrl)
     }
 }

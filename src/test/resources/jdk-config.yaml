@@ -1,7 +1,8 @@
 ---
+# Eclipse Adoptium
 - vendor: ADOPTIUM
-  download-url-format: https://github.com/adoptium/${REPO}/releases/download/jdk-${VERSION_BASE}%2B${BUMP}/OpenJDK${MAJOR_VERSION}U-jre_${ARCH}_${OS}_hotspot_${VERSION_BASE}_${BUMP}.${PACKAGING}
-  checksum-url-format: https://github.com/adoptium/${REPO}/releases/download/jdk-${VERSION_BASE}%2B${BUMP}/OpenJDK${MAJOR_VERSION}U-jre_${ARCH}_${OS}_hotspot_${VERSION_BASE}_${BUMP}.${PACKAGING}.sha256.txt
+  download-url-format: https://github.com/adoptium/${REPO}/releases/download/jdk-${VERSION_BASE}%2B${BUMP}/OpenJDK${MAJOR_VERSION}U-jdk_${ARCH}_${OS}_hotspot_${VERSION_BASE}_${BUMP}.${PACKAGING}
+  checksum-url-format: https://github.com/adoptium/${REPO}/releases/download/jdk-${VERSION_BASE}%2B${BUMP}/OpenJDK${MAJOR_VERSION}U-jdk_${ARCH}_${OS}_hotspot_${VERSION_BASE}_${BUMP}.${PACKAGING}.sha256.txt
   supported-versions:
     - major-version: "19"
       releases:
@@ -20,6 +21,12 @@
         - 17.0.4+8
         - 17.0.3+7
         - 17.0.2+8
+    - major-version: "11"
+      releases:
+        - 11.0.17+8
+    - major-version: "8"
+      releases:
+        - 8u352-b08
   parameters:
     19:
       repo: temurin19-binaries
@@ -27,6 +34,11 @@
       repo: temurin18-binaries
     17:
       repo: temurin17-binaries
+    11:
+      repo: temurin11-binaries
+    8:
+      repo: temurin8-binaries
+# Azul Systems Zulu
 - vendor: AZUL
   download-url-format: https://cdn.azul.com/zulu/bin/zulu${ZULU_VERSION}-ca-jdk${VERSION_BASE}-${OS}_${ARCH}.${PACKAGING}
   public-key-url: https://www.azul.com/wp-content/uploads/2021/05/0xB1998361219BD9C9.txt
@@ -50,6 +62,12 @@
         - 17.0.2+8
         - 17.0.1+12
         - 17+35
+    - major-version: "11"
+      releases:
+        - 11.0.17+8
+    - major-version: "8"
+      releases:
+        - 8u352b08
   parameters:
     19.0.1+10:
       zulu-version: 19.30.11
@@ -77,9 +95,15 @@
       zulu-version: 17.30.15
     17+35:
       zulu-version: 17.28.13
+    11.0.17+8:
+      zulu-version: 11.60.19
+    8u352b08:
+      zulu-version: 8.66.0.15
+# Amazon Corretto
 - vendor: CORRETTO
   download-url-format: https://corretto.aws/downloads/resources/${CORRETTO_VERSION}/amazon-corretto-${CORRETTO_VERSION}-${OS}-${ARCH}.${PACKAGING}
   public-key-url-format: https://corretto.aws/downloads/resources/${KEY_VERSION}/${KEY_ID}.pub
+  max-concurrent-downloads: 2
   supported-versions:
     - major-version: "19"
       releases:
@@ -101,6 +125,12 @@
         - 17.0.1.12.1
         - 17.0.0.35.2
         - 17.0.0.35.1
+    - major-version: "11"
+      releases:
+        - 11.0.17.8.1
+    - major-version: "8"
+      releases:
+        - 8.352.08.1
   parameters:
     19:
       key-version: 19.0.0.36.1
@@ -111,6 +141,13 @@
     17:
       key-version: 17.0.0.35.1
       key-id: B04F24E3
+    11:
+      key-version: 11.0.6.10.1
+      key-id: B04F24E3
+    8:
+      key-version: 8.242.07.1
+      key-id: B04F24E3
+# Open JDK
 - vendor: OPENJDK
   download-url-format: https://download.java.net/java/GA/jdk${VERSION_BASE}/${HASH}/${BUMP}/GPL/openjdk-${VERSION_BASE}_${OS}-${ARCH}_bin.${PACKAGING}
   checksum-url-format: https://download.java.net/java/GA/jdk${VERSION_BASE}/${HASH}/${BUMP}/GPL/openjdk-${VERSION_BASE}_${OS}-${ARCH}_bin.${PACKAGING}.sha256
@@ -146,6 +183,7 @@
       hash: 2a2082e5a09d4267845be086888add4f
     17+35:
       hash: 0d483333a00540d886896bac774ff48b
+# Oracle JDK
 - vendor: ORACLE
   download-url-format: https://download.oracle.com/java/${VERSION_BASE}/archive/jdk-${RELEASE}_${OS}-${ARCH}_bin.${PACKAGING}
   checksum-url-format: https://download.oracle.com/java/${VERSION_BASE}/archive/jdk-${RELEASE}_${OS}-${ARCH}_bin.${PACKAGING}.sha256
@@ -167,3 +205,4 @@
         - 17.0.4
         - 17.0.3.1
         - 17.0.3
+
