@@ -33,6 +33,8 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
 import java.nio.file.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
 
 class JdkInstallationTaskWorker(private val installConfigList: List<JdkInstallConfig>, val taskId: String) : Runnable {
@@ -100,8 +102,7 @@ class JdkInstallationTaskWorker(private val installConfigList: List<JdkInstallCo
                 if (it.latest) {
                     current.releases.forEach { it.latest = false }
                 }
-                current.releases.add(
-                    InstalledJdkRelease(
+                current.releases.add(InstalledJdkRelease(
                         release = it.release,
                         latest = it.latest,
                         installedJdk = current
@@ -146,38 +147,62 @@ class JdkInstallationTaskWorker(private val installConfigList: List<JdkInstallCo
         installConfigList.forEach { config ->
             createDirectoryStructure(config.platform.vendor, config.majorVersion)
             logger.info("Started JDk download: vendor=${config.platform.vendor}, release=${config.release}")
-            platforms(config.majorVersion, config.platform.vendor).forEach { pair ->
-                val downloadLink = config.createDownloadLink(pair.first, pair.second)
-                logger.debug("Download link: $downloadLink")
-                val tmpFile = Files.createTempFile("jdk_install", "${pair.first}_${pair.second}")
-                logger.info("Starting JDK download for ${pair.first} and ${pair.second}")
-                val request = HttpRequest.newBuilder(URI(downloadLink)).GET().build()
-                val future = client.sendAsync(request, BodyHandlers.ofInputStream())
-                    .thenApply { ins ->
-                        if (ins.statusCode() != 200 && ins.statusCode() != 302) {
-                            throw Exception("Invalid response code ${ins.statusCode()} for $downloadLink")
-                        }
-                        Files.copy(ins.body(), tmpFile, StandardCopyOption.REPLACE_EXISTING)
-                        logger.debug("Copying data to file ${tmpFile.absolutePathString()}")
+            if(config.platform.maxConcurrentDownloads > 0) {
+                val maxVal = config.platform.maxConcurrentDownloads
+                logger.debug("Max concurrent download set to $maxVal")
+                val platformsList = platforms(config.majorVersion, config.platform.vendor)
+                val curDownloads = mutableListOf<CompletableFuture<JdkInstallationSource>>()
+                val counter = AtomicInteger()
+                val chunks = platformsList.stream().collect(Collectors.groupingBy { counter.getAndIncrement() / maxVal }).values
+                chunks.forEach { curList ->
+                    curDownloads.clear()
+                    curList.forEach{
+                        curDownloads.add(createJdkDownloadTask(config, it))
                     }
-                    .thenApply {
-                        logger.info("Completed JDK download for ${pair.first} and ${pair.second}")
-                        JdkInstallationSource(config, tmpFile, pair.first, pair.second, extractFileName(downloadLink))
-                    }.exceptionally {
-                        logger.error("Error while downloading JDK: ", it)
-                        JdkInstallationSource(
-                            config,
-                            tmpFile,
-                            pair.first,
-                            pair.second,
-                            extractFileName(downloadLink),
-                            it
-                        )
-                    }
-                downloadsList.add(future)
+                    logger.debug("Waiting for downloads: $curList")
+                    CompletableFuture.allOf(*curDownloads.toTypedArray()).join()
+                    downloadsList.addAll(curDownloads)
+                }
+            } else {
+                platforms(config.majorVersion, config.platform.vendor).forEach { pair ->
+                    val task = createJdkDownloadTask(config, pair)
+                    downloadsList.add(task)
+                }
             }
+
         }
         return downloadsList
+    }
+
+    private fun createJdkDownloadTask(config : JdkInstallConfig, pair : Pair<OperatingSystem, CpuArch>) : CompletableFuture<JdkInstallationSource> {
+        val downloadLink = config.createDownloadLink(pair.first, pair.second)
+        logger.debug("Download link: $downloadLink")
+        val tmpFile = Files.createTempFile("jdk_install", "${pair.first}_${pair.second}")
+        logger.info("Starting JDK download for ${pair.first} and ${pair.second}")
+        val request = HttpRequest.newBuilder(URI(downloadLink)).GET().build()
+        val future = client.sendAsync(request, BodyHandlers.ofInputStream())
+            .thenApply { ins ->
+                if (ins.statusCode() != 200 && ins.statusCode() != 302) {
+                    throw Exception("Invalid response code ${ins.statusCode()} for $downloadLink")
+                }
+                Files.copy(ins.body(), tmpFile, StandardCopyOption.REPLACE_EXISTING)
+                logger.debug("Copying data to file ${tmpFile.absolutePathString()}")
+            }
+            .thenApply {
+                logger.info("Completed JDK download for ${pair.first} and ${pair.second}")
+                JdkInstallationSource(config, tmpFile, pair.first, pair.second, extractFileName(downloadLink))
+            }.exceptionally {
+                logger.error("Error while downloading JDK: ", it)
+                JdkInstallationSource(
+                    config,
+                    tmpFile,
+                    pair.first,
+                    pair.second,
+                    extractFileName(downloadLink),
+                    it
+                )
+            }
+        return  future
     }
 
     private fun unpackDownloads(downloadsList: List<CompletableFuture<JdkInstallationSource>>): List<CompletableFuture<JdkInstallationResult>> {
