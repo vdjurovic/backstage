@@ -35,6 +35,8 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import javax.servlet.http.HttpServletRequest
 
+val startDotRegex = Regex("^\\./")
+val endSlashRegex = Regex("/$")
 
 inline fun <reified T : Any> logger(from: T): Logger {
     return LoggerFactory.getLogger(from.javaClass)
@@ -113,6 +115,9 @@ fun extractTarGzArchive(source: Path, targetDir: Path, logger: Logger) : Path? {
             if (entry?.isDirectory == true) {
                 val cleanEntry = cleanArchiveEntryPath(entry?.name ?: "")
                 logger.debug("Clean entry name: $cleanEntry")
+                if(cleanEntry.isEmpty()) {
+                    continue
+                }
                 val dirPath = Files.createDirectories(targetDir.resolve(cleanEntry))
                 if(topLevelPath == null) {
                     topLevelPath = dirPath
@@ -140,6 +145,9 @@ fun extractZipArchive(source : Path, targetDir : Path, logger: Logger) : Path? {
             if(entry?.isDirectory == true) {
                 val cleanEntry = cleanArchiveEntryPath(entry?.name ?: "")
                 logger.debug("Clean entry name: $cleanEntry")
+                if(cleanEntry.isEmpty()) {
+                    continue
+                }
                 val dirPath = Files.createDirectories(targetDir.resolve(cleanEntry))
                 if(topLevelPath == null) {
                     topLevelPath = dirPath
@@ -159,10 +167,7 @@ fun extractZipArchive(source : Path, targetDir : Path, logger: Logger) : Path? {
 }
 
 fun cleanArchiveEntryPath(entryName : String) : String {
-    if(entryName.startsWith("./")) {
-        return entryName.substring(2)
-    }
-    return entryName
+    return entryName.replace(startDotRegex, "").replace(endSlashRegex, "")
 }
 
 fun posixModeToString(mode: Int): String {

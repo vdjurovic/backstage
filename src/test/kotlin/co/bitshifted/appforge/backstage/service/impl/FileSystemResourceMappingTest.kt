@@ -27,16 +27,16 @@ class FileSystemResourceMappingTest {
     @Test
     fun testGetJdkLocation() {
         val jdkRoot = Files.createTempDirectory("backstage-test")
-        val jdkDir = Paths.get(jdkRoot.toAbsolutePath().toString(), JvmVendor.OPENJDK.code, JavaVersion.JAVA_11.display, OperatingSystem.LINUX.display, "11.0.2")
+        val jdkDir = Paths.get(jdkRoot.toAbsolutePath().toString(), JvmVendor.OPENJDK.code, JavaVersion.JAVA_11.display, OperatingSystem.LINUX.display, CpuArch.X64.display, "11.0.2")
         Files.createDirectories(jdkDir)
-        val latest = jdkDir.parent.resolve("latest")
-        Files.createSymbolicLink(latest, jdkDir)
+        val latestLink = jdkDir.parent.resolve("latest")
+        val latest = Files.createSymbolicLink(latestLink, jdkDir)
 
         val launchcodeRoot = Files.createTempDirectory("backstage-test-launchcode")
         val syncroJarLocation = Files.createTempFile("backstage-syncro", ".jar")
 
         val mapping = FileSystemResourceMapping(jdkRoot.toAbsolutePath().toString(), launchcodeRoot.absolutePathString(), syncroJarLocation.absolutePathString())
-        val result = mapping.getJdkLocation(JvmVendor.OPENJDK, JavaVersion.JAVA_11, OperatingSystem.LINUX, CpuArch.X64, "11.0.2")
+        val result = mapping.getJdkLocation(JvmVendor.OPENJDK, JavaVersion.JAVA_11, OperatingSystem.LINUX, CpuArch.X64, "latest")
         Assertions.assertEquals(Path.of(result).toFile().absolutePath, latest.toFile().absolutePath)
         FileUtils.deleteDirectory(jdkRoot.toFile())
     }

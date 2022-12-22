@@ -11,6 +11,7 @@
 package co.bitshifted.appforge.backstage.util
 
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,9 +24,9 @@ class FunctionsTests {
         val archivePathUrl = this.javaClass.getResource("/testarchive.tar.gz")
         val archivePath = Path.of(archivePathUrl.toURI())
         val tmpDir = Files.createTempDirectory("tar_gz_unpack_test_")
-        val out = extractTarGzArchive(archivePath, tmpDir)
+        val out = extractTarGzArchive(archivePath, tmpDir, logger(this))
         val expected = tmpDir.resolve("archive")
-        Assertions.assertEquals(expected.absolutePathString(), out?.absolutePathString())
+        assertEquals(expected.absolutePathString(), out?.absolutePathString())
     }
 
     @Test
@@ -33,8 +34,19 @@ class FunctionsTests {
         val archivePathUrl = this.javaClass.getResource("/testarchive.zip")
         val archivePath = Path.of(archivePathUrl.toURI())
         val tmpDir = Files.createTempDirectory("zip_unpack_test_")
-        val out = extractZipArchive(archivePath, tmpDir)
+        val out = extractZipArchive(archivePath, tmpDir, logger(this))
         val expected = tmpDir.resolve("archive")
-        Assertions.assertEquals(expected.absolutePathString(), out?.absolutePathString())
+        assertEquals(expected.absolutePathString(), out?.absolutePathString())
+    }
+
+    @Test
+    fun cleanArchiveEntryPathTest() {
+        var input = "./entry/foo/"
+        var result = cleanArchiveEntryPath(input)
+        assertEquals("entry/foo", result)
+
+        input = "foo/bar"
+        result = cleanArchiveEntryPath(input)
+        assertEquals(input, result)
     }
 }
