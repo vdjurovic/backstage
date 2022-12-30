@@ -13,6 +13,7 @@ package co.bitshifted.appforge.backstage.service.deployment.builders
 import co.bitshifted.appforge.backstage.BackstageConstants
 import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.util.logger
+import co.bitshifted.appforge.common.model.JavaVersion
 import java.io.BufferedReader
 import java.io.PrintWriter
 import java.io.StringReader
@@ -28,13 +29,20 @@ class ToolsRunner(val buildDir: Path) {
     private val jdeps = ToolProvider.findFirst("jdeps").orElseThrow()
     private val jlink = ToolProvider.findFirst("jlink").orElseThrow()
 
-    fun getJdkModules(): Set<String> {
+    fun getJdkModules(majorVersion : JavaVersion): Set<String> {
         val outString = StringWriter();
         val out = PrintWriter(outString);
         val errString = StringWriter();
         val err = PrintWriter(errString);
 
         val argsList = mutableListOf<String>()
+        argsList.add("--multi-release")
+        if(majorVersion == JavaVersion.JAVA_8) {
+            argsList.add("base")
+        } else {
+            argsList.add(majorVersion.display)
+        }
+        argsList.add("--ignore-missing-deps")
         argsList.add("--module-path")
         argsList.add(buildDir.resolve(BackstageConstants.OUTPUT_MODULES_DIR).toFile().absolutePath)
         argsList.add("--list-deps")
@@ -49,7 +57,7 @@ class ToolsRunner(val buildDir: Path) {
                 it.filter { line -> isJdkModule(line.trim()) }.forEach { line -> modules.add(line.trim()) }
             }
         } else {
-            logger.error("Error running jdeps: {}", errString.toString())
+            logger.error("Error running jdeps: {}\n{}", errString.toString(), outString.toString())
             throw DeploymentException("Error running jdeps: $errString" )
         }
         logger.debug("Found JDK modules: {}", modules)
@@ -77,8 +85,8 @@ class ToolsRunner(val buildDir: Path) {
         if (result == 0) {
             logger.info("Runtime image generated successfully")
         } else {
-            logger.error("Error running jlink: {}", errString)
-            throw DeploymentException("Error running jlink: ${err.toString()}" )
+            logger.error("Error running jlink: {}\n{}", errString.toString(), outString.toString())
+            throw DeploymentException("Error running jlink: ${errString}" )
         }
     }
 
