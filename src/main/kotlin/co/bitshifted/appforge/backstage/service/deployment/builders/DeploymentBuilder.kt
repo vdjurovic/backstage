@@ -80,6 +80,8 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     lateinit var releaseService : ReleaseService
     @Value("\${server.url}")
     lateinit var serverUrl : String
+    @Value("\${deployment.builddir.keep:false}")
+    var keepBuildDir : Boolean = false
     @Autowired
     lateinit var syncroConfig : SyncroConfig
     lateinit var launchCodeDir: Path
@@ -90,24 +92,28 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
 
     fun build(): Boolean {
         try {
-            val releaseId = releaseService.initRelease(builderConfig.deploymentConfig)
-            createDirectoryStructure()
-            setupSyncroJar(releaseId)
-            buildLaunchers()
-            val linuxBuilder = LinuxDeploymentBuilder(this)
-            linuxBuilder.build()
-            cacheDeploymentFiles(linuxDir)
-            val windowsBuilder = WindowsDeploymentBuilder(this)
-            windowsBuilder.build()
-            cacheDeploymentFiles(windowsDir)
-            val macBuilder = MacDeploymentBuilder(this)
-            macBuilder.build()
-            cacheDeploymentFiles(macDir)
-            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
+//            val releaseId = releaseService.initRelease(builderConfig.deploymentConfig)
+//            createDirectoryStructure()
+//            setupSyncroJar(releaseId)
+//            buildLaunchers()
+//            val linuxBuilder = LinuxDeploymentBuilder(this)
+//            linuxBuilder.build()
+//            cacheDeploymentFiles(linuxDir)
+//            val windowsBuilder = WindowsDeploymentBuilder(this)
+//            windowsBuilder.build()
+//            cacheDeploymentFiles(windowsDir)
+//            val macBuilder = MacDeploymentBuilder(this)
+//            macBuilder.build()
+//            cacheDeploymentFiles(macDir)
+//            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
             logger.info("Deployment created successfully!")
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
             return false
+        }
+        if(!keepBuildDir) {
+            logger.info("Deleting build directory ${builderConfig.baseDir.parent.absolutePathString()}")
+            FileUtils.deleteDirectory(builderConfig.baseDir.parent.toFile())
         }
         return true
     }
