@@ -13,6 +13,7 @@ package co.bitshifted.appforge.backstage.service.deployment.builders
 import co.bitshifted.appforge.backstage.BackstageConstants
 import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.util.logger
+import co.bitshifted.appforge.common.dto.JvmConfigurationDTO
 import co.bitshifted.appforge.common.model.JavaVersion
 import java.io.BufferedReader
 import java.io.PrintWriter
@@ -23,7 +24,7 @@ import java.nio.file.Path
 import java.util.spi.ToolProvider
 import kotlin.io.path.name
 
-class ToolsRunner(val buildDir: Path) {
+class ToolsRunner(val buildDir: Path, val jvmConfig: JvmConfigurationDTO) {
 
     private val logger = logger(this)
     private val jdeps = ToolProvider.findFirst("jdeps").orElseThrow()
@@ -51,10 +52,11 @@ class ToolsRunner(val buildDir: Path) {
         logger.debug("jdeps arguments list: {}", argsList)
         val result = jdeps.run(out, err, *argsList.toTypedArray())
         val modules = mutableSetOf<String>()
+        val ignoredModules = jvmConfig.jlinkIgnoreModules ?: emptySet()
         if (result == 0) {
             logger.debug("jdeps output: {}", outString.toString());
             BufferedReader(StringReader(outString.toString())).useLines {
-                it.filter { line -> isJdkModule(line.trim()) }.forEach { line -> modules.add(line.trim()) }
+                it.filter { line -> isJdkModule(line.trim()) && !ignoreModule(line.trim(), ignoredModules) }.forEach { line -> modules.add(line.trim()) }
             }
         } else {
             logger.error("Error running jdeps: {}\n{}", errString.toString(), outString.toString())
@@ -92,7 +94,13 @@ class ToolsRunner(val buildDir: Path) {
 
     private fun isJdkModule(moduleName: String): Boolean {
         return BackstageConstants.JDK_MODULES_PREFIXES.any { moduleName.startsWith(it.trim()) }
+    }
 
+    private fun ignoreModule(moduleName: String, ignoredModules : Set<String>) : Boolean {
+        if(ignoredModules.contains(moduleName)) {
+            return true
+        }
+        return false
     }
 
     private fun getAllJarsInDirectory(directory: Path): List<String> {

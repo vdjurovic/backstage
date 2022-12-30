@@ -62,6 +62,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         val archs = builder.builderConfig.deploymentConfig.applicationInfo.linux.supportedCpuArchitectures
         archs.forEach {
             logger.info("Creating Linux deployment in directory {}", builder.getLinuxDir(it))
+            val data = getTemplateData(it)
             try {
                 createDirectoryStructure(it)
                 builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.LINUX, it)
@@ -70,6 +71,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
                 copyLauncher(it)
                 copyLinuxIcons(it)
                 copySplashScreen(it)
+                createDesktopEntry(desktopEntryGlobalTemplate, builder.getLinuxDir(it), data)
                 if(packageTypes.contains(LinuxPackageType.TAR_GZ)) {
                     createTarGzPackage(it)
                 }
@@ -182,7 +184,8 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         Files.createDirectories(contentDir)
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
         // generate desktop entry file
-        createDesktopEntry(desktopEntryLocalTemplate, contentDir, data)
+        // TODO needs to be fixed, see https://github.com/bitshifted/appforge/issues/63
+//        createDesktopEntry(desktopEntryLocalTemplate, contentDir, data)
         val installerName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.TAR_GZ)
         val installerPath = builder.installerDir.resolve(installerName)
         logger.debug("Linux installer name: {}", installerName)
@@ -214,7 +217,8 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         // copy content
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
         // generate desktop entry file
-        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
+        // TODO needs to be fixed, see https://github.com/bitshifted/appforge/issues/63
+//        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
         // create .deb package
         val packageFinalName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.DEB)
         builder.runExternalProgram(listOf("dpkg-deb", "--verbose", "--build", debWorkDirName, packageFinalName), builder.installerDir.toFile())
@@ -264,7 +268,8 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         Files.createDirectories(contentDir)
         FileUtils.copyDirectory(builder.getLinuxDir(arch).toFile(), contentDir.toFile())
         // create global desktop entry file
-        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
+        // TODO needs to be fixed, see https://github.com/bitshifted/appforge/issues/63
+//        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
         // generate spec file
         val specFileName = "build-spec-${arch.display}.spec"
         val specFile = rpmSpecsDir.resolve(specFileName)
