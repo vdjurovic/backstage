@@ -58,6 +58,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     private val splashFilePath = "config/embed/splash.txt"
     private val moduleFilePath = "config/embed/module.txt"
     private val mainClassFilePath = "config/embed/mainclass.txt"
+    private val addModulesFilePath = "config/embed/addmodules.txt"
     private val winIconPath = "icons/launchcode.ico"
     private val syncroPropertiesTemplate = "syncro.properties.ftl"
 
@@ -215,6 +216,17 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
+        // copy license if present
+        val license = builderConfig.deploymentConfig.applicationInfo.license
+        if(license != null) {
+            val target = baseDir.resolve(license.target)
+            logger.debug("License target: {}", target.toFile().absolutePath)
+            // create directory structure
+            Files.createDirectories(target.parent)
+            builderConfig.contentService?.get(license.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))?.input.use {
+                Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
     }
 
     fun buildJdkImage(baseDir: Path, modulesDir: Path, os : OperatingSystem, arch : CpuArch) {
@@ -227,8 +239,8 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             FileUtils.copyDirectory(Paths.get(jdkLocation).resolve("jre").toFile(), jreOutputDir.toFile())
         } else {
             val moduleDirs = listOf(Path.of(jdkLocation).resolve(BackstageConstants.JDK_JMODS_DIR_NAME), modulesDir)
-            val toolRunner = ToolsRunner(baseDir)
-            val jdkModules = toolRunner.getJdkModules()
+            val toolRunner = ToolsRunner(baseDir, builderConfig.deploymentConfig.jvmConfiguration)
+            val jdkModules = toolRunner.getJdkModules(builderConfig.deploymentConfig.jvmConfiguration.majorVersion)
             logger.debug("JDK modules to include: {}", jdkModules)
             if (jdkModules.isEmpty()) {
                 throw DeploymentException("Failed to get any JDK module")
@@ -304,6 +316,8 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             val modulesPathDir = launchCodeDir.resolve(modulepathFilePath)
             Files.writeString(modulesPathDir, OUTPUT_MODULES_DIR)
         }
+        val addModulesFile = launchCodeDir.resolve(addModulesFilePath)
+        Files.writeString(addModulesFile, builderConfig.deploymentConfig.jvmConfiguration.addModules ?: "")
 
         val jarPath = launchCodeDir.resolve(jarFilePath)
         Files.writeString(jarPath, builderConfig.deploymentConfig.jvmConfiguration.jar ?: "")
