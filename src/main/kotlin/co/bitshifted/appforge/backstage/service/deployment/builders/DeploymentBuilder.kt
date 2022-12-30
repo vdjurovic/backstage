@@ -239,7 +239,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             FileUtils.copyDirectory(Paths.get(jdkLocation).resolve("jre").toFile(), jreOutputDir.toFile())
         } else {
             val moduleDirs = listOf(Path.of(jdkLocation).resolve(BackstageConstants.JDK_JMODS_DIR_NAME), modulesDir)
-            val toolRunner = ToolsRunner(baseDir)
+            val toolRunner = ToolsRunner(baseDir, builderConfig.deploymentConfig.jvmConfiguration)
             val jdkModules = toolRunner.getJdkModules(builderConfig.deploymentConfig.jvmConfiguration.majorVersion)
             logger.debug("JDK modules to include: {}", jdkModules)
             if (jdkModules.isEmpty()) {
@@ -317,9 +317,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             Files.writeString(modulesPathDir, OUTPUT_MODULES_DIR)
         }
         val addModulesFile = launchCodeDir.resolve(addModulesFilePath)
-        if(builderConfig.deploymentConfig.jvmConfiguration.moduleName == null) {
-            Files.writeString(addModulesFile, "ALL-MODULE-PATH")
-        }
+        Files.writeString(addModulesFile, builderConfig.deploymentConfig.jvmConfiguration.addModules ?: "")
 
         val jarPath = launchCodeDir.resolve(jarFilePath)
         Files.writeString(jarPath, builderConfig.deploymentConfig.jvmConfiguration.jar ?: "")

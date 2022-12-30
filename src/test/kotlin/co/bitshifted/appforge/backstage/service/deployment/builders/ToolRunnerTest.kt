@@ -12,6 +12,8 @@ package co.bitshifted.appforge.backstage.service.deployment.builders
 
 import co.bitshifted.appforge.backstage.BackstageConstants
 import co.bitshifted.appforge.backstage.deleteDirectory
+import co.bitshifted.appforge.common.dto.JvmConfigurationDTO
+import co.bitshifted.appforge.common.model.JavaVersion
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -23,17 +25,19 @@ import kotlin.io.path.exists
 class ToolRunnerTest {
 
     private lateinit var baseDir : Path
+    private lateinit var jvmConfig : JvmConfigurationDTO
 
     @BeforeEach
     fun setup() {
         val baseDirPath = this.javaClass.getResource("/deployment-package")
         baseDir = Path.of(baseDirPath.toURI())
+        jvmConfig = JvmConfigurationDTO()
     }
 
     @Test
     fun getJdkModulesTest() {
-        val runner = ToolsRunner(baseDir)
-        val modules = runner.getJdkModules()
+        val runner = ToolsRunner(baseDir, jvmConfig)
+        val modules = runner.getJdkModules(JavaVersion.JAVA_17)
         assertTrue(modules.contains("java.base"))
         assertTrue(modules.contains("java.desktop"))
         assertFalse(modules.contains("foo"))
@@ -45,8 +49,8 @@ class ToolRunnerTest {
         println("java home dir: $javaHome")
         val jmodsDir = Path.of(javaHome, BackstageConstants.JDK_JMODS_DIR_NAME)
         val appModsDir = baseDir.resolve(BackstageConstants.OUTPUT_MODULES_DIR)
-        val runner = ToolsRunner(baseDir)
-        val modules = runner.getJdkModules()
+        val runner = ToolsRunner(baseDir, jvmConfig)
+        val modules = runner.getJdkModules(JavaVersion.JAVA_17)
         val modulesPath = listOf(jmodsDir, appModsDir)
         val outputDir = Files.createTempDirectory("backstage-test")
         runner.createRuntimeImage(modules, modulesPath, outputDir.resolve("jre"))
