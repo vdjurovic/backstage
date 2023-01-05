@@ -34,6 +34,7 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
 
     private val appBundleMacOSDirPath = "Contents/MacOS"
     private val appBundleResourcesDirPath = "Contents/Resources"
+    private val appBundleRuntimeDirPath = "Contents/Runtime" // directory which contains Java rutime
     private val infoPlistTemplate = "mac/info.plist.ftl"
     private val infoPlistFile = "Info.plist"
     private val createDmgTemplate = "mac/create-dmg.sh.ftl"
@@ -54,13 +55,13 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
                 createDirectoryStructure(it)
                 builder.copyDependencies(getModulesDir(it), getClasspathDir(it), OperatingSystem.MAC, it)
                 builder.copyResources(getMacOsDir(it))
-                builder.buildJdkImage(getMacOsDir(it), getModulesDir(it), OperatingSystem.MAC, it)
+                builder.buildJdkImage(getMacOsRuntimeDir(it), getModulesDir(it), OperatingSystem.MAC, it)
                 val templateData = getTemplateData(it)
                 copyLauncher(it)
                 copyMacIcons(it)
                 copySplashScreen(it)
                 createInfoPlist(it, templateData)
-                moveNonExecutableFiles(it)
+//                moveNonExecutableFiles(it)
                 createInstaller(it, templateData)
                 logger.info("Successfully created Mac OS X deployment in directory {}", builder.getMacDir(it))
             } catch(th : Throwable) {
@@ -71,12 +72,16 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
         return true
     }
 
+    private fun getMacOsRuntimeDir(cpuArch: CpuArch) : Path {
+        return builder.getMacDir(cpuArch).resolve(appBundleRuntimeDirPath)
+    }
+
     private fun getClasspathDir(arch: CpuArch) : Path {
-        return builder.getMacDir(arch).resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_CLASSPATH_DIR)
+        return builder.getMacDir(arch).resolve(appBundleRuntimeDirPath).resolve(BackstageConstants.OUTPUT_CLASSPATH_DIR)
     }
 
     private fun getModulesDir(arch: CpuArch) : Path {
-        return builder.getMacDir(arch).resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_MODULES_DIR)
+        return builder.getMacDir(arch).resolve(appBundleRuntimeDirPath).resolve(BackstageConstants.OUTPUT_MODULES_DIR)
     }
 
     private fun getMacOsDir(arch: CpuArch) : Path {
@@ -89,9 +94,10 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
 
     private fun createDirectoryStructure(arch : CpuArch) {
         Files.createDirectories(Paths.get(builder.getMacDir(arch).absolutePathString(), appBundleMacOSDirPath))
-        Files.createDirectories(builder.getMacDir(arch).resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_CLASSPATH_DIR))
+        Files.createDirectories(builder.getMacDir(arch).resolve(appBundleRuntimeDirPath))
+        Files.createDirectories(builder.getMacDir(arch).resolve(appBundleRuntimeDirPath).resolve(BackstageConstants.OUTPUT_CLASSPATH_DIR))
         logger.info("Created classpath directory at {}", getClasspathDir(arch).toFile().absolutePath)
-        Files.createDirectories(builder.getMacDir(arch).resolve(appBundleMacOSDirPath).resolve(BackstageConstants.OUTPUT_MODULES_DIR))
+        Files.createDirectories(builder.getMacDir(arch).resolve(appBundleRuntimeDirPath).resolve(BackstageConstants.OUTPUT_MODULES_DIR))
         logger.info("Created modules directory at {}", getModulesDir(arch).toFile().absolutePath)
         Files.createDirectories(Paths.get(builder.getMacDir(arch).absolutePathString(), appBundleResourcesDirPath))
         logger.info("Created Resources directory in {}", getResourcesDir(arch).absolutePathString())
