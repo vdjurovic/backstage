@@ -13,6 +13,20 @@ services:
     volumes:
       - dbstore:/var/lib/mysql
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+  backstage-tools:
+    image: ghcr.io/bitshifted/backstage-tools:1.0.2
+    restart: always
+    ports:
+      - '3022:22'
+    volumes:
+      - /tmp:/tmp
+  launchcode:
+    image: launchcode-dev:latest
+    restart: always
+    ports:
+      - '2022:22'
+    volumes:
+      - /tmp:/tmp
 volumes:
   dbstore:
     driver: local

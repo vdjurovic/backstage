@@ -20,7 +20,5 @@ interface ResourceMapping {
 
     fun getJdkLocation(vendor : JvmVendor, version : JavaVersion, os : OperatingSystem, arch : CpuArch, release : String) : URI
 
-    fun getLaunchcodeSourceLocation() : URI
-
     fun getSyncroJarLocation() : URI
 }
