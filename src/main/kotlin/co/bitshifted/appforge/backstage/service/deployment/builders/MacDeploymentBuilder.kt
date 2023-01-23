@@ -197,6 +197,6 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
         builder.generateFromTemplate(createDmgTemplate, installerFile, data)
         installerFile.toFile().setExecutable(true)
         // invoke installer creation
-        builder.runExternalProgram(listOf("./$createDmgScriptFileName"), builder.installerDir.toFile(), mapOf("PWD" to builder.installerDir.absolutePathString()))
+        builder.buildContext.packageToolsRunner.createDmg(builder.installerDir, createDmgScriptFileName, mapOf("PWD" to builder.installerDir.absolutePathString()))
     }
 }

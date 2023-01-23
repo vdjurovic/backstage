@@ -10,6 +10,9 @@
 
 package co.bitshifted.appforge.backstage.service.deployment.tools
 
+import co.bitshifted.appforge.backstage.BackstageConstants.sshDefaultPass
+import co.bitshifted.appforge.backstage.BackstageConstants.sshDefaultTimeout
+import co.bitshifted.appforge.backstage.BackstageConstants.sshDefaultUsername
 import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.util.logger
 import com.jcraft.jsch.ChannelExec
@@ -31,28 +34,30 @@ class RemoteLaunchCodeRunner(
     ) : LaunchCodeRunner {
 
     private val logger = logger(this)
-    private val connectTimeoutMs = 5000
-    private val sshUsername = "root"
-    private val sshPassword = "root"
-
 
     override fun copySourceCode(targetDir: Path) {
-        executeCommand("copy-src ${targetDir.absolutePathString()}")
+        val sshConfig = createSSHConfig()
+        BuildContext.executeCommand(sshConfig, "copy-src ${targetDir.absolutePathString()}")
     }
 
     override fun buildLaunchers(targetDir: Path) {
-        executeCommand("PATH=\$PATH:/usr/local/go/bin:\$HOME/go/bin build-launchers ${targetDir.absolutePathString()}")
+        val sshConfig = createSSHConfig()
+        BuildContext.executeCommand(sshConfig, "PATH=\$PATH:/usr/local/go/bin:\$HOME/go/bin build-launchers ${targetDir.absolutePathString()}")
+    }
+
+    private fun createSSHConfig() : SSHConfig {
+        return SSHConfig(host, port, sshDefaultUsername, sshDefaultPass, sshDefaultTimeout)
     }
 
     private fun executeCommand(cmd : String) {
         logger.debug("Command to execute: $cmd")
         val jsch = JSch()
 
-        val session = jsch.getSession(sshUsername, host, port)
+        val session = jsch.getSession(sshDefaultUsername, host, port)
         session.setConfig("StrictHostKeyChecking", "no")
-        session.setPassword(sshPassword)
+        session.setPassword(sshDefaultPass)
         try {
-            session.connect(connectTimeoutMs)
+            session.connect(sshDefaultTimeout)
             logger.info("SSH connection established")
             val channel = session.openChannel("exec")
             val errStream = ByteArrayOutputStream()

@@ -15,4 +15,10 @@ import java.nio.file.Path
 interface PackageToolsRunner {
 
     fun runNsis(baseDir: Path, installerFile : String, options : Map<String, String> = emptyMap())
+
+    fun runDpkg(baseDir : Path, packageName : String, debWorkDirName : String)
+
+    fun runRpm(baseDir: Path, specFileName : String)
+
+    fun createDmg(baseDir: Path, scriptName : String, options : Map<String, String> = emptyMap())
 }

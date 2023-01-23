@@ -24,4 +24,16 @@ class LocalPackageToolsRunner : PackageToolsRunner {
     override fun runNsis(baseDir: Path, installerFile : String, options : Map<String, String>) {
         BuildContext.runExternalProgram(listOf(nsisCompilerCmd, installerFile), baseDir.toFile(), options)
     }
+
+    override fun runDpkg(baseDir: Path, packageName : String, debWorkDirName : String) {
+        BuildContext.runExternalProgram(listOf("dpkg-deb", "--verbose", "--build", debWorkDirName, packageName), baseDir.toFile())
+    }
+
+    override fun runRpm(baseDir: Path, specFileName: String) {
+        BuildContext.runExternalProgram(listOf("rpmbuild", "--define", "_topdir ${baseDir.absolutePathString()}", "-bb", "SPECS/$specFileName"), baseDir.toFile())
+    }
+
+    override fun createDmg(baseDir: Path, scriptName: String, options : Map<String, String>) {
+        BuildContext.runExternalProgram(listOf("./$scriptName"), baseDir.toFile(), options)
+    }
 }
