@@ -27,7 +27,6 @@ import kotlin.io.path.notExists
 @Service
 class FileSystemResourceMapping(
     @Value("\${jdk.root.location}") val jdkRoot : String,
-    @Value("\${launchcode.source.root}") val launchcodeSourceRoot : String,
     @Value("\${syncro.jar.location}") val syncroJarLocation : String) : ResourceMapping {
 
     val logger = logger(this)
@@ -50,10 +49,6 @@ class FileSystemResourceMapping(
             throw DeploymentException("Directory ${target.toFile().absolutePath} does not exist")
         }
         return target.toUri()
-    }
-
-    override fun getLaunchcodeSourceLocation(): URI {
-        return Path.of(launchcodeSourceRoot).toUri()
     }
 
     override fun getSyncroJarLocation(): URI {

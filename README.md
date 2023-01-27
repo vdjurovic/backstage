@@ -1,6 +1,6 @@
 # Backstage
 
-*Ignite is part of [AppForge](https://github.com/bitshifted/appforge) platform.*
+*Backstage is part of [AppForge](https://github.com/bitshifted/appforge) platform.*
 
 Backstage is the engine for building and deploying application packages and updates. It's a server side application that provides the
 following functionality:
