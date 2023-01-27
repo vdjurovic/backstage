@@ -10,10 +10,15 @@
 
 package co.bitshifted.appforge.backstage.service.deployment.tools
 
+import co.bitshifted.appforge.backstage.BackstageConstants
+import co.bitshifted.appforge.backstage.BackstageConstants.sshDefaultPass
+import co.bitshifted.appforge.backstage.BackstageConstants.sshDefaultTimeout
+import co.bitshifted.appforge.backstage.BackstageConstants.sshDefaultUsername
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 @Component
 @ConditionalOnProperty(value = ["external.tools.mode"], havingValue = "remote", matchIfMissing = false)
@@ -23,18 +28,26 @@ class RemotePackageToolsRunner(
 ) : PackageToolsRunner {
 
     override fun runNsis(baseDir: Path, installerFile: String, options: Map<String, String>) {
-        TODO("Not yet implemented")
+        val config = createSshConfig()
+        BuildContext.executeRemoteCommand(config, "build-nsis ${baseDir.absolutePathString()} $installerFile")
     }
 
     override fun runDpkg(baseDir: Path, packageName: String, debWorkDirName: String) {
-        TODO("Not yet implemented")
+        val config = createSshConfig()
+        BuildContext.executeRemoteCommand(config, "build-deb ${baseDir.absolutePathString()} $debWorkDirName $packageName")
     }
 
     override fun runRpm(baseDir: Path, specFileName: String) {
-        TODO("Not yet implemented")
+        val config = createSshConfig()
+        BuildContext.executeRemoteCommand(config, "build-rpm ${baseDir.absolutePathString()} $specFileName")
     }
 
     override fun createDmg(baseDir: Path, scriptName: String, options: Map<String, String>) {
-        TODO("Not yet implemented")
+        val config = createSshConfig()
+        BuildContext.executeRemoteCommand(config, "build-dmg ${baseDir.absolutePathString()} $scriptName")
+    }
+
+    private fun createSshConfig() : SSHConfig {
+        return SSHConfig(host, port, sshDefaultUsername, sshDefaultPass, sshDefaultTimeout)
     }
 }

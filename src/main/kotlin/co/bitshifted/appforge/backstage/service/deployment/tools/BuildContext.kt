@@ -14,6 +14,7 @@ import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.util.logger
 import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
@@ -27,7 +28,7 @@ class BuildContext(
 
 
     companion object Util {
-        val logger = logger(BuildContext.Util::class)
+        val logger = LoggerFactory.getLogger(Util::class.java)
 
         fun runExternalProgram(cmdLine : List<String>, workingDirectory : File, environment : Map<String, String> = emptyMap()) {
             val pb = ProcessBuilder(*cmdLine.toTypedArray())
@@ -46,7 +47,7 @@ class BuildContext(
             }
         }
 
-        fun executeCommand(config : SSHConfig, cmd : String) {
+        fun executeRemoteCommand(config : SSHConfig, cmd : String) {
             logger.debug("Command to execute: $cmd")
             val jsch = JSch()
 

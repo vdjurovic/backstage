@@ -95,20 +95,20 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
 
     fun build(): Boolean {
         try {
-//            val releaseId = releaseService.initRelease(builderConfig.deploymentConfig)
+            val releaseId = releaseService.initRelease(builderConfig.deploymentConfig)
             createDirectoryStructure()
-//            setupSyncroJar(releaseId)
+            setupSyncroJar(releaseId)
             buildLaunchers()
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
-//            cacheDeploymentFiles(linuxDir)
+            cacheDeploymentFiles(linuxDir)
             val windowsBuilder = WindowsDeploymentBuilder(this)
             windowsBuilder.build()
-//            cacheDeploymentFiles(windowsDir)
+            cacheDeploymentFiles(windowsDir)
             val macBuilder = MacDeploymentBuilder(this)
             macBuilder.build()
-//            cacheDeploymentFiles(macDir)
-//            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
+            cacheDeploymentFiles(macDir)
+            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
             logger.info("Deployment created successfully!")
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)

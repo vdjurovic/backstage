@@ -14,14 +14,19 @@ services:
       - dbstore:/var/lib/mysql
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
   backstage-tools:
-    image: ghcr.io/bitshifted/backstage-tools:1.0.2
+    image: ghcr.io/bitshifted/backstage-tools:1.1.0
+#    cap_add:
+#      - SYS_ADMIN
+#    security_opt:
+#      - seccomp:unconfined
+    privileged: true
     restart: always
     ports:
       - '3022:22'
     volumes:
       - /tmp:/tmp
   launchcode:
-    image: launchcode-dev:latest
+    image: ghcr.io/bitshifted/launchcode:1.0.1
     restart: always
     ports:
       - '2022:22'

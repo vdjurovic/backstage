@@ -189,9 +189,9 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
     private fun createInstaller(arch: CpuArch, data : Map<String, Any>) {
         logger.info("Creating Mac OS X installer")
         val dsStore = this.javaClass.getResourceAsStream(dsStoreInput)
-        Files.copy(dsStore, builder.installerDir.resolve(dsStoreFile))
+        Files.copy(dsStore, builder.installerDir.resolve(dsStoreFile), StandardCopyOption.REPLACE_EXISTING)
         val bgImage = this.javaClass.getResourceAsStream(backgroundImgInput)
-        Files.copy(bgImage, builder.installerDir.resolve(backgroundImageFile))
+        Files.copy(bgImage, builder.installerDir.resolve(backgroundImageFile), StandardCopyOption.REPLACE_EXISTING)
         val createDmgScriptFileName = String.format(createDmgScriptNameFormat, arch.display)
         val installerFile = builder.installerDir.resolve(createDmgScriptFileName)
         builder.generateFromTemplate(createDmgTemplate, installerFile, data)
