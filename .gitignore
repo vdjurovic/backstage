@@ -61,4 +61,5 @@ hs_err_pid*
 # local settings file
 liquibase/liquibase.properties
 .DS_Store
+db/
 
