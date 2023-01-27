@@ -25,6 +25,7 @@ import co.bitshifted.appforge.backstage.exception.ErrorInfo
 import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.service.ReleaseService
 import co.bitshifted.appforge.backstage.service.ResourceMapping
+import co.bitshifted.appforge.backstage.service.deployment.tools.BuildContext
 import co.bitshifted.appforge.backstage.util.logger
 import co.bitshifted.appforge.common.model.CpuArch
 import co.bitshifted.appforge.common.model.JavaVersion
@@ -84,6 +85,8 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     var keepBuildDir : Boolean = false
     @Autowired
     lateinit var syncroConfig : SyncroConfig
+    @Autowired
+    lateinit var buildContext: BuildContext
     lateinit var launchCodeDir: Path
     private lateinit var linuxDir: Path
     private lateinit var windowsDir: Path
@@ -263,48 +266,11 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         }
     }
 
-    fun runExternalProgram(cmdLine : List<String>, workingDirectory : File, environment : Map<String, String> = emptyMap()) {
-        val pb = ProcessBuilder(*cmdLine.toTypedArray())
-        logger.debug("Running command: {} in working directory {}", pb.command(), workingDirectory.absolutePath)
-        pb.directory(workingDirectory)
-        pb.environment().putAll(environment)
-        val process = pb.start()
-        if (process.waitFor() == 0) {
-            logger.info(process.inputReader().use { it.readText() })
-            logger.info("Command executed successfully")
-        } else {
-            logger.error("Error encountered while running command. Details:")
-            logger.error(process.inputReader().use { it.readText() })
-            logger.error(process.errorReader().use { it.readText() })
-            throw DeploymentException("Failed to run command: $cmdLine")
-        }
-    }
-
     private fun buildLaunchers() {
-        val sourceRoot = resourceMapping.getLaunchcodeSourceLocation()
-        logger.debug("Launchcode source location: {}", sourceRoot.toString())
-        logger.debug("Copying Launchcode source to {}", launchCodeDir.absolutePathString())
-        FileUtils.copyDirectory(File(sourceRoot), launchCodeDir.toFile())
+        buildContext.launchCodeRunner.copySourceCode(launchCodeDir)
         logger.debug("Finished copying Launchcode source")
         setupLauncherConfig()
-        val pb = ProcessBuilder("make", "all")
-        pb.directory(File(launchCodeDir.absolutePathString()))
-        val path = System.getenv("PATH")
-        val userHome = System.getProperty("user.home")
-        pb.environment().put("PATH", "/usr/bin:/usr/local/bin:/usr/local/go/bin:$userHome/go/bin:/bin:/sbin")
-        pb.environment().put("PWD", launchCodeDir.absolutePathString())
-
-        println("PATH: $path")
-        val process = pb.start()
-        if (process.waitFor() == 0) {
-            logger.info(process.inputReader().use { it.readText() })
-            logger.info("Launchers created successfully")
-        } else {
-            logger.error("Error encountered while building launchers. Details:")
-            logger.error(process.inputReader().use { it.readText() })
-            logger.error(process.errorReader().use { it.readText() })
-            throw DeploymentException("Failed to build launchers")
-        }
+        buildContext.launchCodeRunner.buildLaunchers(launchCodeDir)
     }
 
     private fun setupLauncherConfig() {

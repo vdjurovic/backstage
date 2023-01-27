@@ -221,7 +221,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 //        createDesktopEntry(desktopEntryGlobalTemplate, contentDir, data)
         // create .deb package
         val packageFinalName = linuxPackageFinalName(data[appSafeNameDataKey].toString(), data["version"].toString(), arch, LinuxPackageType.DEB)
-        builder.runExternalProgram(listOf("dpkg-deb", "--verbose", "--build", debWorkDirName, packageFinalName), builder.installerDir.toFile())
+        builder.buildContext.packageToolsRunner.runDpkg(builder.installerDir, packageFinalName, debWorkDirName)
         // cleanup
         FileUtils.deleteDirectory(debWorkDir.toFile())
     }
@@ -280,7 +280,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             return
         }
         // build command in form: rpmbuild --define "_topdir `pwd`" -bb ./SPECS/rpm-build.spec
-        builder.runExternalProgram(listOf("rpmbuild", "--define", "_topdir ${rpmWorkDir.absolutePathString()}", "-bb", "SPECS/$specFileName"), rpmWorkDir.toFile())
+        builder.buildContext.packageToolsRunner.runRpm(rpmWorkDir, specFileName)
 
         // copy RPM to installers directory
         val rpmPackageName = "$rpmBuildDirName.rpm"
