@@ -29,7 +29,7 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
 
     private val installerTemplate = "windows/installer.nsi.ftl"
     private val installerConfigFileName = "installer.nsi"
-    private val nsisCompilerCmd = "makensis"
+//    private val nsisCompilerCmd = "makensis"
     val logger = logger(this)
     lateinit var classpathDir: Path
     lateinit var modulesDir: Path
@@ -151,7 +151,7 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
         val installerFile = builder.builderConfig.baseDir.resolve(installerConfigFileName)
         builder.generateFromTemplate(installerTemplate, installerFile, data)
         // run NSIS compiler
-        builder.runExternalProgram(listOf(nsisCompilerCmd, installerConfigFileName), builder.builderConfig.baseDir.toFile(), mapOf("PWD" to builder.builderConfig.baseDir.absolutePathString()))
+        builder.buildContext.packageToolsRunner.runNsis(builder.builderConfig.baseDir, installerConfigFileName, mapOf("PWD" to builder.builderConfig.baseDir.absolutePathString()))
         // make installer executable
         val installerExe = Path.of(data["installerExe"].toString()).toFile()
         installerExe.setExecutable(true)

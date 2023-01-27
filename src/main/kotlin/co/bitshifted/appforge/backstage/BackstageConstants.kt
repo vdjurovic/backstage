@@ -49,4 +49,9 @@ object BackstageConstants {
 
     const val SYNCRO_JAR_NAME = "syncro.jar"
     const val SYNCRO_PROPERTIES_FILE = "syncro.properties"
+
+    // SSH constants
+    const val sshDefaultUsername = "root"
+    const val sshDefaultPass = "root"
+    const val sshDefaultTimeout = 5000
 }
