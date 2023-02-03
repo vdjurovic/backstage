@@ -16,4 +16,4 @@ jobs:
             cache: 'maven'
       - name: Build and test
         run: |
-          mvn verify
+          mvn -Dgpg.skip=true verify

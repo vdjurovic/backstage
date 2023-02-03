@@ -15,7 +15,7 @@
     <parent>
         <groupId>co.bitshifted.appforge</groupId>
         <artifactId>appforge</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.2</version>
     </parent>
     <groupId>co.bitshifted</groupId>
     <artifactId>backstage</artifactId>
@@ -35,7 +35,7 @@
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-compress.version>1.21</commons-compress.version>
-        <appforge-common.version>0.1.0-SNAPSHOT</appforge-common.version>
+        <appforge-common.version>1.1.0</appforge-common.version>
         <jackson.version>2.13.3</jackson.version>
         <uuid-creator.version>5.2.0</uuid-creator.version>
         <spring-boot.version>2.7.0</spring-boot.version>

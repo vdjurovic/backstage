@@ -10,5 +10,11 @@
 
 package co.bitshifted.appforge.backstage.exception
 
-class DeploymentException (message : String) : Throwable(message) {
+class DeploymentException : Throwable {
+
+    constructor(message : String) : super(message)
+
+    constructor(message : String, throwable: Throwable) : super(message, throwable) {
+
+    }
 }
