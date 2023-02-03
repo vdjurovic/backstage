@@ -28,6 +28,7 @@ class JdkInstallationTask(
     var taskId : String? = null,
     @Column(name = "started_on") var startedOn : ZonedDateTime = currentTimeUtc(),
     @Column(name = "completed_on") var completedOn : ZonedDateTime? = null,
+    @Column(name = "details") var details : String? = null,
     @Enumerated(EnumType.STRING) var status : JdkInstallationStatus = JdkInstallationStatus.PENDING) {
 
 }

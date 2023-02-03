@@ -15,6 +15,7 @@ import co.bitshifted.appforge.backstage.BackstageConstants.DEPLOYMENT_OUTPUT_DIR
 import co.bitshifted.appforge.backstage.BackstageConstants.DEPLOYMENT_RESOURCES_DIR
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
+import co.bitshifted.appforge.backstage.model.DeploymentBuildStatus
 import co.bitshifted.appforge.backstage.model.DeploymentStage
 import co.bitshifted.appforge.common.model.DeploymentStatus
 import co.bitshifted.appforge.backstage.model.DeploymentTaskConfig
@@ -106,8 +107,8 @@ class DeploymentProcessTask  (
         processFinalContent()
         val outputDir = createDeploymentStructure()
         val builder = deploymentBuilderFactory.apply(DeploymentBuilderConfig( outputDir, taskConfig.deploymentConfig, contentService))
-        val success = builder.build()
-        setDeploymentStatus( if(success) SUCCESS else FAILED)
+        val buildStatus = builder.build()
+        setDeploymentStatus(buildStatus)
     }
 
     private fun processFinalContent() {
@@ -157,6 +158,13 @@ class DeploymentProcessTask  (
     private fun setDeploymentStatus(status : DeploymentStatus) {
         val deployment = deploymentRepository.findById(taskConfig.deploymentConfig.deploymentId ?: "unknown"). orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, taskConfig.deploymentConfig.deploymentId) }
         deployment.status = status
+        deploymentRepository.save(deployment)
+    }
+
+    private fun setDeploymentStatus(buildStatus : DeploymentBuildStatus) {
+        val deployment = deploymentRepository.findById(taskConfig.deploymentConfig.deploymentId ?: "unknown"). orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, taskConfig.deploymentConfig.deploymentId) }
+        deployment.status = if (buildStatus.status) SUCCESS else FAILED
+        deployment.details = buildStatus.details
         deploymentRepository.save(deployment)
     }
 }

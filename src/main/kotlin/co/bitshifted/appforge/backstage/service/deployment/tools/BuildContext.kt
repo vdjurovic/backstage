@@ -84,7 +84,7 @@ class BuildContext(
                 channel.disconnect()
             } catch (ex : Throwable) {
                 logger.error("Failed to connect to server", ex)
-                throw DeploymentException("Failed to run remote command: $cmd")
+                throw DeploymentException("Failed to run remote command: $cmd", ex)
             }
 
         }

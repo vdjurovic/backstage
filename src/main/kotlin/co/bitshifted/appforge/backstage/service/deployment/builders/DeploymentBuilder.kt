@@ -22,6 +22,7 @@ import co.bitshifted.appforge.backstage.config.SyncroConfig
 import co.bitshifted.appforge.backstage.exception.BackstageException
 import co.bitshifted.appforge.backstage.exception.DeploymentException
 import co.bitshifted.appforge.backstage.exception.ErrorInfo
+import co.bitshifted.appforge.backstage.model.DeploymentBuildStatus
 import co.bitshifted.appforge.backstage.service.ContentService
 import co.bitshifted.appforge.backstage.service.ReleaseService
 import co.bitshifted.appforge.backstage.service.ResourceMapping
@@ -93,7 +94,9 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     private lateinit var macDir: Path
     lateinit var installerDir : Path
 
-    fun build(): Boolean {
+    fun build(): DeploymentBuildStatus {
+        var success = true
+        var details : String? = null
         try {
             val releaseId = releaseService.initRelease(builderConfig.deploymentConfig)
             createDirectoryStructure()
@@ -112,13 +115,14 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             logger.info("Deployment created successfully!")
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
-            return false
+            details = failureDetails(ex)
+            success = false
         }
         if(!keepBuildDir) {
             logger.info("Deleting build directory ${builderConfig.baseDir.parent.absolutePathString()}")
             FileUtils.deleteDirectory(builderConfig.baseDir.parent.toFile())
         }
-        return true
+        return DeploymentBuildStatus(success, details)
     }
 
     fun getLinuxDir(arch : CpuArch) : Path {
@@ -131,6 +135,17 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
 
     fun getWindowsDir(arch : CpuArch) : Path {
         return windowsDir.resolve(arch.display)
+    }
+
+    private fun failureDetails(th : Throwable) : String {
+        val sb = StringBuilder()
+        sb.append("${th.javaClass.name}: ${th.message}\n")
+        if (th.cause != null) {
+            val cause = th.cause
+            sb.append("cause: ${cause?.javaClass?.name}: ${cause?.message}")
+        }
+        logger.debug("Deployment error details: ${sb}")
+        return sb.toString()
     }
 
     private fun createDirectoryStructure() {
