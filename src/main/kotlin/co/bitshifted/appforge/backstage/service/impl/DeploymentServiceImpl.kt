@@ -106,6 +106,6 @@ class DeploymentServiceImpl(
         if(text == null || text == "") {
             text = "{}"
         }
-        return DeploymentStatusDTO(deployment.status, objectMapper.readValue(text, RequiredResourcesDTO::class.java))
+        return DeploymentStatusDTO(deployment.status, objectMapper.readValue(text, RequiredResourcesDTO::class.java), deployment.details)
     }
 }
