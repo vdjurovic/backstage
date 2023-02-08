@@ -12,4 +12,6 @@ APP_DIR=/opt/backstage
 
 cd $APP_DIR && \
   java -jar backstage.jar
+while true; do echo "waiting..."; sleep 2; done
+
 

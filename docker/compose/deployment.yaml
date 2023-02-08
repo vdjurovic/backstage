@@ -1,0 +1,59 @@
+---
+version: "3.9"
+services:
+  backstage-db:
+    image: mysql:8.0.29
+    cap_add:
+      - SYS_NICE
+    restart: always
+    environment:
+      - MYSQL_DATABASE=${BACKSTAGE_DB_NAME}
+      - MYSQL_USER=${BACKSTAGE_DB_USER}
+      - MYSQL_PASSWORD=${BACKSTAGE_DB_PASSWORD}
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    volumes:
+      - dbstore:/var/lib/mysql
+    networks:
+      - db-net
+  launchcode:
+    image: ghcr.io/bitshifted/launchcode:${LAUNCHCODE_VERSION}
+    restart: always
+    volumes:
+      - workdir:/tmp
+    networks:
+      - tools-net
+  backstage-tools:
+    image: ghcr.io/bitshifted/backstage-tools:${BACKSTAGE_TOOLS_VERSION}
+    privileged: true
+    restart: always
+    volumes:
+      - workdir:/tmp
+    networks:
+      - tools-net
+  backstage-server:
+    image: backstage-dev:latest
+    depends_on:
+      backstage-db:
+        condition: service_healthy
+      launchcode:
+        condition: service_started
+      backstage-tools:
+        condition: service_started
+    volumes:
+      - workdir:/tmp
+    networks:
+      - db-net
+      - tools-net
+volumes:
+  dbstore:
+    driver: local
+  workdir:
+    driver: local
+networks:
+  db-net:
+  tools-net:
+
