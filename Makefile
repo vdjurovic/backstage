@@ -8,6 +8,5 @@ maven-build:
 	mvn -Pautomatic clean install
 
 build-docker: maven-build
-	docker build . -t ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} --build-arg BACKSTAGE_VERSION=${VERSION}
-
-
+	docker build . -t ${DOCKER_IMAGE_NAME}:${DOCKER_TAG} --build-arg BACKSTAGE_VERSION=${VERSION} \
+		--build-arg SYNCRO_VERSION=$(shell cat docker/syncro.version)

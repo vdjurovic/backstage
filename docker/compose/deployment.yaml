@@ -7,9 +7,9 @@ services:
       - SYS_NICE
     restart: always
     environment:
-      - MYSQL_DATABASE=${BACKSTAGE_DB_NAME}
-      - MYSQL_USER=${BACKSTAGE_DB_USER}
-      - MYSQL_PASSWORD=${BACKSTAGE_DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
       - MYSQL_RANDOM_ROOT_PASSWORD=yes
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
@@ -35,7 +35,12 @@ services:
     networks:
       - tools-net
   backstage-server:
-    image: backstage-dev:latest
+    image: backstage-dev:${BACKSTAGE_VERSION}
+    restart: always
+    environment:
+      - BACKSTAGE_DB_NAME=${DB_NAME}
+      - BACKSTAGE_DB_USER=${DB_USER}
+      - BACKSTAGE_DB_PASSWORD=${DB_PASSWORD}
     depends_on:
       backstage-db:
         condition: service_healthy
@@ -45,13 +50,24 @@ services:
         condition: service_started
     volumes:
       - workdir:/tmp
+      - contentdir:/var/backstage/content
+      - jdkrootdir:/var/backstage/jdk-root
+      - releasedir:/var/backstage/release
     networks:
       - db-net
       - tools-net
+    ports:
+      - '8080:8080'
 volumes:
   dbstore:
     driver: local
   workdir:
+    driver: local
+  contentdir:
+    driver: local
+  jdkrootdir:
+    driver: local
+  releasedir:
     driver: local
 networks:
   db-net:
